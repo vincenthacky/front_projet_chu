@@ -1,0 +1,91 @@
+.actualites-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+}
+.actualites-container h2 {
+  text-align: center;
+  color: #1e3a8a;
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 2.5rem;
+}
+.info-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 32px;
+  margin: 0 auto;
+  max-width: 1200px;
+  width: 100%;
+}
+.info-card {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  margin-bottom: 32px;
+  flex: 1 1 260px;
+  max-width: 320px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.info-card nz-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 16px rgba(30,58,138,0.08);
+  width: 100%;
+}
+.info-card h3 {
+  margin-top: 0;
+  color: #1e3a8a;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.info-card p {
+  color: #333;
+  font-size: 1rem;
+  margin-bottom: 0;
+}
+.progress-bar {
+  width: 100%;
+  height: 12px;
+  background: #e5e7eb;
+  border-radius: 6px;
+  margin-top: 12px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1e3a8a 60%, #3b82f6 100%);
+  border-radius: 6px 0 0 6px;
+  transition: width 0.5s;
+}
+@media (max-width: 1100px) {
+  .info-grid {
+    gap: 16px;
+  }
+  .info-card {
+    flex: 1 1 220px;
+    max-width: 100%;
+  }
+}
+@media (max-width: 900px) {
+  .actualites-container {
+    padding: 30px 5px 0 5px;
+  }
+  .info-grid {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+  .actualites-container h2 {
+    font-size: 1.4rem;
+  }
+  .info-card {
+    max-width: 100%;
+    margin-bottom: 20px;
+  }
+} 

@@ -1,0 +1,183 @@
+<!-- evenements.component.html - Version corrigée -->
+<section class="content">
+  <div class="container-fluid">
+    <h6 class="evenements-title">
+      <i class="fas fa-map-marked-alt"></i>
+      Suivi du Projet & Avancement des Terrains
+    </h6>
+
+    <!-- Section Mes Souscriptions -->
+    <div class="souscription-section">
+      <div class="section-header">
+        <div class="section-title">
+          <i class="fas fa-user-check"></i> Mes Souscriptions
+        </div>
+        <div class="section-subtitle">Suivi personnalisé de vos terrains</div>
+      </div>
+
+      <div class="timeline">
+        <!-- Label de date pour les souscriptions -->
+        <div class="time-label blue">
+          <span>Juillet 2025 - Mes Projets</span>
+        </div>
+
+        <!-- Boucle sur les événements de souscription -->
+        <div *ngFor="let event of evenementsSouscription; let i = index">
+          <i class="fas" 
+             [ngClass]="getEventIcon(event.type)" 
+             [class]="getEventColor(event.type, event.avancement)"></i>
+          
+          <div class="timeline-item">
+            <span class="time">
+              <i class="fas fa-clock"></i> 
+              {{ getEventStatus(event.avancement) }}
+            </span>
+            
+            <h3 class="timeline-header">
+              <a href="#" (click)="onEventClick(event)">{{ event.titre }}</a>
+              <span *ngIf="event.lieu"> - {{ event.lieu }}</span>
+            </h3>
+
+            <div class="timeline-body">
+              {{ event.description }}
+              <br><br>
+              <img *ngFor="let photo of event.photos" 
+                   [src]="photo" 
+                   [alt]="event.titre"
+                   (click)="openPhotoModal(photo)"
+                   style="cursor: pointer;">
+            </div>
+
+            <div class="evenement-info">
+              <span class="tag" [ngClass]="'type-' + event.type.toLowerCase()">
+                {{ event.type }}
+              </span>
+              <span class="tag etape">{{ event.etape }}</span>
+              <span class="tag">{{ event.lieu }}</span>
+            </div>
+
+            <div class="evenement-dates">
+              <strong>Date :</strong> {{ event.date_debut | date:'dd/MM/yyyy' }}
+              <span *ngIf="event.date_debut !== event.date_fin">
+                - {{ event.date_fin | date:'dd/MM/yyyy' }}
+              </span>
+            </div>
+
+            <div class="progress-section">
+              <div class="progress-label">
+                {{ getProgressLabel(event.type) }}
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" 
+                     [style.width.%]="event.avancement"
+                     [style.background]="getProgressGradient(event.avancement)"></div>
+              </div>
+              <div class="progress-text">
+                {{ event.avancement === 100 ? 'Lancé avec succès ✓' : event.avancement + '% complété' }}
+              </div>
+            </div>
+
+            <div class="timeline-footer">
+              <a href="#" class="btn btn-primary" (click)="viewDetails(event)">
+                {{ event.type === 'Annonce' ? 'Voir vidéo' : 'Voir détails' }}
+              </a>
+              <!-- Bouton Album photos supprimé complètement -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Indicateur de fin -->
+        <div>
+          <i class="fas fa-clock bg-gray"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Événements Globaux -->
+    <div class="souscription-section">
+      <div class="section-header global-header">
+        <div class="section-title">
+          <i class="fas fa-globe-americas"></i> Événements Globaux du Projet
+        </div>
+        <div class="section-subtitle">Actualités générales de la Cité des Agents</div>
+      </div>
+
+      <div class="timeline">
+        <!-- Label de date pour les événements globaux -->
+        <div class="time-label green">
+          <span>Mai 2025 - Lancement</span>
+        </div>
+
+        <!-- Boucle sur les événements globaux -->
+        <div *ngFor="let event of evenementsGlobaux; let i = index">
+          <i class="fas" 
+             [ngClass]="getEventIcon(event.type)" 
+             [class]="getEventColor(event.type, event.avancement)"></i>
+          
+          <div class="timeline-item">
+            <span class="time">
+              <i class="fas fa-clock"></i> 
+              {{ getEventStatus(event.avancement) }}
+            </span>
+            
+            <h3 class="timeline-header">
+              <a href="#" (click)="onEventClick(event)">{{ event.titre }}</a>
+              <span *ngIf="event.lieu"> - {{ event.lieu }}</span>
+            </h3>
+
+            <div class="timeline-body">
+              {{ event.description }}
+              <br><br>
+              <img *ngFor="let photo of event.photos" 
+                   [src]="photo" 
+                   [alt]="event.titre"
+                   (click)="openPhotoModal(photo)"
+                   style="cursor: pointer;">
+            </div>
+
+            <div class="evenement-info">
+              <span class="tag" [ngClass]="'type-' + event.type.toLowerCase()">
+                {{ event.type }}
+              </span>
+              <span class="tag etape">{{ event.etape }}</span>
+              <span class="tag">{{ event.lieu }}</span>
+            </div>
+
+            <div class="evenement-dates">
+              <strong>Date :</strong> {{ event.date_debut | date:'dd/MM/yyyy' }}
+              <span *ngIf="event.date_debut !== event.date_fin">
+                - {{ event.date_fin | date:'dd/MM/yyyy' }}
+              </span>
+            </div>
+
+            <div class="progress-section">
+              <div class="progress-label">
+                {{ getProgressLabel(event.type) }}
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" 
+                     [style.width.%]="event.avancement"
+                     [style.background]="getProgressGradient(event.avancement)"></div>
+              </div>
+              <div class="progress-text">
+                {{ event.avancement === 100 ? 'Lancé avec succès ✓' : event.avancement + '% complété' }}
+              </div>
+            </div>
+
+            <div class="timeline-footer">
+              <a href="#" class="btn btn-primary" (click)="viewDetails(event)">
+                {{ event.type === 'Annonce' ? 'Voir vidéo' : 'Voir détails' }}
+              </a>
+              <!-- Bouton Album photos supprimé complètement -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Indicateur de fin -->
+        <div>
+          <i class="fas fa-clock bg-gray"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

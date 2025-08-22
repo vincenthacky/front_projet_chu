@@ -1,0 +1,13 @@
+<h2 class="document-title">Mes Documents</h2>
+
+<div class="document-list">
+  <div class="document-item" *ngFor="let doc of documents; let i = index">
+    <div class="document-info">
+      <strong>{{ doc.titre }}</strong>
+      <small>Publié le {{ doc.date | date:'dd MMM yyyy' }}</small>
+    </div>
+    <button nz-button nzType="primary" class="btn" (click)="onConsulter(doc)">
+      {{ doc.action }}
+    </button>
+  </div>
+</div>

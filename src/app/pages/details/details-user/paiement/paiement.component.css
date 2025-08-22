@@ -1,0 +1,599 @@
+/* paiement.component.css - Version responsive moderne */
+
+/* Container principal */
+.payment-container {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: clamp(8px, 1.5vw, 16px);
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  
+  /* Scrollbar personnalisée */
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 2px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 2px;
+    
+    &:hover {
+      background: #a8a8a8;
+    }
+  }
+}
+
+/* Host styles */
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* Important pour éviter les scrollbars indésirables du host */
+}
+
+/* Header Section */
+.header-section {
+  background: white;
+  border-radius: 12px;
+  padding: clamp(12px, 2.5vw, 20px);
+  margin-bottom: clamp(12px, 2vw, 16px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+}
+
+.main-title {
+  font-size: clamp(1.1rem, 2.5vw, 1.6rem);
+  font-weight: 800;
+  color: #1e3a8a;
+  text-align: center;
+  margin-bottom: clamp(16px, 3vw, 24px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  
+  i {
+    color: #3b82f6;
+  }
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  /* Par défaut, 2 colonnes pour les écrans plus grands que mobile */
+  grid-template-columns: repeat(auto-fit, minmax(clamp(120px, 25vw, 180px), 1fr));
+  gap: clamp(8px, 1.5vw, 12px);
+}
+
+.stat-card {
+  background: white;
+  border-radius: 10px;
+  padding: clamp(8px, 1.5vw, 12px);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+  display: flex; /* Garde la disposition horizontale pour icône et texte */
+  align-items: center; /* Centre verticalement l'icône et le texte */
+  gap: clamp(6px, 1vw, 10px);
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  }
+  
+  &.total-card {
+    border-left: 4px solid #3b82f6;
+    
+    .stat-icon {
+      background: linear-gradient(135deg, #3b82f6, #1e40af);
+    }
+  }
+  
+  &.success-card {
+    border-left: 4px solid #10b981;
+    
+    .stat-icon {
+      background: linear-gradient(135deg, #10b981, #059669);
+    }
+  }
+  
+  &.warning-card {
+    border-left: 4px solid #f59e0b;
+    
+    .stat-icon {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+  }
+  
+  &.pending-card {
+    border-left: 4px solid #6b7280;
+    
+    .stat-icon {
+      background: linear-gradient(135deg, #6b7280, #4b5563);
+    }
+  }
+}
+
+.stat-icon {
+  width: clamp(32px, 6vw, 40px);
+  height: clamp(32px, 6vw, 40px);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: clamp(0.8rem, 1.5vw, 1rem);
+  flex-shrink: 0;
+}
+
+.stat-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.stat-number {
+  font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+  font-weight: 800;
+  color: #1f2937;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.stat-label {
+  font-size: clamp(0.7rem, 1.3vw, 0.85rem);
+  color: #6b7280;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+/* Status Section */
+.status-section {
+  margin-bottom: clamp(12px, 2vw, 16px);
+}
+
+.status-tags {
+  display: flex;
+  justify-content: center;
+  gap: clamp(8px, 1.5vw, 12px);
+  flex-wrap: wrap;
+}
+
+.status-tag {
+  font-size: clamp(0.75rem, 1.4vw, 0.9rem) !important;
+  padding: clamp(6px, 1vw, 8px) clamp(10px, 1.8vw, 12px) !important;
+  border-radius: 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  
+  i {
+    font-size: 0.9em;
+  }
+}
+
+/* Summary Cards */
+.summary-cards {
+  display: grid;
+  /* Par défaut, 2 colonnes pour les écrans plus grands que mobile */
+  grid-template-columns: repeat(auto-fit, minmax(clamp(200px, 40vw, 280px), 1fr));
+  gap: clamp(8px, 1.5vw, 12px);
+  margin-bottom: clamp(12px, 2vw, 16px);
+}
+
+.summary-card {
+  background: white;
+  border-radius: 10px;
+  padding: clamp(12px, 2vw, 16px);
+  border: 1px solid #e2e8f0;
+  display: flex; /* Garde la disposition horizontale pour icône et texte */
+  align-items: center;
+  gap: clamp(8px, 1.5vw, 12px);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+  
+  &.amount-card {
+    border-left: 4px solid #10b981;
+    
+    .summary-icon {
+      background: linear-gradient(135deg, #10b981, #059669);
+    }
+  }
+  
+  &.penalty-card {
+    border-left: 4px solid #ef4444;
+    
+    .summary-icon {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+  }
+}
+
+.summary-icon {
+  width: clamp(40px, 7vw, 48px);
+  height: clamp(40px, 7vw, 48px);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: clamp(1rem, 1.8vw, 1.2rem);
+  flex-shrink: 0;
+}
+
+.summary-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.summary-value {
+  font-size: clamp(1.2rem, 2.2vw, 1.6rem);
+  font-weight: 800;
+  color: #1f2937;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.summary-label {
+  font-size: clamp(0.75rem, 1.4vw, 0.9rem);
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* Table Section */
+.table-section {
+  background: white;
+  border-radius: 12px;
+  padding: clamp(12px, 2vw, 16px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+}
+
+.table-header {
+  margin-bottom: clamp(12px, 2vw, 16px);
+}
+
+.table-title {
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  font-weight: 700;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  
+  i {
+    color: #3b82f6;
+  }
+}
+
+.responsive-table-container {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Table Styles */
+:host ::ng-deep .ant-table {
+  font-size: clamp(0.7rem, 1.3vw, 0.85rem);
+  
+  .ant-table-thead > tr > th {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%) !important;
+    color: #fff !important;
+    font-weight: 600 !important;
+    font-size: clamp(0.65rem, 1.2vw, 0.8rem) !important;
+    border-bottom: 2px solid #1e40af !important;
+    padding: clamp(6px, 1vw, 10px) clamp(8px, 1.2vw, 12px) !important;
+    text-align: center !important;
+  }
+  
+  .ant-table-tbody > tr > td {
+    padding: clamp(6px, 1vw, 10px) clamp(4px, 0.8vw, 8px) !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    vertical-align: middle !important;
+  }
+  
+  .ant-table-tbody > tr:hover > td {
+    background: rgba(59, 130, 246, 0.05) !important;
+  }
+}
+
+/* Row Classes */
+.row-success {
+  background: rgba(16, 185, 129, 0.02) !important;
+}
+
+.row-warning {
+  background: rgba(245, 158, 11, 0.02) !important;
+}
+
+.row-pending {
+  background: rgba(107, 114, 128, 0.02) !important;
+}
+
+/* Cell Content */
+.cell-content {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: clamp(0.65rem, 1.2vw, 0.8rem);
+}
+
+.cell-icon {
+  font-size: 0.8em;
+  opacity: 0.7;
+  
+  &.success {
+    color: #10b981;
+    opacity: 1;
+  }
+  
+  &.muted {
+    color: #9ca3af;
+  }
+}
+
+.mensualite-badge {
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: clamp(0.6rem, 1.1vw, 0.75rem);
+}
+
+.amount-cell {
+  font-weight: 600;
+  color: #1f2937;
+  
+  &.paid {
+    color: #10b981;
+  }
+}
+
+.date-cell {
+  color: #4b5563;
+}
+
+.mode-badge {
+  background: #f1f5f9;
+  color: #374151;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: clamp(0.6rem, 1.1vw, 0.7rem);
+  font-weight: 500;
+}
+
+.reference-cell {
+  font-family: 'Courier New', monospace;
+  font-size: clamp(0.6rem, 1.1vw, 0.7rem);
+  color: #6b7280;
+}
+
+.reference-text {
+  background: #f9fafb;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+.status-tag-table {
+  font-size: clamp(0.6rem, 1.1vw, 0.75rem) !important;
+  padding: 2px 6px !important;
+  border-radius: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  
+  i {
+    font-size: 0.8em;
+  }
+}
+
+.penalty-cell {
+  .penalty-amount {
+    color: #ef4444;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+}
+
+.comment-cell {
+  .comment-text {
+    color: #4b5563;
+    font-style: italic;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.muted-text {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .stats-grid {
+    /* Sur les écrans de taille moyenne, affiche 2 colonnes */
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .summary-cards {
+    /* MODIFICATION ICI : Affiche 2 colonnes sur tablette */
+    grid-template-columns: repeat(2, 1fr);
+    gap: clamp(8px, 1.5vw, 12px); /* Conserve le gap */
+  }
+
+  .summary-card {
+    /* Ajustements de taille et de disposition pour les cartes de résumé sur tablette */
+    padding: clamp(8px, 1.5vw, 12px); /* Padding réduit */
+    display: flex; /* Garde la disposition horizontale pour icône et texte */
+    align-items: center;
+    text-align: left; /* Assure que le texte est aligné à gauche */
+    gap: clamp(6px, 1vw, 10px);
+  }
+
+  .summary-icon {
+      width: clamp(36px, 6vw, 44px); /* Taille de l'icône réduite */
+      height: clamp(36px, 6vw, 44px);
+      font-size: clamp(0.9rem, 1.5vw, 1.1rem);
+  }
+
+  .summary-value {
+      font-size: clamp(1rem, 2vw, 1.4rem); /* Taille de la valeur réduite */
+  }
+
+  .summary-label {
+      font-size: clamp(0.7rem, 1.2vw, 0.85rem); /* Taille du label réduite */
+  }
+}
+
+@media (max-width: 768px) {
+  .payment-container {
+    padding: 6px;
+  }
+  
+  .stats-grid {
+    /* Affiche 2 colonnes sur les petits écrans */
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+  
+  .stat-card {
+    /* Ajustements de taille et de disposition pour les cartes de stats sur mobile */
+    padding: clamp(5px, 1.2vw, 10px); /* Padding réduit */
+    text-align: left; /* Assure que le texte est aligné à gauche */
+    gap: 4px;
+  }
+
+  .stat-icon {
+      width: clamp(24px, 4.5vw, 32px); /* Taille de l'icône réduite */
+      height: clamp(24px, 4.5vw, 32px);
+      font-size: clamp(0.7rem, 1.2vw, 0.9rem);
+  }
+
+  .stat-number {
+      font-size: clamp(0.9rem, 1.8vw, 1.3rem); /* Taille du nombre réduite */
+  }
+
+  .stat-label {
+      font-size: clamp(0.6rem, 1vw, 0.75rem); /* Taille du label réduite */
+  }
+  
+  .status-tags {
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .summary-cards {
+    /* MODIFICATION ICI : Affiche 2 colonnes sur mobile */
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px; /* Réduit le gap */
+  }
+
+  .summary-card {
+    /* Ajustements de taille et de disposition pour les cartes de résumé sur mobile */
+    padding: clamp(5px, 1.2vw, 10px); /* Padding réduit */
+    display: flex; /* Garde la disposition horizontale pour icône et texte */
+    align-items: center;
+    text-align: left; /* Assure que le texte est aligné à gauche */
+    gap: 4px;
+  }
+
+  .summary-icon {
+      width: clamp(28px, 4.8vw, 36px); /* Taille de l'icône réduite */
+      height: clamp(28px, 4.8vw, 36px);
+      font-size: clamp(0.7rem, 1.2vw, 1rem);
+  }
+
+  .summary-value {
+      font-size: clamp(0.8rem, 1.5vw, 1.2rem); /* Taille de la valeur réduite */
+  }
+
+  .summary-label {
+      font-size: clamp(0.5rem, 0.8vw, 0.7rem); /* Taille du label réduite */
+  }
+  
+  .table-section {
+    padding: 8px;
+  }
+  
+  :host ::ng-deep .ant-table {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 4px 2px !important;
+    }
+  }
+  
+  .cell-content {
+    gap: 2px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-title {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr); /* Assure 2 colonnes même sur très petits écrans */
+    gap: 4px; /* Réduit encore le gap */
+  }
+
+  .stat-card {
+    padding: clamp(3px, 0.8vw, 7px); /* Padding encore plus réduit */
+    text-align: left; /* Assure que le texte est aligné à gauche */
+  }
+
+  .stat-icon {
+      width: clamp(20px, 3.5vw, 28px); /* Icône encore plus petite */
+      height: clamp(20px, 3.5vw, 28px);
+      font-size: clamp(0.55rem, 0.9vw, 0.75rem);
+  }
+
+  .stat-number {
+      font-size: clamp(0.8rem, 1.5vw, 1.1rem);
+  }
+
+  .stat-label {
+      font-size: clamp(0.45rem, 0.7vw, 0.6rem);
+  }
+  
+  .summary-cards {
+    grid-template-columns: repeat(2, 1fr); /* Force 2 colonnes sur très petits écrans aussi */
+    gap: 4px; /* Réduit encore le gap */
+  }
+
+  .summary-card {
+    padding: clamp(3px, 0.8vw, 7px); /* Padding encore plus réduit */
+    text-align: left; /* Assure que le texte est aligné à gauche */
+  }
+
+  .summary-icon {
+      width: clamp(24px, 4vw, 32px); /* Icône encore plus petite */
+      height: clamp(24px, 4vw, 32px);
+      font-size: clamp(0.6rem, 1vw, 0.8rem);
+  }
+
+  .summary-value {
+      font-size: clamp(0.7rem, 1.3vw, 1rem);
+  }
+
+  .summary-label {
+      font-size: clamp(0.4rem, 0.6vw, 0.6rem);
+  }
+}

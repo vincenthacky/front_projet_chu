@@ -1,0 +1,887 @@
+/* Réinitialisation et styles de base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:host {
+  display: block;
+  width: 100%;
+  height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  overflow-x: hidden;
+
+  /* Particules d'arrière-plan animées */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+      radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.2) 0%, transparent 50%);
+    animation: float 20s ease-in-out infinite;
+    z-index: 1;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(180deg); }
+}
+
+.login-content {
+  display: flex;
+  flex: 1 0 auto;
+  width: 100%;
+  min-height: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.info-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 3rem;
+  color: white;
+  position: relative;
+}
+
+.info-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 500px;
+}
+
+.info-title {
+  font-size: 2.6rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  line-height: 1.2;
+  background: linear-gradient(135deg, #ffffff, #e0e7ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.info-description {
+  font-size: 1.25rem;
+  line-height: 1.6;
+  margin-bottom: 2.2rem;
+  opacity: 0.9;
+}
+
+/* Illustration moderne avec appareils */
+.terrain-illustration {
+  margin: 2rem 0;
+}
+
+.devices-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+}
+
+.device {
+  position: absolute;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: transform 0.3s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+  }
+}
+
+.laptop {
+  width: 200px;
+  height: 120px;
+  z-index: 3;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 0 0 12px 12px;
+  }
+}
+
+.laptop-screen {
+  width: 100%;
+  height: 85%;
+  background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+  border-radius: 8px 8px 0 0;
+  padding: 8px;
+  position: relative;
+}
+
+.tablet {
+  width: 120px;
+  height: 160px;
+  right: -30px;
+  top: 20px;
+  z-index: 2;
+  transform: rotate(15deg);
+}
+
+.tablet-screen {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-radius: 12px;
+  padding: 8px;
+}
+
+.mobile {
+  width: 70px;
+  height: 130px;
+  left: -20px;
+  top: 50px;
+  z-index: 1;
+  transform: rotate(-10deg);
+}
+
+.mobile-screen {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #ec4899, #f59e0b);
+  border-radius: 16px;
+  padding: 6px;
+}
+
+.screen-content,
+.tablet-content,
+.mobile-content {
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.screen-header,
+.tablet-header,
+.mobile-header {
+  width: 100%;
+  height: 20%;
+  background: rgba(255, 255, 255, 0.2);
+  margin-bottom: 4px;
+}
+
+.progress-bar {
+  width: 60%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 2px;
+  margin: 8px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.copyright {
+  font-size: 0.9rem;
+  opacity: 0.7;
+  text-align: center;
+}
+
+/* Section droite - Formulaire */
+.login-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.login-container {
+  width: 100%;
+  min-height: 65%;
+  max-width: 350px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 2rem 1.5rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: slideIn 0.6s ease-out;
+  margin-top: -230px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.login-title {
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 2rem;
+  background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Styles pour ng-zorro form - INPUTS PLUS PETITS */
+.login-form {
+  width: 100%;
+
+  ::ng-deep {
+    /* Customisation des labels */
+    .ant-form-item-label > label {
+      font-weight: 600;
+      color: #374151;
+      font-size: 0.85rem; /* Réduit de 0.9rem à 0.85rem */
+
+      &.ant-form-item-required::before {
+        color: #ef4444;
+      }
+    }
+
+    /* Customisation des inputs - TAILLE RÉDUITE */
+    .ant-input-affix-wrapper {
+      border-radius: 10px; /* Réduit de 12px à 10px */
+      border: 2px solid #e5e7eb;
+      padding: 0.6rem 0.8rem; /* Réduit de 0.8rem 1rem à 0.6rem 0.8rem */
+      transition: all 0.3s ease;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(10px);
+      min-height: 36px; /* Hauteur fixe plus petite */
+
+      &:focus,
+      &.ant-input-affix-wrapper-focused {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1); /* Réduit de 3px à 2px */
+        background: rgba(255, 255, 255, 0.95);
+      }
+
+      &.ant-input-affix-wrapper-status-error {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1); /* Réduit de 3px à 2px */
+      }
+
+      .ant-input {
+        border: none;
+        box-shadow: none;
+        background: transparent;
+        font-size: 0.9rem; /* Réduit de 1rem à 0.9rem */
+        padding: 0; /* Supprime le padding par défaut */
+        line-height: 1.4;
+
+        &::placeholder {
+          color: #9ca3af;
+          font-size: 0.85rem; /* Plus petit placeholder */
+        }
+      }
+
+      .anticon {
+        color: #9ca3af;
+        font-size: 14px; /* Réduit la taille des icônes */
+        
+        &.ant-input-prefix {
+          margin-right: 6px; /* Réduit de 8px à 6px */
+        }
+      }
+    }
+
+    /* Styles spécifiques pour les input groups avec suffix (œil) */
+    .ant-input-group-wrapper {
+      .ant-input-wrapper {
+        .ant-input-group {
+          .ant-input-group-addon {
+            background: transparent;
+            border: none;
+            padding: 0;
+          }
+        }
+      }
+    }
+
+    /* Espacement entre les champs réduit */
+    .ant-form-item {
+      margin-bottom: 12px; /* Réduit de 16px à 12px */
+    }
+  }
+}
+
+/* STYLES POUR L'ŒIL DU MOT DE PASSE */
+.password-toggle-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+  margin-right: 4px;
+  
+  &:hover {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+  }
+  
+  &:active {
+    background-color: rgba(59, 130, 246, 0.2);
+    transform: scale(0.95);
+  }
+}
+
+.eye-icon {
+  font-size: 14px !important;
+  color: #9ca3af;
+  transition: color 0.2s ease;
+  
+  .password-toggle-icon:hover & {
+    color: #3b82f6 !important;
+  }
+}
+
+/* Ajustement pour les input groups avec suffix */
+::ng-deep {
+  .ant-input-group {
+    .ant-input-affix-wrapper {
+      border-radius: 10px !important;
+    }
+    
+    .ant-input-group-addon {
+      background: transparent !important;
+      border: none !important;
+      padding: 0 8px !important;
+      
+      .password-toggle-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+  }
+  
+  /* Positionnement correct de l'œil */
+  .ant-input-suffix {
+    margin-left: 8px;
+    
+    .password-toggle-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border-radius: 3px;
+      
+      &:hover {
+        background-color: rgba(59, 130, 246, 0.1);
+      }
+      
+      .eye-icon {
+        font-size: 13px !important;
+        color: #9ca3af;
+        
+        &:hover {
+          color: #3b82f6 !important;
+        }
+      }
+    }
+  }
+}
+
+.form-input {
+  &.error {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1) !important; /* Réduit de 3px à 2px */
+  }
+}
+
+/* Bouton de connexion personnalisé - LÉGÈREMENT PLUS PETIT */
+.login-btn {
+  width: 100%;
+  height: 2.5rem; /* Réduit de 3rem à 2.5rem */
+  border-radius: 10px; /* Réduit de 12px à 10px */
+  font-size: 1rem; /* Réduit de 1.1rem à 1rem */
+  font-weight: 600;
+  margin-top: 0.8rem; /* Réduit de 1rem à 0.8rem */
+  position: relative;
+  overflow: hidden;
+  border: none;
+
+  ::ng-deep {
+    &.ant-btn-primary {
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+      border: none;
+      transition: all 0.3s ease;
+
+      &:hover:not(:disabled) {
+        background: linear-gradient(135deg, #1e40af, #2563eb);
+        transform: translateY(-1px); /* Réduit de -2px à -1px */
+        box-shadow: 0 8px 16px rgba(30, 58, 138, 0.3); /* Réduit de 0 10px 20px */
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+
+      &:disabled {
+        background: #d1d5db;
+        color: #9ca3af;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+    }
+
+    /* Animation de brillance */
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+      z-index: 1;
+    }
+
+    &:hover::before {
+      left: 100%;
+    }
+  }
+}
+
+.forgot-password {
+  text-align: center;
+  margin-top: 1.2rem; /* Réduit de 1.5rem à 1.2rem */
+}
+
+.forgot-link {
+  color: #3b82f6;
+  text-decoration: none;
+  font-size: 0.85rem; /* Réduit de 0.9rem à 0.85rem */
+  transition: color 0.3s ease;
+  cursor: pointer;
+
+  &:hover {
+    color: #1e40af;
+    text-decoration: underline;
+  }
+}
+
+/* Animation d'entrée pour les éléments */
+.fade-in {
+  animation: fadeIn 0.8s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Logo CHU - LÉGÈREMENT PLUS PETIT */
+.chu-logo {
+  display: block;
+  margin: 0 auto 12px auto; /* Réduit de 16px à 12px */
+  max-width: 75px; /* Réduit de 90px à 75px */
+  height: auto;
+}
+
+/* Inputs plus compacts */
+.login-form .form-input {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto 12px auto; /* Réduit de 16px à 12px */
+  font-size: 0.9rem; /* Réduit de 1.08rem à 0.9rem */
+  padding: 0.6rem 0.8rem; /* Réduit de 0.9rem 1.1rem */
+}
+
+/* Bouton connexion bleu + hover + effet clic - OPTIMISÉ */
+.login-btn {
+  background: linear-gradient(135deg, #1976d2, #1565c0);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  box-shadow: 0 2px 6px rgba(25, 118, 210, 0.08); /* Réduit de 8px à 6px */
+  transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+}
+
+.login-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #1565c0, #0d47a1);
+  box-shadow: 0 3px 12px rgba(21, 101, 192, 0.15); /* Réduit de 4px 16px à 3px 12px */
+  transform: translateY(-1px) scale(1.02); /* Réduit de -2px et scale(1.03) */
+}
+
+.login-btn:active:not(:disabled) {
+  background: linear-gradient(135deg, #0d47a1, #1976d2);
+  box-shadow: 0 2px 6px rgba(13, 71, 161, 0.12);
+  transform: scale(0.98);
+}
+
+.login-footer {
+  width: 100vw;
+  text-align: center;
+  color: #b0b3b8;
+  font-size: 0.9rem; /* Réduit de 0.98rem */
+  padding: 10px 0 6px 0; /* Réduit de 12px à 10px */
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(2px);
+  border-top: 1px solid rgba(0,0,0,0.04);
+  z-index: 10;
+  margin-top: auto;
+}
+
+@media (max-width: 768px) {
+  .login-footer {
+    font-size: 0.8rem; /* Réduit de 0.85rem */
+    padding: 6px 0 3px 0; /* Réduit de 8px à 6px */
+  }
+}
+
+.terrain-illustration {
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.terrain-image {
+  display: block;
+  margin: 0 auto 1.5rem auto;
+  max-width: 100%;
+  max-height: 400px;
+  width: auto;
+  height: auto;
+  transition: transform 0.3s ease;
+}
+
+.terrain-image:hover {
+  transform: scale(1.02);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .login-content {
+    align-items: flex-start;
+  }
+  .info-section {
+    flex: 0 0 180px;
+    max-height: 180px;
+    min-height: unset;
+    padding: 1rem 0.5rem 0.5rem 0.5rem;
+    justify-content: flex-start;
+  }
+  
+  .info-title {
+    font-size: 2.2rem;
+    margin-bottom: 1rem;
+  }
+  
+  .info-description {
+    font-size: 1.15rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .devices-container {
+    height: 200px;
+  }
+  
+  .laptop {
+    width: 150px;
+    height: 90px;
+  }
+  
+  .tablet {
+    width: 90px;
+    height: 120px;
+  }
+  
+  .mobile {
+    width: 55px;
+    height: 100px;
+  }
+  
+  .login-section {
+    border-left: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1rem;
+  }
+
+  .terrain-image {
+    max-width: 90%;
+    max-height: 250px;
+  }
+}
+
+@media (max-width: 600px) {
+  .login-content {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .info-section, .login-section {
+    width: 100%;
+    min-width: 0;
+    max-width: 100vw;
+    padding: 1rem 0.5rem;
+    box-sizing: border-box;
+  }
+  .info-title {
+    text-align: center;
+  }
+  .login-container {
+    max-width: 95vw;
+    padding: 1rem 0.5rem;
+  }
+
+  .terrain-image {
+    max-width: 80vw;
+    max-height: 300px;
+  }
+}
+
+@media (max-width: 768px) {
+  .info-section {
+    padding: 1.5rem;
+    min-height: 35vh;
+  }
+  
+  .info-title {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+  
+  .info-description {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .devices-container {
+    height: 150px;
+  }
+  
+  .login-container {
+    padding: 2rem 1.5rem;
+    margin: 0 1rem;
+    border-radius: 16px;
+  }
+  
+  .login-title {
+    font-size: 1.5rem;
+  }
+
+  .terrain-image {
+    max-width: 80vw;
+    max-height: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  .info-section {
+    padding: 1rem;
+    min-height: 30vh;
+  }
+  
+  .login-container {
+    padding: 1.5rem 1rem;
+    margin: 0 0.5rem;
+  }
+  
+  .login-btn {
+    height: 2.2rem; /* Encore plus petit sur mobile */
+    font-size: 0.9rem;
+  }
+
+  .terrain-image {
+    max-width: 98vw;
+    max-height: 180px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .login-content {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .info-section, .login-section {
+    width: 100%;
+    min-width: 0;
+    max-width: 100vw;
+    padding: 1.5rem 1rem;
+    box-sizing: border-box;
+  }
+  .terrain-image {
+    max-width: 90vw;
+    max-height: 260px;
+    margin-bottom: 1.5rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .terrain-illustration {
+    display: none;
+  }
+  .info-title {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* Styles pour le modal de mot de passe oublié */
+.forgot-password-modal {
+  ::ng-deep {
+    .ant-modal-header {
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6) !important;
+      border-bottom: none !important;
+      
+      .ant-modal-title {
+        color: white !important;
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+      }
+    }
+    
+    .ant-modal-close {
+      color: white !important;
+      
+      &:hover {
+        color: #e5e7eb !important;
+      }
+    }
+    
+    .ant-modal-body {
+      padding: 1.5rem;
+    }
+    
+    .ant-form-item-label > label {
+      font-weight: 600;
+      color: #374151;
+      
+      &.ant-form-item-required::before {
+        color: #ef4444;
+      }
+    }
+    
+    .ant-input {
+      border-radius: 8px;
+      border: 2px solid #e5e7eb;
+      padding: 0.6rem; /* Réduit de 0.75rem */
+      transition: all 0.3s ease;
+      font-size: 0.9rem; /* Ajouté pour cohérence */
+      
+      &:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1); /* Réduit de 3px à 2px */
+      }
+    }
+    
+    .ant-btn-primary {
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      
+      &:hover {
+        background: linear-gradient(135deg, #1e40af, #2563eb);
+      }
+    }
+  }
+}
+
+.forgot-email-input {
+  width: 100%;
+  min-width: 280px; /* Réduit de 300px */
+}
+
+.error-message {
+  color: #ef4444;
+  font-size: 0.8rem; /* Réduit de 0.875rem */
+  margin-top: 0.75rem;
+  padding: 0.4rem; /* Réduit de 0.5rem */
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  text-align: center;
+}
+
+/* Styles globaux pour forcer l'apparence du modal */
+::ng-deep {
+  .ant-modal .ant-modal-header {
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6) !important;
+    border-bottom: none !important;
+    
+    .ant-modal-title {
+      color: white !important;
+      font-weight: 600 !important;
+      font-size: 1.1rem !important;
+    }
+  }
+  
+  .ant-modal .ant-modal-close {
+    color: white !important;
+    
+    &:hover {
+      color: #e5e7eb !important;
+    }
+  }
+}
+
+/* Styles pour navigateurs webkit */
+input::-webkit-input-placeholder {
+  color: #9ca3af;
+}
+
+input::-moz-placeholder {
+  color: #9ca3af;
+}
+
+input:-ms-input-placeholder {
+  color: #9ca3af;
+}

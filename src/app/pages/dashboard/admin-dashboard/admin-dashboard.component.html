@@ -1,0 +1,136 @@
+<nz-layout class="app-layout">
+  <nz-sider class="menu-sidebar"
+    nzCollapsible
+    nzWidth="256px"
+    nzBreakpoint="md"
+    [(nzCollapsed)]="isCollapsed"
+    [nzTrigger]="null">
+    <div class="sidebar-logo">
+      <a href="#" target="_blank">
+        <nz-avatar class="header-avatar" nzIcon="user" nzSrc="//zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png"></nz-avatar>
+        <span class="header-username" nz-tooltip [nzTooltipTitle]="userName">{{ userName }}</span>
+      </a>
+    </div>
+    <ul nz-menu nzTheme="dark" nzMode="inline">
+      <li nz-menu-item routerLink="/dashboard/admin/details/home-admin" routerLinkActive="ant-menu-item-selected" nz-tooltip [nzTooltipTitle]="'Vue d\'ensemble'" nzTooltipPlacement="right">
+        <span nz-icon nzType="appstore"></span>
+        <span>Vue d'ensemble</span>
+      </li>
+
+      <li nz-submenu nzTitle="Souscriptions" nzIcon="user">
+        <ul>
+          <li nz-menu-item routerLink="/dashboard/admin/details/souscription-admin" routerLinkActive="ant-menu-item-selected" nz-tooltip [nzTooltipTitle]="'Toutes les souscriptions'" nzTooltipPlacement="right">
+             Souscripteurs
+          </li>
+          <li nz-menu-item routerLink="/dashboard/admin/details/create-souscription-admin" routerLinkActive="ant-menu-item-selected" nz-tooltip [nzTooltipTitle]="'Nouvelle souscription'" nzTooltipPlacement="right">
+            Nouvelle souscription
+          </li>
+          <li nz-menu-item routerLink="/dashboard/admin/details/all-subscription-requests-admin" routerLinkActive="ant-menu-item-selected" nz-tooltip [nzTooltipTitle]="'Toutes les demandes de souscription'" nzTooltipPlacement="right">
+            Demandes de souscription
+          </li>
+        </ul>
+      </li>
+
+      <li nz-submenu nzTitle="Paiements" nzIcon="money-collect">
+        <ul>
+          <li nz-menu-item routerLink="/dashboard/admin/details/payment-admin" routerLinkActive="ant-menu-item-selected" nz-tooltip [nzTooltipTitle]="'Paiements'" nzTooltipPlacement="right">
+            Paiements
+          </li>
+          <li nz-menu-item routerLink="/dashboard/admin/details/new-payment-admin" routerLinkActive="ant-menu-item-selected" nz-tooltip [nzTooltipTitle]="'Nouveau paiement'" nzTooltipPlacement="right">
+            Nouveau paiement
+          </li>
+        </ul>
+      </li>
+  
+      <li nz-menu-item routerLink="/dashboard/admin/details/complaints-admin" routerLinkActive="ant-menu-item-selected" nz-tooltip [nzTooltipTitle]="'Réclamations'" nzTooltipPlacement="right">
+        <span nz-icon nzType="exclamation-circle"></span>
+        <span>Réclamations</span>
+      </li>
+
+      <li nz-submenu nzTitle="Documents" nzIcon="file-text">
+        <ul>
+          <li nz-menu-item routerLink="/dashboard/admin/details/documents-admin" routerLinkActive="ant-menu-item-selected" nz-tooltip [nzTooltipTitle]="'Documents'" nzTooltipPlacement="right">
+            Documents
+          </li>
+          <li nz-menu-item routerLink="/dashboard/admin/details/new-document-admin" routerLinkActive="ant-menu-item-selected" nz-tooltip [nzTooltipTitle]="'Ajouter un nouveau document'" nzTooltipPlacement="right">
+            Ajouter un nouveau document
+          </li>
+        </ul>
+      </li>
+
+      <li nz-submenu nzTitle="Événements" nzIcon="calendar">
+        <ul>
+          <li nz-menu-item routerLink="/dashboard/admin/details/event-admin" routerLinkActive="ant-menu-item-selected" nz-tooltip [nzTooltipTitle]="'Événements'" nzTooltipPlacement="right">
+            Événements
+          </li>
+          <li nz-menu-item routerLink="/dashboard/admin/details/new-event-admin" routerLinkActive="ant-menu-item-selected" nz-tooltip [nzTooltipTitle]="'Nouvel événement'" nzTooltipPlacement="right">
+            Nouvel événement
+          </li>
+        </ul>
+      </li>
+    
+      <li nz-menu-item routerLink="/dashboard/admin/details/rewards-admin" routerLinkActive="ant-menu-item-selected" nz-tooltip [nzTooltipTitle]="'Récompenses'" nzTooltipPlacement="right">
+        <span nz-icon nzType="gift"></span>
+        <span>Récompenses</span>
+      </li>
+
+      <li nz-submenu nzTitle="Paramètres" nzIcon="setting">
+        <ul>
+          <li nz-menu-item routerLink="/dashboard/admin/details/profile-admin" routerLinkActive="ant-menu-item-selected" nz-tooltip [nzTooltipTitle]="'Profil'" nzTooltipPlacement="right">
+            Profil
+          </li>
+          <li nz-menu-item routerLink="/dashboard/admin/details/users-admin" routerLinkActive="ant-menu-item-selected" nz-tooltip [nzTooltipTitle]="'Utilisateurs'" nzTooltipPlacement="right">
+            Utilisateurs
+          </li>
+          <li nz-menu-item routerLink="/dashboard/admin/details/new-user-admin" routerLinkActive="ant-menu-item-selected" nz-tooltip [nzTooltipTitle]="'Nouvel utilisateur'" nzTooltipPlacement="right">
+            Nouvel utilisateur
+          </li>
+        </ul>
+      </li>
+
+      <li nz-menu-item routerLink="/dashboard/admin/details/log-admin" routerLinkActive="ant-menu-item-selected" nz-tooltip [nzTooltipTitle]="'Logs'" nzTooltipPlacement="right">
+        <span nz-icon nzType="history"></span>
+        <span>Logs</span>
+      </li>
+
+      <li 
+      nz-menu-item 
+      (click)="showLogoutConfirm()" 
+      nz-tooltip 
+      [nzTooltipTitle]="'Déconnexion'" 
+      nzTooltipPlacement="right"
+    >
+      <span nz-icon nzType="logout"></span>
+      <span>Déconnexion</span>
+    </li>
+    
+    </ul>
+  </nz-sider>
+
+  <nz-layout class="main-layout">
+    <nz-header>
+      <div class="app-header">
+        <div class="header-left">
+          <span class="header-trigger" (click)="isCollapsed = !isCollapsed">
+            <span class="trigger"
+               nz-icon
+               [nzType]="isCollapsed ? 'menu-unfold' : 'menu-fold'">
+            </span>
+          </span>
+        </div>
+        <div class="header-right">
+          <span class="description">Coordination syndicale du CHU d'Angré</span>
+          <button class="logout-icon-btn" (click)="showLogoutConfirm()" nz-tooltip="Déconnexion">
+            <span nz-icon nzType="logout" nzTheme="outline"></span>
+          </button>
+        </div>  
+      </div>
+    </nz-header>
+
+    <nz-content>
+      <div class="inner-content">
+        <router-outlet></router-outlet>
+      </div>
+    </nz-content>
+  </nz-layout>
+</nz-layout>

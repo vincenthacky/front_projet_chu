@@ -1,0 +1,89 @@
+<div class="pricing-container">
+  <h1 class="main-title">Choisissez votre type d'abonnement de terrain</h1>
+  
+  <div *ngFor="let offer of offers; let i = index" 
+       class="pricing-card" 
+       [ngClass]="{'premium-card': offer.premium}">
+    
+    <div class="card-header">
+      <div class="offer-badge" [ngClass]="{'premium-badge': offer.premium}">
+        {{ offer.badge }}
+      </div>
+      <h2 class="plan-name">{{ offer.name }}</h2>
+      <p class="plan-subtitle">{{ offer.subtitle }}</p>
+    </div>
+    
+    <div class="card-body">
+      <div class="surface-info">
+        <div class="surface-number">{{ offer.surface }}</div>
+        <div class="surface-label">Mètres carrés</div>
+      </div>
+      
+      <div class="price-section">
+        <div class="price-main">
+          {{ offer.price | number }} <span class="price-currency">FCFA</span>
+        </div>
+        <div class="price-period">{{ offer.period }}</div>
+      </div>
+      
+      <div class="payment-info">
+        <div class="payment-highlight">
+          <i class="fas fa-calendar-alt"></i> {{ offer.paymentLabel }}
+        </div>
+        <div class="payment-details">
+          <strong>{{ offer.months }} mensualités</strong> de {{ offer.paymentStart }} à {{ offer.paymentEnd }}<br>
+          Total: <span class="highlight">{{ offer.highlight }}</span>
+        </div>
+      </div>
+      
+      <button class="cta-button" 
+              [disabled]="ctaLoading[i] || ctaConfirmed[i]" 
+              (click)="onCtaClick(i)">
+        <ng-container *ngIf="!ctaLoading[i] && !ctaConfirmed[i]">
+          <i class="fas" [ngClass]="offer.icon"></i> {{ offer.cta }}
+        </ng-container>
+        <ng-container *ngIf="ctaLoading[i]">
+          <i class="fas fa-spinner fa-spin"></i> Traitement...
+        </ng-container>
+        <ng-container *ngIf="ctaConfirmed[i]">
+          <i class="fas fa-check"></i> Demande envoyée !
+        </ng-container>
+      </button>
+      
+      <div class="features-section">
+        <h3 class="section-title">
+          <i class="fas section-icon" 
+             [ngClass]="offer.premium ? 'fa-star' : 'fa-map-marked-alt'"></i>
+          {{ offer.premium ? 'Caractéristiques premium' : 'Caractéristiques du terrain' }}
+        </h3>
+        <ul class="feature-list">
+          <li class="feature-item" *ngFor="let feature of offer.features">
+            <i class="fas fa-check-circle feature-icon"></i>
+            <span class="feature-text">{{ feature }}</span>
+          </li>
+        </ul>
+      </div>
+      
+      <div class="bonus-section">
+        <div class="bonus-badge">{{ offer.bonusLabel }}</div>
+        <div class="bonus-content">
+          <div class="bonus-title">
+            <i class="fas" [ngClass]="offer.bonusIcon"></i> {{ offer.bonusTitle }}
+          </div>
+          <div class="bonus-text">
+            <div *ngFor="let b of offer.bonus">• {{ b }}</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="terms-section">
+        <div class="terms-title">
+          {{ offer.premium ? 'Avantages premium' : 'Modalités de paiement' }}
+        </div>
+        <div class="terms-text">
+          <div *ngFor="let t of offer.terms">{{ t }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

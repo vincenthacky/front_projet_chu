@@ -1,0 +1,41 @@
+<nz-layout>
+  <nz-header class="header">
+    <div class="nav-container">
+      <div class="logo">
+        <div class="logo-icon">CHU</div>
+        <div>
+            <h2>Cité des Agents</h2>
+        </div>
+      </div>
+      <button 
+        class="burger" 
+        (click)="toggleMenu()" 
+        [attr.aria-expanded]="menuOpen"
+        [attr.aria-label]="menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'">
+        <span [class.open]="menuOpen"></span>
+        <span [class.open]="menuOpen"></span>
+        <span [class.open]="menuOpen"></span>
+      </button>
+      <div class="menu-mobile-backdrop" [class.open]="menuOpen" (click)="closeMenu()"></div>
+      <nav>
+        <ul nz-menu 
+            nzMode="horizontal" 
+            class="nav-menu" 
+            [class.menu-mobile-open]="menuOpen">
+          <li nz-menu-item routerLinkActive="active">
+            <a [routerLink]="['/items/home']" (click)="closeMenu()">Accueil</a>
+          </li>
+          <li nz-menu-item routerLinkActive="active">
+            <a [routerLink]="['/items/projet']" (click)="closeMenu()">Le Projet</a>
+          </li>
+          <li nz-menu-item routerLinkActive="active">
+            <a [routerLink]="['/items/actualites']" (click)="closeMenu()">Actualités</a>
+          </li>
+          <li nz-menu-item routerLinkActive="active">
+            <a [routerLink]="['/authentification/login']" (click)="closeMenu()">Connexion</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </nz-header>
+</nz-layout>

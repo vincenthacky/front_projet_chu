@@ -1,0 +1,94 @@
+<h2 class="reclamation-title">Mes réclamations</h2>
+
+<div class="reclamation-grid">
+  <div class="reclamation-col reclamation-col-list">
+    <!-- Liste des réclamations sous forme de cartes -->
+    <div class="reclamation-card-list">
+      <div class="reclamation-card" *ngFor="let r of reclamations">
+        <div class="reclamation-card-header">
+          <div>
+            <strong>{{ r.titre }}</strong>
+            <br>
+            <small>Soumise le {{ r.date_reclamation | date:'dd MMM yyyy' }}</small>
+          </div>
+          <span class="status-badge"
+                [ngClass]="{
+                  'status-success': r.statut.libelle_statut_reclamation === 'Résolue',
+                  'status-warning': r.statut.libelle_statut_reclamation === 'En cours',
+                  'status-danger': r.statut.libelle_statut_reclamation === 'En attente'
+                }">
+            {{ r.statut.libelle_statut_reclamation }}
+          </span>
+        </div>
+        <div class="reclamation-card-body">
+          <div class="reclamation-info">
+            <div><b>Souscription :</b> {{ r.souscription }}</div>
+            <div *ngIf="r.paiement"><b>Paiement :</b> {{ r.paiement }}</div>
+            <div><b>Type :</b> {{ r.type_reclamation | titlecase }}</div>
+            <div><b>Priorité :</b> <span [ngClass]="{
+              'prio-haute': r.priorite === 'Haute',
+              'prio-basse': r.priorite === 'Basse',
+              'prio-normale': r.priorite === 'Normale'
+            }">{{ r.priorite }}</span></div>
+          </div>
+          <div class="reclamation-desc">{{ r.description }}</div>
+          <div class="reclamation-admin" *ngIf="r.reponse_admin">
+            <b>Réponse admin :</b> {{ r.reponse_admin }}<br>
+            <small>Date réponse : {{ r.date_reponse | date:'dd/MM/yyyy' }}</small>
+          </div>
+          <div class="reclamation-resol" *ngIf="r.date_resolution">
+            <b>Date de résolution :</b> {{ r.date_resolution | date:'dd/MM/yyyy' }}
+          </div>
+          <div class="reclamation-sat" *ngIf="r.satisfaction_client">
+            <b>Satisfaction :</b> <span class="satisfaction">{{ r.satisfaction_client }}/5</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="reclamation-col reclamation-col-form">
+    <!-- Formulaire de nouvelle réclamation -->
+    <div class="reclamation-form">
+      <h4>Nouvelle réclamation</h4>
+      <form [formGroup]="form" (ngSubmit)="handleOk()" nz-form>
+        <div class="form-group">
+          <label for="souscription">Souscription</label>
+          <nz-select formControlName="souscription" id="souscription" nzPlaceHolder="Sélectionner une souscription" (ngModelChange)="form.patchValue({ paiement: null })">
+            <nz-option *ngFor="let s of souscriptions" [nzValue]="s.id" [nzLabel]="s.label"></nz-option>
+          </nz-select>
+        </div>
+        <div class="form-group">
+          <label for="paiement">Paiement (optionnel)</label>
+          <nz-select formControlName="paiement" id="paiement" nzPlaceHolder="Sélectionner un paiement" [nzDisabled]="!form.value.souscription">
+            <nz-option *ngFor="let p of getPaiementsForSouscription(form.value.souscription)" [nzValue]="p.id" [nzLabel]="p.label"></nz-option>
+          </nz-select>
+        </div>
+        <div class="form-group">
+          <label for="type_reclamation">Type</label>
+          <nz-select formControlName="type_reclamation" id="type_reclamation" nzPlaceHolder="Type de réclamation">
+            <nz-option *ngFor="let t of typeOptions" [nzValue]="t.value" [nzLabel]="t.label"></nz-option>
+          </nz-select>
+        </div>
+        <div class="form-group">
+          <label for="titre">Sujet</label>
+          <input nz-input formControlName="titre" id="titre" maxlength="100" required placeholder="Sujet de la réclamation" />
+        </div>
+        <div class="form-group">
+          <label for="description">Message</label>
+          <textarea nz-input formControlName="description" id="description" rows="4" maxlength="500" required placeholder="Décrivez votre problème"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="priorite">Priorité</label>
+          <nz-select formControlName="priorite" id="priorite">
+            <nz-option *ngFor="let p of prioriteOptions" [nzValue]="p.value" [nzLabel]="p.label"></nz-option>
+          </nz-select>
+        </div>
+        <div class="form-group">
+          <label for="piece_jointe">Pièce jointe</label>
+          <input nz-input type="file" id="piece_jointe" formControlName="piece_jointe" />
+        </div>
+        <button nz-button nzType="primary" class="btn" type="submit">Envoyer la réclamation</button>
+      </form>
+    </div>
+  </div>
+</div>

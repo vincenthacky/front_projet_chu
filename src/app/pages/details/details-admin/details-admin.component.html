@@ -1,0 +1,40 @@
+
+<div class="admin-container">
+  <div class="hero-section">
+    <h1>{{ adminDetails.title }}</h1>
+    <p class="hero-description">{{ adminDetails.description }}</p>
+  </div>
+
+  <div nz-row nzGutter="24" class="stats-grid">
+    <div nz-col nzXs="24" nzSm="12" nzMd="6" *ngFor="let stat of adminDetails.stats" class="stat-card">
+      <nz-card>
+        <div class="stat-content">
+          <div class="stat-icon" [style.color]="stat.color">{{ stat.icon }}</div>
+          <h3>{{ stat.title }}</h3>
+          <div class="stat-value" [style.color]="stat.color">{{ stat.value }}</div>
+        </div>
+      </nz-card>
+    </div>
+  </div>
+
+  <div class="admin-sections">
+    <div nz-row nzGutter="24">
+      <div nz-col nzXs="24" nzMd="12">
+        <nz-card title="Gestion des Agents">
+          <div class="admin-action">
+            <button nz-button nzType="primary">Voir tous les agents</button>
+            <button nz-button nzType="default">Ajouter un agent</button>
+          </div>
+        </nz-card>
+      </div>
+      <div nz-col nzXs="24" nzMd="12">
+        <nz-card title="Gestion des Terrains">
+          <div class="admin-action">
+            <button nz-button nzType="primary">Voir les terrains</button>
+            <button nz-button nzType="default">Ajouter un terrain</button>
+          </div>
+        </nz-card>
+      </div>
+    </div>
+  </div>
+</div>

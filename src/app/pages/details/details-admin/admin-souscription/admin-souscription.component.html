@@ -1,0 +1,161 @@
+<div class="subscription-wrapper">
+  <!-- En-tête -->
+  <div class="header-section">
+      <h1 class="main-title">
+          <i class="fas fa-map-marked-alt"></i>
+          Gestion des Souscriptions
+      </h1>
+      <p class="subtitle">Gérez toutes les souscriptions des agents du CHU Angré</p>
+  </div>
+
+  <!-- Contrôles optimisés pour utiliser tout l'espace -->
+  <div class="controls-section">
+      <!-- Conteneur flex optimisé pour search et bouton -->
+      <div class="search-and-action">
+          <div class="search-container">
+              <i class="fas fa-search search-icon"></i>
+              <input 
+                  type="text" 
+                  class="search-input" 
+                  placeholder="Rechercher par nom, prénom, terrain, montant..."
+                  [(ngModel)]="searchTerm"
+                  (input)="onSearchChange()"
+              >
+          </div>
+          <div class="header-actions">
+              <button class="btn btn-primary" (click)="AddNewSouscription()">
+                  <i class="fas fa-plus"></i>
+                  <span>Nouvelle Souscription</span>
+              </button>
+          </div>
+      </div>
+      
+      <!-- Filtres restent en dessous -->
+      <div class="filters-section">
+          <select class="filter-select" [(ngModel)]="statusFilter" (change)="onStatusFilterChange()">
+              <option value="">Tous les statuts</option>
+              <option value="en-cours">En cours</option>
+              <option value="en-retard">En retard</option>
+              <option value="termine">Terminé</option>
+          </select>
+          <select class="filter-select" [(ngModel)]="terrainFilter" (change)="onTerrainFilterChange()">
+              <option value="">Toutes les surfaces</option>
+              <option value="250">250m²</option>
+              <option value="500">500m²</option>
+          </select>
+          <button class="refresh-btn" (click)="refreshData()">
+              <i class="fas fa-sync-alt"></i>
+              <span>Actualiser</span>
+          </button>
+      </div>
+  </div>
+
+  <!-- Statistiques -->
+  <div class="stats-bar">
+      <div class="stat-card">
+          <div class="stat-number">{{ totalSubscriptions }}</div>
+          <div class="stat-label">Total Souscriptions</div>
+      </div>
+      <div class="stat-card">
+          <div class="stat-number">{{ formatAmount(totalAmount) }}</div>
+          <div class="stat-label">Montant Total</div>
+      </div>
+      <div class="stat-card">
+          <div class="stat-number">{{ formatAmount(totalPaid) }}</div>
+          <div class="stat-label">Déjà Payé</div>
+      </div>
+      <div class="stat-card">
+          <div class="stat-number">{{ formatAmount(totalRemaining) }}</div>
+          <div class="stat-label">Reste à Payer</div>
+      </div>
+  </div>
+
+  <!-- Tableau -->
+  <div class="table-responsive desktop-only">
+      <div class="table-container">
+          <table class="modern-table">
+              <thead class="table-header">
+                  <tr>
+                      <th>Nom et Prénoms</th>
+                      <th>Terrain</th>
+                      <th>Prix Total</th>
+                      <th>Montant Payé</th>
+                      <th>Reste à Payer</th>
+                      <th>Date Début</th>
+                      <th>Prochain Paiement</th>
+                      <th>Statut</th>
+                      <th>Actions</th>
+                  </tr>
+              </thead>
+              <tbody id="tableBody">
+                  <tr class="table-row" *ngFor="let subscription of paginatedData; trackBy: trackByFn">
+                      <td class="table-cell">
+                          <div class="subscription-id">{{ subscription.id }}</div>
+                      </td>
+                      <td class="table-cell">
+                          <div class="terrain-info">
+                              <div class="terrain-details">
+                                  <h4>{{ subscription.terrain }}</h4>
+                              </div>
+                          </div>
+                      </td>
+                      <td class="table-cell">
+                          <div class="price-display">{{ formatAmount(subscription.prixTotal) }}</div>
+                          <div class="progress-bar">
+                              <div class="progress-fill" [style.width.%]="subscription.progression"></div>
+                          </div>
+                      </td>
+                      <td class="table-cell">
+                          <div class="amount-paid">{{ formatAmount(subscription.montantPaye) }}</div>
+                      </td>
+                      <td class="table-cell">
+                          <div class="amount-remaining">{{ formatAmount(subscription.resteAPayer) }}</div>
+                      </td>
+                      <td class="table-cell">
+                          <div class="date-display">{{ formatDate(subscription.dateDebut) }}</div>
+                      </td>
+                      <td class="table-cell">
+                          <div class="next-payment">
+                              <i class="fas fa-calendar-alt"></i>
+                              {{ formatDate(subscription.prochainPaiement) }}
+                          </div>
+                      </td>
+                      <td class="table-cell">
+                          <div class="status-badge" [ngClass]="getStatusClass(subscription.statut)">
+                              <i class="fas" [ngClass]="getStatusIcon(subscription.statut)"></i>
+                              {{ getStatusLabel(subscription.statut) }}
+                          </div>
+                      </td>
+                      <td class="table-cell">
+                          <div class="action-buttons">
+                              <button class="action-btn btn-view" nz-button [nzType]="'primary'" (click)="showModal(subscription)" title="Voir plus">
+                                  <i class="fas fa-money-bill-wave"></i>
+                                  <span class="btn-text">Payer</span>
+                              </button>
+                          </div>
+                      </td>
+                  </tr>
+              </tbody>
+          </table>
+      </div>
+  </div>
+
+  <!-- Modal Paiements avec en-tête bleue -->
+  <nz-modal [(nzVisible)]="isVisible" [nzFooter]="null" (nzOnCancel)="handleCancel()" [nzWidth]="400">
+    <div class="modal-header-blue" *nzModalTitle>
+      <i class="fas fa-credit-card modal-icon"></i>
+      <span class="modal-title-text">Ajouter un nouveau paiement</span>
+    </div>
+    <ng-container *nzModalContent>
+      
+      <div class="add-payment" style="margin-bottom: 18px;">
+        <input type="date" [(ngModel)]="newPaymentDate" style="width: 100%; margin-bottom: 8px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+        <input type="number" [(ngModel)]="newPaymentAmount" placeholder="Montant" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+      </div>
+      <div class="modal-footer-custom" style="display: flex; justify-content: space-between;">
+        <button nz-button nzType="default" (click)="handleCancel()">Annuler</button>
+        <button nz-button nzType="primary" (click)="handleOk()">Payer</button>
+      </div>
+    </ng-container>
+  </nz-modal>
+</div>

@@ -1,0 +1,171 @@
+<!-- login.component.html -->
+<div class="login-page">
+  <div class="login-content">
+    <!-- Section gauche avec informations et image -->
+    <div class="info-section fade-in">
+      <div class="info-content">
+        <h1 class="info-title">Cité des agents du CHU d'Angré.</h1>
+        <p class="info-description">
+          Votre projet immobilier au cœur d'Abidjan. Acquérez votre terrain de 250m² ou 500m² 
+          dans un environnement sécurisé et moderne.
+        </p>
+        
+         <!-- Image responsive remplacée -->
+         <div class="terrain-illustration">
+          <img 
+            src="For-sale-pana.png" 
+            alt="Illustration de connexion sécurisée"
+            class="terrain-image"
+          />
+        </div>
+
+      </div>
+      
+    </div>
+
+    <!-- Section droite avec formulaire de connexion -->
+    <div class="login-section">
+      <div class="login-container">
+        <img src="favicon.ico" alt="Logo CHU" class="chu-logo" style="display:block;margin:0 auto 16px auto;max-width:90px;">
+        <h2 class="login-title">CONNEXION</h2>
+        
+        <form 
+          nz-form 
+          [formGroup]="loginForm" 
+          (ngSubmit)="onSubmit()" 
+          class="login-form"
+          [nzLayout]="'vertical'">
+          
+          <!-- Champ Identifiant (Email) -->
+          <nz-form-item>
+            <nz-form-label nzRequired class="form-label">
+              Saisir votre email :
+            </nz-form-label>
+            <nz-form-control 
+              nzHasFeedback
+              [nzErrorTip]="identifiantErrorTpl">
+              <input 
+                nz-input 
+                formControlName="identifiant"
+                type="email"
+                placeholder="saisir votre email"
+                class="form-input"
+                [class.error]="identifiant.invalid && identifiant.dirty"
+                prefix="user" />
+              
+              <ng-template #identifiantErrorTpl let-control>
+                <ng-container *ngIf="control.hasError('required')">
+                  L'email est requis
+                </ng-container>
+                <ng-container *ngIf="control.hasError('email')">
+                  Format d'email invalide
+                </ng-container>
+              </ng-template>
+            </nz-form-control>
+          </nz-form-item>
+
+          <!-- Champ Mot de passe AVEC ŒIL -->
+          <nz-form-item>
+            <nz-form-label nzRequired class="form-label">
+              Mot de passe :
+            </nz-form-label>
+            <nz-form-control 
+              nzHasFeedback
+              [nzErrorTip]="passwordErrorTpl">
+              <nz-input-group [nzSuffix]="passwordSuffixTemplate" style="height: 42px !important;   /* surcharge la hauteur */
+              font-size: 13px; 
+              padding: 4px 8px;">
+                <input 
+                  nz-input 
+                  formControlName="mot_de_passe"
+                  [type]="showPassword ? 'text' : 'password'"
+                  placeholder="entrez votre mot de passe"
+                  class="form-input"
+                  [class.error]="mot_de_passe.invalid && mot_de_passe.dirty"
+                  prefix="lock" />
+              </nz-input-group>
+              
+              <!-- Template pour l'icône œil -->
+              <ng-template #passwordSuffixTemplate>
+                <span 
+                  class="password-toggle-icon"
+                  (click)="togglePasswordVisibility()"
+                  [title]="showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'">
+                  <i 
+                    nz-icon 
+                    [nzType]="showPassword ? 'eye-invisible' : 'eye'"
+                    class="eye-icon">
+                  </i>
+                </span>
+              </ng-template>
+              
+              <ng-template #passwordErrorTpl let-control>
+                <ng-container *ngIf="control.hasError('required')">
+                  Le mot de passe est requis
+                </ng-container>
+                <ng-container *ngIf="control.hasError('minlength')">
+                  Minimum 8 caractères requis
+                </ng-container>
+              </ng-template> 
+            </nz-form-control>
+          </nz-form-item>
+
+          <!-- Bouton de connexion -->
+          <button 
+            nz-button 
+            nzType="primary" 
+            nzSize="large"
+            [nzLoading]="isLoading"
+            [disabled]="loginForm.invalid"
+            class="login-btn"
+            type="submit">
+            <span *ngIf="!isLoading">Se connecter</span>
+            <span *ngIf="isLoading">Connexion...</span>
+          </button>
+          
+          <!-- Lien mot de passe oublié -->
+          <div class="forgot-password">
+            <a 
+              class="forgot-link" 
+             (click)="showModal()">
+              Mot de passe oublié
+            </a>
+          </div>
+        </form> 
+      </div>
+    </div>
+  </div>
+</div>
+<div class="login-footer">
+  © 2025 Cité des Agents du CHU d'Angré. Tous droits réservés.
+</div>
+
+<!-- Modal mot de passe oublié -->
+<nz-modal
+      [(nzVisible)]="isVisible"
+      nzTitle="Mot de passe oublié"
+      (nzOnCancel)="handleCancel()"
+      (nzOnOk)="handleOk()"
+      [nzOkLoading]="isOkLoading"
+      [nzOkText]="'Envoyé'"
+      [nzCancelText]="'Annuler'"
+      class="forgot-password-modal"
+    >
+      <div *nzModalContent>
+        <nz-form-item>
+          <nz-form-label nzRequired>Email</nz-form-label>
+          <nz-form-control>
+            <input 
+              nz-input 
+              placeholder="Entrez votre email"
+              [(ngModel)]="forgotEmail"
+              type="email"
+              class="forgot-email-input" />
+          </nz-form-control>
+        </nz-form-item>
+        
+        <div *ngIf="showErrorMessage" class="error-message">
+          Veuillez remplir correctement tous les champs obligatoires.
+        </div>
+      </div>
+</nz-modal>

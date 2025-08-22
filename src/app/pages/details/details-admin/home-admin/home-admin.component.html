@@ -1,0 +1,193 @@
+<div class="admin-dashboard">
+  <!-- Header Section -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <h1 class="dashboard-title">
+        <i class="fas fa-tachometer-alt"></i>
+        Tableau de Bord Administrateur
+      </h1>
+      <p class="dashboard-subtitle">Gestion de la Cité des Agents du CHU Angré</p>
+    </div>
+  </div>
+
+  <!-- Alertes importantes -->
+  <div class="alerts-section" *ngIf="alertes.length > 0">
+    <div class="alert-container">
+      <div class="alert" 
+           *ngFor="let alerte of alertes" 
+           [ngClass]="'alert-' + alerte.type">
+        <div class="alert-icon">
+          <i class="fas fa-exclamation-triangle" *ngIf="alerte.type === 'danger'" style="color: #dc3545"></i>
+          <i class="fas fa-exclamation-circle" *ngIf="alerte.type === 'warning'" style="color: #dc3545"></i>
+          <i class="fas fa-info-circle" *ngIf="alerte.type === 'info'" style="color: #17a2b8;"></i>
+        </div>
+        <div class="alert-content">
+          <span class="alert-count">{{ alerte.count }}</span>
+          <span class="alert-message">{{ alerte.message }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistiques principales -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon success">
+        <i class="fas fa-users" style="color: #28a745;"></i>
+      </div>
+      <div class="stat-content">
+        <h3 class="stat-number">{{ stats.totalSouscriptions }}</h3>
+        <p class="stat-label">Total Souscriptions</p>
+        <span class="stat-detail">{{ stats.souscriptionsActives }} actives</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon primary">
+        <i class="fas fa-money-bill-wave" style="color: green;"></i>
+      </div>
+      <div class="stat-content">
+        <h3 class="stat-number" style="font-size: 20px;">{{ formatCurrency(stats.montantTotalCollecte) }}</h3>
+        <p class="stat-label">Montant Collecté</p>
+        <span class="stat-detail">{{ stats.totalPaiements }} paiements</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon warning">
+        <i class="fas fa-exclamation-triangle" style="color: #ffc107;"></i>
+      </div>
+      <div class="stat-content">
+        <h3 class="stat-number">{{ stats.paiementsEnRetard }}</h3>
+        <p class="stat-label">Paiements en Retard</p>
+        <span class="stat-detail">Nécessitent attention</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon info">
+        <i class="fas fa-calendar-alt" style="color: #17a2b8;"></i>
+      </div>
+      <div class="stat-content">
+        <h3 class="stat-number">{{ stats.totalEvenements }}</h3>
+        <p class="stat-label">Événements</p>
+        <span class="stat-detail">{{ stats.evenementsEnCours }} en cours</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graphiques Section -->
+  <div class="charts-section">
+    <div class="charts-grid">
+      <!-- Graphique des paiements -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3><i class="fas fa-chart-pie"></i> État des Paiements</h3>
+          <div class="chart-actions">
+            <button class="btn btn-sm btn-outline-primary">Voir détails</button>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas #paiementsChart></canvas>
+        </div>
+      </div>
+
+      <!-- Graphique des souscriptions -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3><i class="fas fa-chart-bar"></i> Évolution des Souscriptions</h3>
+          <div class="chart-actions">
+            <button class="btn btn-sm btn-outline-primary">Voir détails</button>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas #souscriptionsChart></canvas>
+        </div>
+      </div>
+
+      <!-- Graphique des événements -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3><i class="fas fa-chart-line"></i> Progression des Événements</h3>
+          <div class="chart-actions">
+            <button class="btn btn-sm btn-outline-primary">Voir détails</button>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas #evenementsChart></canvas>
+        </div>
+      </div>
+
+      <!-- Graphique des réclamations -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3><i class="fas fa-chart-pie"></i> Statut des Réclamations</h3>
+          <div class="chart-actions">
+            <button class="btn btn-sm btn-outline-primary">Voir détails</button>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas #reclamationsChart></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Activités récentes et Actions rapides -->
+  <div class="bottom-section">
+    <div class="recent-activities">
+      <div class="section-header">
+        <h3><i class="fas fa-clock"></i> Activités Récentes</h3>
+        <button class="btn btn-sm btn-outline-secondary">Voir tout</button>
+      </div>
+      <div class="activities-list">
+        <div class="activity-item" *ngFor="let activity of recentActivities">
+          <div class="activity-icon" [style.background-color]="getStatusColor(activity.status)">
+            <i class="fas fa-check" *ngIf="activity.type === 'paiement'"></i>
+            <i class="fas fa-exclamation" *ngIf="activity.type === 'reclamation'"></i>
+            <i class="fas fa-calendar" *ngIf="activity.type === 'evenement'"></i>
+            <i class="fas fa-user-plus" *ngIf="activity.type === 'souscription'"></i>
+          </div>
+          <div class="activity-content">
+            <p class="activity-message">{{ activity.message }}</p>
+            <span class="activity-time">{{ activity.time }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="quick-actions">
+      <div class="section-header">
+        <h3><i class="fas fa-bolt"></i> Actions Rapides</h3>
+      </div>
+      <div class="actions-grid">
+        <button class="action-btn" routerLink="/dashboard/admin/details/create-souscription-admin">
+          <i class="fas fa-user-plus" style="color: #28a745;"></i>
+          <span>Nouvelle Souscription</span>
+        </button>
+        
+        <button class="action-btn" (click)="goToNewPayements()">
+          <i class="fas fa-money-bill-wave" style="color: #28a745;"></i>
+          <span>Enregistrer Paiement</span>
+        </button>
+
+        <button class="action-btn" (click)="goToNewEvents()">
+          <i class="fas fa-calendar-plus" style="color: #17a2b8;"></i>
+          <span>Créer Événement</span>
+        </button>
+        <button class="action-btn" (click)="goToDocuments()">
+          <i class="fas fa-file-alt" style="color: #343a40;"></i>
+          <span>Gérer Documents</span>
+        </button>
+        <button class="action-btn" (click)="goToNewReclamations()">
+          <i class="fas fa-exclamation-circle" style="color: #ffc107;"></i>
+          <span>Traiter Réclamations</span>
+        </button>
+        <button class="action-btn" (click)="goToNewUser()">
+          <i class="fas fa-chart-bar" style="color: #6c757d;"></i>
+          <span>Créer un utilisateur</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div> 
