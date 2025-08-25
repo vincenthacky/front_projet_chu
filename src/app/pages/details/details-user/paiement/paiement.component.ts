@@ -1,21 +1,31 @@
-// paiement.component.ts - Version améliorée avec fonctionnalités supplémentaires
+// paiement.component.ts - Version corrigée des erreurs
 
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzTagModule } from 'ng-zorro-antd/tag';
+import { PaiementsResponse, ApiPaiement, PayementsService } from 'src/app/core/services/payements.service';
 
-interface Paiement {
+interface Payment {
+  date: string;
+  amount: number;
   numero_mensualite: number;
-  montant_versement_prevu: number;
-  date_limite_versement: string;
-  date_paiement_effectif: string | null;
-  montant_paye: number;
   mode_paiement: string;
-  reference_paiement: string;
-  statut_versement: 'paye_a_temps' | 'paye_en_retard' | 'en_attente' | 'non_paye';
+  reference_paiement?: string | null; // Correspond à l'API
+  statut_versement: string;
+  montant_prevu: number;
   penalite_appliquee: number;
-  commentaire_paiement: string;
+  date_limite: string;
+  commentaire?: string | null; // Correspond à l'API
+}
+
+interface PaymentStats {
+  totalMensualites: number;
+  totalPayeATemps: number;
+  totalEnRetard: number;
+  totalEnAttente: number;
+  montantTotalPaye: number;
+  totalPenalites: number;
 }
 
 @Component({
@@ -25,202 +35,252 @@ interface Paiement {
   templateUrl: './paiement.component.html',
   styleUrls: ['./paiement.component.css']
 })
-export class PaiementComponent {
-  paiements: Paiement[] = [
-    {
-      numero_mensualite: 1,
-      montant_versement_prevu: 250000,
-      date_limite_versement: '2024-01-15',
-      date_paiement_effectif: '2024-01-15',
-      montant_paye: 250000,
-      mode_paiement: 'Virement',
-      reference_paiement: 'REF12345',
-      statut_versement: 'paye_a_temps',
-      penalite_appliquee: 0,
-      commentaire_paiement: 'RAS'
-    },
-    {
-      numero_mensualite: 2,
-      montant_versement_prevu: 250000,
-      date_limite_versement: '2024-02-15',
-      date_paiement_effectif: '2024-02-18',
-      montant_paye: 250000,
-      mode_paiement: 'Espèces',
-      reference_paiement: 'REF12346',
-      statut_versement: 'paye_en_retard',
-      penalite_appliquee: 5000,
-      commentaire_paiement: 'Retard de 3 jours'
-    },
-    {
-      numero_mensualite: 3,
-      montant_versement_prevu: 250000,
-      date_limite_versement: '2024-03-15',
-      date_paiement_effectif: null,
-      montant_paye: 0,
-      mode_paiement: '',
-      reference_paiement: '',
-      statut_versement: 'en_attente',
-      penalite_appliquee: 0,
-      commentaire_paiement: ''
-    },
-    {
-      numero_mensualite: 4,
-      montant_versement_prevu: 250000,
-      date_limite_versement: '2024-04-15',
-      date_paiement_effectif: null,
-      montant_paye: 0,
-      mode_paiement: '',
-      reference_paiement: '',
-      statut_versement: 'en_attente',
-      penalite_appliquee: 0,
-      commentaire_paiement: ''
+export class PaiementComponent implements OnInit {
+  payments: Payment[] = [];
+  stats: PaymentStats = {
+    totalMensualites: 0,
+    totalPayeATemps: 0,
+    totalEnRetard: 0,
+    totalEnAttente: 0,
+    montantTotalPaye: 0,
+    totalPenalites: 0
+  };
+  loading = false;
+  paiementsData: PaiementsResponse | null = null;
+
+  constructor(
+    private paiementsService: PayementsService
+  ) {}
+
+  ngOnInit(): void {
+    console.log('🚀 Initialisation - Récupération de tous les paiements utilisateur');
+    this.loadAllUserPayments();
+  }
+
+  // Récupérer tous les paiements de l'utilisateur connecté
+  loadAllUserPayments(): void {
+    console.log('🔍 === CHARGEMENT DE TOUS LES PAIEMENTS UTILISATEUR ===');
+    
+    this.loading = true;
+    
+    // Appel API pour récupérer tous les paiements de l'utilisateur
+    this.paiementsService.getMesPaiements({
+      per_page: 1000 // Récupérer un maximum de paiements
+    }).subscribe({
+      next: (result: PaiementsResponse) => {
+        console.log('📥 Paiements reçus:', result);
+        
+        if (result.success) {
+          this.paiementsData = result;
+          this.mapPaymentsData(result);
+          console.log('✅ Mapping des paiements terminé');
+        } else {
+          console.error('❌ Erreur dans la réponse API:', result);
+        }
+        
+        this.loading = false;
+      },
+      error: (error: any) => {
+        console.error('❌ Erreur lors du chargement des paiements:', error);
+        this.loading = false;
+      }
+    });
+  }
+
+  // Mapper les données des paiements pour l'affichage
+  private mapPaymentsData(paiementsData: PaiementsResponse): void {
+    console.log('🗺️ Mapping des paiements:', paiementsData);
+    
+    // Mapper tous les paiements avec types corrects
+    this.payments = paiementsData.data.map((p: ApiPaiement) => ({
+      date: p.est_paye ? this.formatDateFromAPI(p.date_paiement_effectif) : '-',
+      amount: this.parseAmountFromAPI(p.montant_paye),
+      numero_mensualite: p.numero_mensualite,
+      mode_paiement: p.est_paye ? this.getPaymentModeFromAPI(p.mode_paiement) : '-',
+      reference_paiement: p.reference_paiement, // Type: string | null
+      statut_versement: p.statut_versement,
+      montant_prevu: this.parseAmountFromAPI(p.montant_versement_prevu),
+      penalite_appliquee: this.parseAmountFromAPI(p.penalite_appliquee),
+      date_limite: this.formatDateFromAPI(p.date_limite_versement),
+      commentaire: p.commentaire_paiement // Type: string | null
+    })).sort((a: Payment, b: Payment) => b.numero_mensualite - a.numero_mensualite);
+
+    // Calculer les statistiques
+    this.calculateStats(paiementsData);
+    
+    console.log('💳 Paiements mappés:', {
+      nombrePaiements: this.payments.length,
+      stats: this.stats
+    });
+  }
+
+  // Calculer les statistiques des paiements
+  private calculateStats(paiementsResponse: PaiementsResponse): void {
+    const paiements = paiementsResponse.data;
+    
+    // Utiliser les statistiques de l'API si disponibles
+    if (paiementsResponse.statistiques) {
+      this.stats = {
+        totalMensualites: paiementsResponse.statistiques.total_mensualites,
+        totalPayeATemps: paiementsResponse.statistiques.total_paye_a_temps,
+        totalEnRetard: paiementsResponse.statistiques.total_en_retard,
+        totalEnAttente: paiementsResponse.statistiques.total_en_attente,
+        montantTotalPaye: paiements
+          .filter((p: ApiPaiement) => p.est_paye)
+          .reduce((sum: number, p: ApiPaiement) => sum + this.parseAmountFromAPI(p.montant_paye), 0),
+        totalPenalites: paiements.reduce((sum: number, p: ApiPaiement) => sum + this.parseAmountFromAPI(p.penalite_appliquee), 0)
+      };
+    } else {
+      // Calcul manuel si pas de statistiques dans l'API
+      this.stats = {
+        totalMensualites: paiements.length,
+        totalPayeATemps: paiements.filter((p: ApiPaiement) => p.statut_versement === 'paye_a_temps').length,
+        totalEnRetard: paiements.filter((p: ApiPaiement) => p.statut_versement === 'paye_en_retard').length,
+        totalEnAttente: paiements.filter((p: ApiPaiement) => p.statut_versement === 'en_attente' || !p.est_paye).length,
+        montantTotalPaye: paiements
+          .filter((p: ApiPaiement) => p.est_paye)
+          .reduce((sum: number, p: ApiPaiement) => sum + this.parseAmountFromAPI(p.montant_paye), 0),
+        totalPenalites: paiements.reduce((sum: number, p: ApiPaiement) => sum + this.parseAmountFromAPI(p.penalite_appliquee), 0)
+      };
     }
-  ];
-
-  // Méthodes pour les statistiques
-  getPayedCount(): number {
-    return this.paiements.filter(p => p.statut_versement === 'paye_a_temps').length;
   }
 
-  getLateCount(): number {
-    return this.paiements.filter(p => p.statut_versement === 'paye_en_retard').length;
+  // Méthodes utilitaires internes
+  private parseAmountFromAPI(amount: string | number): number {
+    if (typeof amount === 'number') return amount;
+    if (!amount) return 0;
+    
+    const cleanAmount = amount.toString().replace(/[^\d.-]/g, '');
+    return parseFloat(cleanAmount) || 0;
   }
 
-  getPendingCount(): number {
-    return this.paiements.filter(p => p.statut_versement === 'en_attente').length;
+  private formatDateFromAPI(dateString: string): string {
+    if (!dateString) return 'Date non disponible';
+    
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Date invalide';
+      
+      return date.toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch (error) {
+      console.error('Erreur formatage date:', error);
+      return 'Date non disponible';
+    }
   }
 
-  getUnpaidCount(): number {
-    return this.paiements.filter(p => p.statut_versement === 'non_paye').length;
+  private getPaymentModeFromAPI(mode: string): string {
+    switch(mode?.toLowerCase()) {
+      case 'cheque': return 'Chèque';
+      case 'especes': return 'Espèces';
+      case 'virement': return 'Virement bancaire';
+      case 'carte': return 'Carte bancaire';
+      case 'mobile': return 'Paiement mobile';
+      case 'mandat': return 'Mandat';
+      default: return mode || 'Non spécifié';
+    }
   }
 
-  getTotalAmount(): number {
-    return this.paiements.reduce((total, p) => total + p.montant_paye, 0);
+  // Méthodes pour le template
+  formatNumber(amount: number): string {
+    return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
   }
 
-  getTotalPenalties(): number {
-    return this.paiements.reduce((total, p) => total + p.penalite_appliquee, 0);
+  trackByPayment(index: number, payment: Payment): string {
+    return `${payment.numero_mensualite}-${payment.date}-${payment.amount}`;
   }
 
-  // Méthodes pour les couleurs et icônes des statuts
-  getStatutColor(statut: string): string {
-    switch (statut) {
+  refresh(): void {
+    console.log('🔄 Actualisation des paiements');
+    this.loadAllUserPayments();
+  }
+
+  // Méthodes utilitaires pour le template
+  getTotalMensualites(): number {
+    return this.stats.totalMensualites;
+  }
+
+  getPayeATemps(): number {
+    return this.stats.totalPayeATemps;
+  }
+
+  getEnRetard(): number {
+    return this.stats.totalEnRetard;
+  }
+
+  getEnAttente(): number {
+    return this.stats.totalEnAttente;
+  }
+
+  getMontantTotalPaye(): string {
+    return this.formatNumber(this.stats.montantTotalPaye);
+  }
+
+  getTotalPenalites(): string {
+    return this.formatNumber(this.stats.totalPenalites);
+  }
+
+  getNombrePaiements(): number {
+    return this.payments.length;
+  }
+
+  // Obtenir la classe CSS pour chaque ligne selon le statut
+  getRowClass(payment: Payment): string {
+    switch(payment.statut_versement) {
+      case 'paye_a_temps': return 'row-success';
+      case 'paye_en_retard': return 'row-warning';
+      case 'en_attente': return 'row-pending';
+      default: return 'row-pending';
+    }
+  }
+
+  // Obtenir la couleur du tag selon le statut
+  getStatusColor(payment: Payment): string {
+    switch(payment.statut_versement) {
       case 'paye_a_temps': return 'green';
       case 'paye_en_retard': return 'orange';
-      case 'en_attente': return 'blue';
-      case 'non_paye': return 'red';
+      case 'en_attente': return 'red';
       default: return 'default';
     }
   }
 
-  getStatutIcon(statut: string): string {
-    switch (statut) {
+  // Obtenir le libellé du statut
+  getStatusLabel(payment: Payment): string {
+    switch(payment.statut_versement) {
+      case 'paye_a_temps': return 'Payé à temps';
+      case 'paye_en_retard': return 'Payé en retard';
+      case 'en_attente': return 'En attente';
+      default: return payment.statut_versement;
+    }
+  }
+
+  // Obtenir l'icône du statut
+  getStatusIcon(payment: Payment): string {
+    switch(payment.statut_versement) {
       case 'paye_a_temps': return 'fa-check-circle';
-      case 'paye_en_retard': return 'fa-exclamation-triangle';
-      case 'en_attente': return 'fa-clock';
-      case 'non_paye': return 'fa-times-circle';
+      case 'paye_en_retard': return 'fa-exclamation-circle';
+      case 'en_attente': return 'fa-times-circle';
       default: return 'fa-question-circle';
     }
   }
 
-  getStatutLabel(statut: string): string {
-    switch (statut) {
-      case 'paye_a_temps': return 'À temps';
-      case 'paye_en_retard': return 'En retard';
-      case 'en_attente': return 'En attente';
-      case 'non_paye': return 'Non payé';
-      default: return 'Inconnu';
+  // Debug
+  debugPaymentsData(): void {
+    console.log('🐛 === DEBUG TOUS LES PAIEMENTS ===');
+    console.log('💾 Payments array:', this.payments);
+    console.log('📊 Statistiques:', this.stats);
+    console.log('📊 Paiements data:', this.paiementsData);
+    console.log('⏳ Loading state:', this.loading);
+    console.log('🐛 === FIN DEBUG ===');
+  }
+
+  ngAfterViewInit(): void {
+    if (typeof window !== 'undefined') {
+      (window as any).debugPayments = () => this.debugPaymentsData();
+      console.log('🛠️ Méthode de debug disponible: debugPayments()');
     }
-  }
-
-  getRowClass(statut: string): string {
-    switch (statut) {
-      case 'paye_a_temps': return 'row-success';
-      case 'paye_en_retard': return 'row-warning';
-      case 'en_attente': return 'row-pending';
-      case 'non_paye': return 'row-danger';
-      default: return '';
-    }
-  }
-
-  // Getters pour les status tags
-  get isAllOnTime(): boolean {
-    const paidPayments = this.paiements.filter(p => p.montant_paye > 0);
-    return paidPayments.length > 0 && paidPayments.every(p => p.statut_versement === 'paye_a_temps');
-  }
-
-  get hasLate(): boolean {
-    return this.paiements.some(p => p.statut_versement === 'paye_en_retard');
-  }
-
-  get hasUnpaid(): boolean {
-    return this.paiements.some(p => p.statut_versement === 'non_paye');
-  }
-
-  // TrackBy function pour les performances
-  trackByPaiement(index: number, paiement: Paiement): number {
-    return paiement.numero_mensualite;
-  }
-
-  // Méthodes utilitaires pour les calculs
-  getCompletionRate(): number {
-    const paidCount = this.paiements.filter(p => p.montant_paye > 0).length;
-    return Math.round((paidCount / this.paiements.length) * 100);
-  }
-
-  getAveragePaymentDelay(): number {
-    const latePayments = this.paiements.filter(p => p.statut_versement === 'paye_en_retard');
-    if (latePayments.length === 0) return 0;
-    
-    // Calcul approximatif basé sur les commentaires (en jours)
-    let totalDelayDays = 0;
-    latePayments.forEach(payment => {
-      const match = payment.commentaire_paiement.match(/(\d+)\s*jour/);
-      if (match) {
-        totalDelayDays += parseInt(match[1]);
-      }
-    });
-    
-    return Math.round(totalDelayDays / latePayments.length);
-  }
-
-  getRemainingAmount(): number {
-    return this.paiements.reduce((total, p) => {
-      return total + (p.montant_versement_prevu - p.montant_paye);
-    }, 0);
-  }
-
-  getNextPaymentDue(): Paiement | null {
-    const pendingPayments = this.paiements
-      .filter(p => p.statut_versement === 'en_attente')
-      .sort((a, b) => new Date(a.date_limite_versement).getTime() - new Date(b.date_limite_versement).getTime());
-    
-    return pendingPayments.length > 0 ? pendingPayments[0] : null;
-  }
-
-  // Méthode pour exporter les données (si nécessaire)
-  exportToCsv(): void {
-    const headers = ['Mensualité', 'Montant prévu', 'Date limite', 'Date paiement', 'Montant payé', 'Mode', 'Référence', 'Statut', 'Pénalité', 'Commentaire'];
-    const csvData = this.paiements.map(p => [
-      p.numero_mensualite,
-      p.montant_versement_prevu,
-      p.date_limite_versement,
-      p.date_paiement_effectif || '',
-      p.montant_paye,
-      p.mode_paiement,
-      p.reference_paiement,
-      this.getStatutLabel(p.statut_versement),
-      p.penalite_appliquee,
-      p.commentaire_paiement
-    ]);
-
-    const csv = [headers, ...csvData].map(row => row.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'echeancier-paiements.csv';
-    a.click();
-    window.URL.revokeObjectURL(url);
   }
 }

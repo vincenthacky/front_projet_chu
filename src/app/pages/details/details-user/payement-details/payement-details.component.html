@@ -1,100 +1,155 @@
-<!-- payement-details.component.html - Version corrigée -->
-
 <div class="container">
-  <!-- Header -->
-  <div class="header-section">
+    <!-- Header -->
+    <div class="header-section">
       <div class="header-content">
-          <h1 class="main-title">
-              <i class="fas fa-receipt"></i>
-              Détail des Paiements
-              <div class="subscription-badge" *ngIf="subscription">{{ subscription.id }}</div>
-          </h1>
-          <p class="subtitle">Suivi complet de votre souscription terrain</p>
+        <!-- ✅ Bouton retour ajouté -->
+        <div class="header-navigation">
+          <button class="back-button" (click)="goBack()">
+            <i class="fas fa-arrow-left"></i>
+            Retour
+          </button>
+        </div>
+        
+        <h1 class="main-title">
+          <i class="fas fa-receipt"></i>
+          Détail des Paiements
+          <div class="subscription-badge" *ngIf="subscription">{{ subscription.id }}</div>
+        </h1>
+        <p class="subtitle">Suivi complet de votre souscription terrain</p>
       </div>
-  </div>
-
-  <!-- Loading State -->
-  <div class="loading-container" *ngIf="loading">
+    </div>
+  
+    <!-- Loading State -->
+    <div class="loading-container" *ngIf="loading">
       <div class="loading-spinner"></div>
       <p class="loading-text">Chargement des informations...</p>
-  </div>
-
-  <!-- Content -->
-  <div class="content-section" *ngIf="!loading && subscription">
+    </div>
+  
+    <!-- Content -->
+    <div class="content-section" *ngIf="!loading && subscription">
       <!-- Stats Overview -->
       <div class="stats-overview">
-          <div class="stat-card">
-              <div class="stat-icon">
-                  <i class="fas fa-map-marked-alt"></i>
-              </div>
-              <div class="stat-value">{{ subscription.terrain }}</div>
-              <div class="stat-label">Type de terrain</div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fas fa-map-marked-alt"></i>
           </div>
-
-          <div class="stat-card">
-              <div class="stat-icon">
-                  <i class="fas fa-coins"></i>
-              </div>
-              <div class="stat-value">{{ formatNumber(subscription.prixTotal) }}</div>
-              <div class="stat-label">Prix total</div>
+          <div class="stat-value">{{ subscription.terrain }}</div>
+          <div class="stat-label">Type de terrain</div>
+        </div>
+  
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fas fa-money-bill"></i>
           </div>
-
-          <div class="stat-card">
-              <div class="stat-icon">
-                  <i class="fas fa-check-circle"></i>
-              </div>
-              <div class="stat-value" [style.color]="getMontantPayeColor()">{{ formatNumber(subscription.montantPaye) }}</div>
-              <div class="stat-label">Montant payé</div>
+          <div class="stat-value">{{ formatNumber(subscription.prixTotal) }}</div>
+          <div class="stat-label">Prix total</div>
+        </div>
+  
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fas fa-coins"></i>
           </div>
-
-          <div class="stat-card">
-              <div class="stat-icon">
-                  <i class="fas fa-clock"></i>
-              </div>
-              <div class="stat-value" [style.color]="getResteAPayerColor()">{{ formatNumber(subscription.resteAPayer) }}</div>
-              <div class="stat-label">Reste à payer</div>
+          <div class="stat-value" [style.color]="getMontantPayeColor()">{{ formatNumber(subscription.montantPaye) }}</div>
+          <div class="stat-label">Montant payé</div>
+        </div>
+  
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fas fa-coins"></i>
           </div>
+          <div class="stat-value" [style.color]="getResteAPayerColor()">{{ formatNumber(subscription.resteAPayer) }}</div>
+          <div class="stat-label">Reste à payer</div>
+        </div>
       </div>
-
+  
       <!-- Progress Section -->
       <div class="progress-section">
-          <div class="progress-header">
-              <h3 class="progress-title">
-                  <i class="fas fa-chart-line"></i>
-                  Progression du paiement
-              </h3>
-              <div class="progress-percentage">{{ getProgress(subscription) }}%</div>
-          </div>
-          <div class="progress-bar-container">
-              <div class="progress-bar-fill" [style.width.%]="getProgress(subscription)"></div>
-          </div>
+        <div class="progress-header">
+          <h3 class="progress-title">
+            <i class="fas fa-chart-line"></i>
+            Progression du paiement
+          </h3>
+          <div class="progress-percentage">{{ getProgress(subscription) }}%</div>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" [style.width.%]="getProgress(subscription)"></div>
+        </div>
       </div>
-
+  
       <!-- Payment History -->
       <div class="payment-history">
-          <div class="history-header">
-              <h3 class="history-title">
-                  <i class="fas fa-history"></i>
-                  Historique des paiements
-              </h3>
-          </div>
-          <div class="payment-list">
-              <div class="payment-item" *ngFor="let payment of subscription.payments; trackBy: trackByPayment">
-                  <div class="payment-content">
-                      <div class="payment-date">
-                          <i class="fas fa-calendar-alt"></i>
-                          {{ payment.date }}
-                      </div>
-                      <div class="payment-amount">
-                          {{ formatNumber(payment.amount) }} FCFA
-                      </div>
-                  </div>
+        <div class="history-header">
+          <h3 class="history-title">
+            <i class="fas fa-history"></i>
+            Historique des paiements
+          </h3>
+        </div>
+        <div class="payment-list">
+          <div class="payment-item" *ngFor="let payment of subscription.payments; trackBy: trackByPayment">
+            <div class="payment-content">
+              <div class="payment-date">
+                <i class="fas fa-calendar-alt"></i>
+                {{ payment.date }}
               </div>
-              <div class="no-payments" *ngIf="!subscription.payments || subscription.payments.length === 0">
-                  <i class="fas fa-info-circle"></i>
-                  <p>Aucun paiement enregistré pour le moment</p>
+              <div class="payment-amount">
+                {{ formatNumber(payment.amount) }} FCFA
               </div>
+            </div>
           </div>
+          <div class="no-payments" *ngIf="!subscription.payments || subscription.payments.length === 0">
+            <i class="fas fa-info-circle"></i>
+            <p>Aucun paiement enregistré pour le moment</p>
+          </div>
+        </div>
       </div>
+    </div>
   </div>
-</div>
+  
+  <!-- ✅ CSS pour le bouton retour -->
+  <style>
+  .header-navigation {
+    margin-bottom: 1rem;
+    text-align: left;
+    display: flex;
+    justify-content: flex-start;
+  }
+  
+  .back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .back-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+  }
+  
+  .back-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .back-button i {
+    font-size: 1rem;
+  }
+  
+  /* ✅ Responsive pour mobile */
+  @media (max-width: 768px) {
+    .back-button {
+      padding: 0.6rem 1.2rem;
+      font-size: 0.85rem;
+    }
+  }
+  </style>

@@ -1,4 +1,3 @@
-<!-- paiement.component.html - Version responsive moderne -->
 <div class="payment-container">
   <!-- Header avec statistiques -->
   <div class="header-section">
@@ -14,7 +13,7 @@
           <i class="fas fa-list-ol"></i>
         </div>
         <div class="stat-content">
-          <div class="stat-number">{{ paiements.length }}</div>
+          <div class="stat-number">{{ getTotalMensualites() }}</div>
           <div class="stat-label">Total mensualités</div>
         </div>
       </div>
@@ -24,7 +23,7 @@
           <i class="fas fa-check-circle"></i>
         </div>
         <div class="stat-content">
-          <div class="stat-number">{{ getPayedCount() }}</div>
+          <div class="stat-number">{{ getPayeATemps() }}</div>
           <div class="stat-label">Payé à temps</div>
         </div>
       </div>
@@ -34,7 +33,7 @@
           <i class="fas fa-exclamation-triangle"></i>
         </div>
         <div class="stat-content">
-          <div class="stat-number">{{ getLateCount() }}</div>
+          <div class="stat-number">{{ getEnRetard() }}</div>
           <div class="stat-label">En retard</div>
         </div>
       </div>
@@ -44,7 +43,7 @@
           <i class="fas fa-clock"></i>
         </div>
         <div class="stat-content">
-          <div class="stat-number">{{ getPendingCount() }}</div>
+          <div class="stat-number">{{ getEnAttente() }}</div>
           <div class="stat-label">En attente</div>
         </div>
       </div>
@@ -54,15 +53,15 @@
   <!-- Status Tags -->
   <div class="status-section">
     <div class="status-tags">
-      <nz-tag *ngIf="isAllOnTime" nzColor="green" class="status-tag">
+      <nz-tag nzColor="green" class="status-tag" *ngIf="getPayeATemps() > 0">
         <i class="fas fa-trophy"></i>
         Paiements conformes - Éligible aux récompenses
       </nz-tag>
-      <nz-tag *ngIf="hasLate" nzColor="orange" class="status-tag">
+      <nz-tag nzColor="orange" class="status-tag" *ngIf="getEnRetard() > 0">
         <i class="fas fa-exclamation-circle"></i>
         Paiements en retard - Attention à la régularité
       </nz-tag>
-      <nz-tag *ngIf="hasUnpaid" nzColor="red" class="status-tag">
+      <nz-tag nzColor="red" class="status-tag" *ngIf="getEnAttente() > 0">
         <i class="fas fa-times-circle"></i>
         Paiements non conformes - Non éligible aux récompenses
       </nz-tag>
@@ -76,7 +75,7 @@
         <i class="fas fa-coins"></i>
       </div>
       <div class="summary-content">
-        <div class="summary-value">{{ getTotalAmount() | currency:'XOF':'symbol':'1.0-0' }}</div>
+        <div class="summary-value">{{ getMontantTotalPaye() }}</div>
         <div class="summary-label">Montant total payé</div>
       </div>
     </div>
@@ -86,7 +85,7 @@
         <i class="fas fa-ban"></i>
       </div>
       <div class="summary-content">
-        <div class="summary-value">{{ getTotalPenalties() | currency:'XOF':'symbol':'1.0-0' }}</div>
+        <div class="summary-value">{{ getTotalPenalites() }}</div>
         <div class="summary-label">Total pénalités</div>
       </div>
     </div>
@@ -97,12 +96,17 @@
     <div class="table-header">
       <h3 class="table-title">
         <i class="fas fa-table"></i>
-        Détail des paiements
+        Détail des paiements ({{ getNombrePaiements() }} paiements)
       </h3>
     </div>
     
     <div class="responsive-table-container">
-      <nz-table [nzData]="paiements" [nzBordered]="true" [nzSize]="'small'" [nzScroll]="{ x: '800px' }">
+      <nz-table 
+        [nzData]="payments" 
+        [nzBordered]="true" 
+        [nzSize]="'small'" 
+        [nzScroll]="{ x: '800px' }"
+        [nzLoading]="loading">
         <thead>
           <tr>
             <th nzWidth="50px">#</th>
@@ -118,81 +122,73 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let paiement of paiements; trackBy: trackByPaiement" [ngClass]="getRowClass(paiement.statut_versement)">
+          <tr *ngFor="let payment of payments; trackBy: trackByPayment; let i = index"
+              [class]="getRowClass(payment)">
             <td>
               <div class="cell-content">
-                <span class="mensualite-badge">{{ paiement.numero_mensualite }}</span>
+                <span class="mensualite-badge">{{ payment.numero_mensualite }}</span>
               </div>
             </td>
             <td>
               <div class="cell-content amount-cell">
                 <i class="fas fa-coins cell-icon"></i>
-                {{ paiement.montant_versement_prevu | currency:'XOF':'symbol':'1.0-0' }}
+                {{ formatNumber(payment.montant_prevu) }}
               </div>
             </td>
             <td>
               <div class="cell-content date-cell">
                 <i class="fas fa-calendar cell-icon"></i>
-                {{ paiement.date_limite_versement | date:'dd/MM/yyyy' }}
+                {{ payment.date_limite }}
               </div>
             </td>
             <td>
               <div class="cell-content date-cell">
-                <ng-container *ngIf="paiement.date_paiement_effectif; else attente">
-                  <i class="fas fa-check cell-icon success"></i>
-                  {{ paiement.date_paiement_effectif | date:'dd/MM/yyyy' }}
-                </ng-container>
-                <ng-template #attente>
-                  <i class="fas fa-minus cell-icon muted"></i>
-                  <span class="muted-text">-</span>
-                </ng-template>
+                <i class="fas fa-check cell-icon success" *ngIf="payment.date !== '-'"></i>
+                <i class="fas fa-minus cell-icon muted" *ngIf="payment.date === '-'"></i>
+                {{ payment.date }}
               </div>
             </td>
             <td>
-              <div class="cell-content amount-cell" [ngClass]="{'paid': paiement.montant_paye > 0}">
+              <div class="cell-content amount-cell paid">
                 <i class="fas fa-money-bill-wave cell-icon"></i>
-                {{ paiement.montant_paye | currency:'XOF':'symbol':'1.0-0' }}
+                {{ formatNumber(payment.amount) }}
               </div>
             </td>
             <td>
               <div class="cell-content">
-                <span class="mode-badge" *ngIf="paiement.mode_paiement; else noMode">
-                  {{ paiement.mode_paiement }}
-                </span>
-                <ng-template #noMode><span class="muted-text">-</span></ng-template>
+                <span class="mode-badge" *ngIf="payment.mode_paiement !== '-'">{{ payment.mode_paiement }}</span>
+                <span class="muted-text" *ngIf="payment.mode_paiement === '-'">-</span>
               </div>
             </td>
             <td>
               <div class="cell-content reference-cell">
-                <span class="reference-text" *ngIf="paiement.reference_paiement; else noRef">
-                  {{ paiement.reference_paiement }}
-                </span>
-                <ng-template #noRef><span class="muted-text">-</span></ng-template>
+                <span class="reference-text" *ngIf="payment.reference_paiement">{{ payment.reference_paiement }}</span>
+                <span class="muted-text" *ngIf="!payment.reference_paiement">-</span>
               </div>
             </td>
             <td>
               <div class="cell-content">
-                <nz-tag [nzColor]="getStatutColor(paiement.statut_versement)" class="status-tag-table">
-                  <i class="fas" [ngClass]="getStatutIcon(paiement.statut_versement)"></i>
-                  {{ getStatutLabel(paiement.statut_versement) }}
+                <nz-tag 
+                  [nzColor]="getStatusColor(payment)" 
+                  class="status-tag-table">
+                  <i class="fas" [class]="getStatusIcon(payment)"></i>
+                  {{ getStatusLabel(payment) }}
                 </nz-tag>
               </div>
             </td>
             <td>
               <div class="cell-content penalty-cell">
-                <span *ngIf="paiement.penalite_appliquee > 0" class="penalty-amount">
+                <span class="penalty-amount" *ngIf="payment.penalite_appliquee > 0">
                   <i class="fas fa-exclamation-triangle"></i>
-                  {{ paiement.penalite_appliquee | currency:'XOF':'symbol':'1.0-0' }}
+                  {{ formatNumber(payment.penalite_appliquee) }}
                 </span>
-                <span *ngIf="paiement.penalite_appliquee === 0" class="muted-text">-</span>
+                <span class="muted-text" *ngIf="payment.penalite_appliquee === 0">-</span>
               </div>
             </td>
             <td>
               <div class="cell-content comment-cell">
-                <span *ngIf="paiement.commentaire_paiement; else noComment" class="comment-text">
-                  {{ paiement.commentaire_paiement }}
-                </span>
-                <ng-template #noComment><span class="muted-text">-</span></ng-template>
+                <span class="comment-text" *ngIf="payment.commentaire">{{ payment.commentaire }}</span>
+                <span class="muted-text" *ngIf="!payment.commentaire">-</span>
               </div>
             </td>
           </tr>
@@ -200,4 +196,12 @@
       </nz-table>
     </div>
   </div>
+</div>
+
+<!-- Loading state -->
+<div class="loading-container" *ngIf="loading">
+  <div class="loading-spinner">
+    <i class="fas fa-spinner fa-spin"></i>
+  </div>
+  <div class="loading-text">Chargement des paiements...</div>
 </div>

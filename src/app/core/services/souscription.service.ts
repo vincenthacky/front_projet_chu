@@ -158,7 +158,8 @@ export class SouscriptionService {
       if (filters.statut) params = params.set('statut', filters.statut);
       if (filters.date_debut) params = params.set('date_debut', filters.date_debut);
       if (filters.date_fin) params = params.set('date_fin', filters.date_fin);
-      if (filters.superficie) params = params.set('page', filters.superficie.toString());
+      // ✅ CORRECTION : Utiliser 'superficie' au lieu de 'page'
+      if (filters.superficie) params = params.set('superficie', filters.superficie.toString());
       if (filters.terrain_id) params = params.set('terrain_id', filters.terrain_id.toString());
       if (filters.search) params = params.set('search', filters.search);
     }
@@ -184,7 +185,8 @@ export class SouscriptionService {
       if (filters.statut) params = params.set('statut', filters.statut);
       if (filters.date_debut) params = params.set('date_debut', filters.date_debut);
       if (filters.date_fin) params = params.set('date_fin', filters.date_fin);
-      if (filters.superficie) params = params.set('terrain_id', filters.superficie.toString());
+      // ✅ CORRECTION : Utiliser 'superficie' au lieu de 'terrain_id'
+      if (filters.superficie) params = params.set('superficie', filters.superficie.toString());
       if (filters.search) params = params.set('search', filters.search);
     }
 
@@ -412,5 +414,62 @@ export class SouscriptionService {
     if (diffDays < 0) return 'urgent'; // En retard
     if (diffDays <= 7) return 'proche'; // Dans les 7 jours
     return 'normal';
+  }
+
+  /**
+   * ✅ NOUVELLE MÉTHODE : Détermine le statut d'une souscription selon la logique métier
+   * Logique des statuts :
+   * - 'termine' : reste_a_payer = 0
+   * - 'en_retard' : date_prochain dépassée
+   * - 'en_cours' : un paiement a été effectué (montant_paye > 0)
+   */
+  calculateSouscriptionStatus(souscription: ApiSouscription): string {
+    const resteAPayer = souscription.reste_a_payer;
+    const dateProchain = souscription.date_prochain;
+    const today = new Date();
+    
+    // Si plus rien à payer → Terminé
+    if (resteAPayer === 0) {
+      return 'termine';
+    }
+    
+    // Si date de prochain paiement dépassée → En retard
+    if (dateProchain) {
+      const prochainePaiement = new Date(dateProchain);
+      if (prochainePaiement < today) {
+        return 'en_retard';
+      }
+    }
+    
+    // Si un paiement a été effectué → En cours
+    const montantPaye = this.parseAmount(souscription.montant_paye);
+    if (montantPaye > 0) {
+      return 'en_cours';
+    }
+    
+    // Par défaut, retourne le statut actuel
+    return souscription.statut_souscription;
+  }
+
+  /**
+   * ✅ MÉTHODE UTILITAIRE : Obtient le statut avec couleur pour l'affichage
+   */
+  getStatusWithColor(souscription: ApiSouscription): {status: string, color: string, label: string} {
+    const status = this.calculateSouscriptionStatus(souscription);
+    
+    switch(status) {
+      case 'termine':
+        return { status, color: 'success', label: 'Terminé' };
+      case 'en_retard':
+        return { status, color: 'danger', label: 'En retard' };
+      case 'en_cours':
+        return { status, color: 'primary', label: 'En cours' };
+      case 'suspendu':
+        return { status, color: 'warning', label: 'Suspendu' };
+      case 'annule':
+        return { status, color: 'secondary', label: 'Annulé' };
+      default:
+        return { status, color: 'info', label: 'En attente' };
+    }
   }
 }

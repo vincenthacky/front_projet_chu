@@ -1,4 +1,4 @@
-/* subscription-table.component.scss - Version Corrigée Mobile/Desktop */
+/* subscription-table.component.scss - Version Complète avec Modal Compact */
 
 :host {
   display: block;
@@ -11,6 +11,22 @@
   box-sizing: border-box;
   overflow: auto;
   position: relative;
+}
+
+/* Wrapper principal */
+.subscription-wrapper {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.97);
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 8px 32px rgba(30,58,138,0.08);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: auto;
 }
 
 .subscription-container {
@@ -188,25 +204,28 @@
   }
 }
 
-/* Table Container - Responsive with Horizontal Scroll */
+/* Table et Pagination intégrées */
 .table-responsive {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-  background: white;
-  margin-bottom: 16px;
+  overflow: hidden;
+  margin-bottom: 20px;
   
-  &::-webkit-scrollbar {
-    height: 8px;
-    background: #f1f5f9;
-    border-radius: 8px;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #a5b4fc, #667eea);
-    border-radius: 8px;
+  /* Container du tableau */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    background: white;
+    
+    &::-webkit-scrollbar {
+      height: 8px;
+      background: #f1f5f9;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, #a5b4fc, #667eea);
+      border-radius: 8px;
+    }
   }
 }
 
@@ -524,7 +543,7 @@
   }
 }
 
-/* Pagination */
+/* Pagination - Simple avec alignement tableau */
 .pagination-container {
   display: flex;
   justify-content: center;
@@ -532,6 +551,26 @@
   margin-top: 20px;
   gap: 10px;
   flex-wrap: wrap;
+  width: 100%;
+  
+  /* Style pour ng-zorro pagination - couleur du texte visible */
+  ::ng-deep .ant-pagination-options-quick-jumper {
+    color:white !important;
+    font-weight: 500 !important;
+  }
+  
+  ::ng-deep .ant-pagination-options-quick-jumper input {
+    background: white !important;
+    border: 1px solid #e5e7eb !important;
+    color:white !important;
+    border-radius: 6px !important;
+  }
+  
+  ::ng-deep .ant-pagination-options-size-changer .ant-select-selector {
+    background: white !important;
+    border: 1px solid #e5e7eb !important;
+    color:white !important;
+  }
   
   .pagination-btn {
     padding: 6px 8px;
@@ -566,7 +605,7 @@
   }
   
   .pagination-info {
-    color: #6b7280;
+    color:white !important;
     font-size: 0.9rem;
     text-align: center;
   }
@@ -592,7 +631,7 @@
     }
     
     .loading-text {
-      color: #6b7280;
+      color:white !important;
       font-weight: 500;
       font-size: 1rem;
     }
@@ -628,6 +667,652 @@
   100% { transform: rotate(360deg); }
 }
 
+/* ===== STYLES MODAL COMPACT ET RESPONSIVE - NOUVEAUX ===== */
+
+/* Override Angular Modal */
+::ng-deep .compact-modal .ant-modal {
+  max-width: 90vw;
+}
+
+::ng-deep .compact-modal .ant-modal-content {
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+::ng-deep .compact-modal .ant-modal-body {
+  padding: 16px !important;
+}
+
+::ng-deep .compact-modal .ant-modal-header {
+  padding: 12px 16px !important;
+  border-bottom: 1px solid #f0f0f0 !important;
+}
+
+::ng-deep .compact-modal .ant-modal-title {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+/* Contenu principal compact */
+.modal-content-compact {
+  padding: 0;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* ===== SECTION INFORMATIONS SOUSCRIPTION COMPACTE ===== */
+.subscription-info-compact {
+  background: linear-gradient(135deg, #f8fafc 0%, #f0f9ff 100%);
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  border: 1px solid #e3f2fd;
+}
+
+.subscription-header-compact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.subscription-title-compact {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1890ff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.subscription-title-compact i {
+  font-size: 14px;
+}
+
+.status-tag-compact {
+  font-size: 10px !important;
+  padding: 2px 6px !important;
+  line-height: 1.2 !important;
+  border-radius: 4px !important;
+}
+
+.terrain-details-compact {
+  margin-bottom: 10px;
+}
+
+.terrain-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 0;
+  font-size: 11px;
+}
+
+.label-compact {
+  color: #666;
+  font-weight: 500;
+}
+
+.value-compact {
+  color: #333;
+  font-weight: 600;
+}
+
+.amounts-summary-compact {
+  display: flex;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #e3f2fd;
+}
+
+.amount-item-compact {
+  flex: 1;
+  text-align: center;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 4px;
+}
+
+.amount-label {
+  display: block;
+  font-size: 9px;
+  color: #666;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.amount-value {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.amount-value.paid {
+  color: #52c41a;
+}
+
+.amount-value.remaining {
+  color: #ff4d4f;
+}
+
+/* ===== SECTION PAIEMENTS COMPACTE ===== */
+.payments-section-compact {
+  margin-bottom: 12px;
+}
+
+.payments-header-compact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.payments-title-compact {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.payments-title-compact i {
+  color: #1890ff;
+  font-size: 12px;
+}
+
+.payments-count-compact {
+  font-size: 9px;
+  color: #666;
+  background: #f0f2f5;
+  padding: 2px 6px;
+  border-radius: 8px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.payments-list-compact {
+  max-height: 180px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.payments-list-compact::-webkit-scrollbar {
+  width: 4px;
+}
+
+.payments-list-compact::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 2px;
+}
+
+.payments-list-compact::-webkit-scrollbar-thumb {
+  background: #d9d9d9;
+  border-radius: 2px;
+}
+
+.payments-list-compact::-webkit-scrollbar-thumb:hover {
+  background: #bfbfbf;
+}
+
+.payment-item-compact {
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+  padding: 8px;
+  margin-bottom: 6px;
+  transition: all 0.2s ease;
+}
+
+.payment-item-compact:hover {
+  background: #f0f9ff;
+  border-color: #91d5ff;
+  transform: translateY(-1px);
+  box-shadow: 0 1px 4px rgba(24, 144, 255, 0.15);
+}
+
+.payment-main-compact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.payment-date-compact {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+  color: #fff;
+  font-size: 11px;
+}
+
+.payment-date-compact i {
+  color: #1890ff;
+  font-size: 10px;
+}
+
+.payment-amount-compact {
+  font-size: 12px;
+  font-weight: 700;
+  color: #52c41a;
+}
+
+.payment-details-compact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  padding-top: 6px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.detail-compact {
+  font-size: 10px;
+  color: #666;
+  background: #f8f8f8;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid #e8e8e8;
+}
+
+.status-tag-small {
+  font-size: 9px !important;
+  padding: 1px 4px !important;
+  line-height: 1.1 !important;
+  border-radius: 3px !important;
+  margin: 0 !important;
+}
+
+/* ===== MESSAGE AUCUN PAIEMENT COMPACT ===== */
+.no-payments-compact {
+  text-align: center;
+  padding: 20px 10px;
+  background: #fafafa;
+  border-radius: 4px;
+  border: 1px dashed #d9d9d9;
+  color: #999;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.no-payments-compact i {
+  font-size: 16px;
+  color: #d9d9d9;
+}
+
+/* ===== ACTIONS MODAL COMPACTES ===== */
+.modal-actions-compact {
+  display: flex;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.btn-compact {
+  flex: 1;
+  height: 32px !important;
+  font-size: 11px !important;
+  padding: 0 12px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-weight: 500;
+  border-radius: 4px;
+}
+
+.btn-compact i {
+  font-size: 10px;
+}
+
+.cancel-btn-compact {
+  border-color: #d9d9d9;
+  color: #666;
+}
+
+.details-btn-compact {
+  background: #1890ff;
+  border-color: #1890ff;
+}
+
+.cancel-btn-compact:hover {
+  border-color: #40a9ff;
+  color: #40a9ff;
+}
+
+.details-btn-compact:hover {
+  background: #40a9ff;
+  border-color: #40a9ff;
+}
+
+/* ===== STYLES MODAL ORIGINAUX - MAINTENUS POUR COMPATIBILITÉ ===== */
+.modal-header-blue {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px 24px;
+  border-radius: 12px 12px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: -24px -24px 0 -24px;
+  width: calc(100% + 48px);
+  justify-content: flex-start;
+}
+
+.modal-close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  padding: 8px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+  }
+}
+
+.modal-header-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-icon {
+  font-size: 1.2rem;
+}
+
+.modal-title-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.modal-content {
+  padding: 0;
+}
+
+/* ✅ Section informations souscription */
+.subscription-info {
+  background: linear-gradient(135deg, #f6f9fc 0%, #eef7ff 100%);
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #e8f4fd;
+}
+
+.subscription-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.subscription-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1890ff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.subscription-title i {
+  font-size: 20px;
+}
+
+.terrain-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.terrain-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.terrain-item .label {
+  font-weight: 500;
+  color: #666;
+}
+
+.terrain-item .value {
+  font-weight: 600;
+  color: #333;
+}
+
+.amounts-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e8f4fd;
+}
+
+.amount-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.amount-item .label {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.amount-item .value {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.amount-item .value.paid {
+  color: #52c41a;
+}
+
+.amount-item .value.remaining {
+  color: #ff4d4f;
+}
+
+/* ✅ Section historique des paiements */
+.payments-section {
+  margin-bottom: 20px;
+}
+
+.payments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.payments-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.payments-title i {
+  color: #1890ff;
+}
+
+.payments-count {
+  font-size: 12px;
+  color: #666;
+  background: #f0f2f5;
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
+.payments-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.payment-item {
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+.payment-item:hover {
+  background: #f0f9ff;
+  border-color: #91d5ff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+}
+
+.payment-main-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.payment-date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  color: #333;
+}
+
+.payment-date i {
+  color: #1890ff;
+  font-size: 14px;
+}
+
+.payment-amount {
+  font-size: 16px;
+  font-weight: 700;
+  color: #52c41a;
+}
+
+.payment-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #e8e8e8;
+}
+
+.payment-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.detail-label {
+  font-size: 11px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.detail-value {
+  font-size: 13px;
+  color: #333;
+  font-weight: 600;
+}
+
+.status-tag {
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+/* ✅ Message aucun paiement */
+.no-payments {
+  text-align: center;
+  padding: 40px 20px;
+  background: #fafafa;
+  border-radius: 8px;
+  border: 2px dashed #d9d9d9;
+}
+
+.no-payments-icon {
+  font-size: 48px;
+  color: #d9d9d9;
+  margin-bottom: 16px;
+}
+
+.no-payments-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 8px 0;
+}
+
+.no-payments-subtitle {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+/* ✅ Actions du modal */
+.modal-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 20px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.cancel-btn,
+.details-btn {
+  flex: 1;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.cancel-btn {
+  border-color: #d9d9d9;
+}
+
+.details-btn {
+  background: #1890ff;
+  border-color: #1890ff;
+}
+
+.cancel-btn:hover {
+  border-color: #40a9ff;
+  color: #40a9ff;
+}
+
+.details-btn:hover {
+  background: #40a9ff;
+  border-color: #40a9ff;
+}
+
 /* RESPONSIVE BREAKPOINTS */
 
 /* Mobile Portrait (320px - 479px) */
@@ -636,7 +1321,8 @@
     padding: 5px;
   }
   
-  .subscription-container {
+  .subscription-container,
+  .subscription-wrapper {
     padding: 10px;
     gap: 15px;
     border-radius: 12px;
@@ -800,7 +1486,49 @@
   }
   
   .pagination-container {
-    gap: 6px;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    
+    ::ng-deep .ant-pagination {
+      flex-direction: column !important;
+      gap: 8px !important;
+    }
+    
+    ::ng-deep .ant-pagination-item,
+    ::ng-deep .ant-pagination-prev,
+    ::ng-deep .ant-pagination-next {
+      min-width: 28px !important;
+      height: 28px !important;
+      
+      a, .ant-pagination-item-link {
+        font-size: 0.75rem !important;
+      }
+    }
+    
+    ::ng-deep .ant-pagination-options {
+      margin-top: 8px !important;
+      text-align: center !important;
+    }
+    
+    ::ng-deep .ant-pagination-options-quick-jumper {
+      font-size: 0.8rem !important;
+      color: white !important;
+      
+      input {
+        width: 60px !important;
+        height: 28px !important;
+        font-size: 0.8rem !important;
+        background: rgba(255, 255, 255, 0.15) !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
+        color: white !important;
+      }
+    }
+    
+    ::ng-deep .ant-pagination-options-size-changer .ant-select-selector {
+      height: 28px !important;
+      font-size: 0.8rem !important;
+    }
     
     .pagination-btn {
       min-width: 28px;
@@ -813,6 +1541,164 @@
       width: 100%;
       order: 1;
     }
+  }
+
+  /* ===== RESPONSIVE MODAL COMPACT - MOBILE ===== */
+  ::ng-deep .compact-modal .ant-modal {
+    width: 95vw !important;
+    margin: 10px auto;
+  }
+
+  ::ng-deep .compact-modal .ant-modal-body {
+    padding: 12px !important;
+  }
+
+  ::ng-deep .compact-modal .ant-modal-header {
+    padding: 8px 12px !important;
+  }
+
+  .modal-content-compact {
+    font-size: 11px;
+  }
+
+  .subscription-info-compact {
+    padding: 8px;
+    margin-bottom: 8px;
+  }
+
+  .subscription-header-compact {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .subscription-title-compact {
+    font-size: 12px;
+  }
+
+  .terrain-details-compact {
+    margin-bottom: 6px;
+  }
+
+  .terrain-row {
+    font-size: 10px;
+    padding: 2px 0;
+  }
+
+  .amounts-summary-compact {
+    gap: 6px;
+    flex-direction: column;
+  }
+
+  .amount-item-compact {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+    padding: 4px 6px;
+  }
+
+  .amount-label {
+    font-size: 8px;
+    margin-bottom: 0;
+  }
+
+  .amount-value {
+    font-size: 10px;
+  }
+
+  .payments-section-compact {
+    margin-bottom: 8px;
+  }
+
+  .payments-header-compact {
+    margin-bottom: 6px;
+  }
+
+  .payments-title-compact {
+    font-size: 12px;
+  }
+
+  .payments-list-compact {
+    max-height: 120px;
+  }
+
+  .payment-item-compact {
+    padding: 6px;
+    margin-bottom: 4px;
+  }
+
+  .payment-main-compact {
+    margin-bottom: 4px;
+  }
+
+  .payment-date-compact {
+    font-size: 10px;
+  }
+
+  .payment-amount-compact {
+    font-size: 11px;
+  }
+
+  .payment-details-compact {
+    gap: 4px;
+    padding-top: 4px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .detail-compact {
+    font-size: 9px;
+    padding: 1px 4px;
+  }
+
+  .modal-actions-compact {
+    gap: 6px;
+    padding-top: 8px;
+  }
+
+  .btn-compact {
+    height: 28px !important;
+    font-size: 10px !important;
+    padding: 0 8px !important;
+  }
+
+  .stats-bar, .stats-overview {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .stat-card {
+    width: 48%;
+    min-width: unset;
+    max-width: unset;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 10px 6px;
+    border-radius: 10px;
+    height: 70px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+  }
+  .stat-value {
+    font-size: 1.05rem !important;
+    font-weight: 600;
+    line-height: 1.1;
+  }
+  .stat-label {
+    font-size: 0.8rem !important;
+    line-height: 1.1;
+  }
+  .stat-icon {
+    font-size: 1rem !important;
+    margin-bottom: 2px;
+  }
+  .stat-card {
+    width: 48%;
+    height: 35%;
   }
 }
 
@@ -859,6 +1745,48 @@
   .action-buttons {
     flex-direction: row;
     gap: 4px;
+  }
+
+  /* ===== RESPONSIVE MODAL COMPACT - TABLET ===== */
+  ::ng-deep .compact-modal .ant-modal {
+    width: 480px !important;
+  }
+
+  .payments-list-compact {
+    max-height: 150px;
+  }
+
+  .amounts-summary-compact {
+    gap: 10px;
+  }
+
+  .payment-details-compact {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    align-items: start;
+  }
+  
+  /* Pagination mobile landscape */
+  .pagination-container {
+    padding: 12px;
+    
+    ::ng-deep .ant-pagination {
+      flex-wrap: wrap !important;
+      gap: 4px !important;
+    }
+    
+    ::ng-deep .ant-pagination-options-quick-jumper {
+      color: white !important;
+      font-size: 0.85rem !important;
+      
+      input {
+        height: 30px !important;
+        background: rgba(255, 255, 255, 0.15) !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
+        color: white !important;
+      }
+    }
   }
 }
 
@@ -909,6 +1837,21 @@
   }
   
   .pagination-container {
+    padding: 12px;
+    
+    ::ng-deep .ant-pagination-options-quick-jumper {
+      font-size: 0.85rem !important;
+      color: white !important;
+    }
+    
+    ::ng-deep .ant-pagination-item,
+    ::ng-deep .ant-pagination-prev,
+    ::ng-deep .ant-pagination-next {
+      a, .ant-pagination-item-link {
+        font-size: 0.8rem !important;
+      }
+    }
+    
     .pagination-info {
       width: auto;
       order: 0;
@@ -992,11 +1935,27 @@
       min-height: 32px;
     }
   }
+
+  /* ===== RESPONSIVE MODAL COMPACT - DESKTOP ===== */
+  ::ng-deep .compact-modal .ant-modal {
+    width: 450px !important;
+  }
+
+  .payments-list-compact {
+    max-height: 200px;
+  }
+
+  .payment-details-compact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
 }
 
 /* Large Desktop (1280px+) */
 @media (min-width: 1280px) {
-  .subscription-container {
+  .subscription-container,
+  .subscription-wrapper {
     max-width: 1400px;
     padding: 40px;
   }
@@ -1013,181 +1972,30 @@
       padding: 18px 15px;
     }
   }
-}
-
-/* Modal Styles */
-.modal-header-blue {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 20px 24px;
-  border-radius: 12px 12px 0 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: -24px -24px 0 -24px;
-  width: calc(100% + 48px);
-  justify-content: flex-start;
-}
-
-.modal-close-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: white;
-  padding: 8px;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
   
-  &:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: scale(1.1);
+  .pagination-container {
+    padding: 20px;
+    
+    ::ng-deep .ant-pagination-item,
+    ::ng-deep .ant-pagination-prev,
+    ::ng-deep .ant-pagination-next {
+      min-width: 36px !important;
+      height: 36px !important;
+      
+      a, .ant-pagination-item-link {
+        font-size: 0.9rem !important;
+      }
+    }
+    
+    ::ng-deep .ant-pagination-options-quick-jumper {
+      font-size: 1rem !important;
+      
+      input {
+        height: 36px !important;
+        width: 80px !important;
+      }
+    }
   }
-}
-
-.modal-header-content {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.modal-icon {
-  font-size: 1.2rem;
-}
-
-.modal-title-text {
-  font-size: 1.1rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-.modal-content {
-  padding: 20px 0;
-}
-
-.subscription-info {
-  margin-bottom: 24px;
-  text-align: center;
-}
-
-.subscription-title {
-  color: #667eea;
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.terrain-badge {
-  display: inline-block;
-  background: linear-gradient(135deg, #f0f7ff, #e0f2fe);
-  color: #0369a1;
-  padding: 6px 12px;
-  border-radius: 16px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  border: 1px solid #bae6fd;
-}
-
-.payments-section {
-  margin-bottom: 24px;
-}
-
-.payments-title {
-  color: #374151;
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.payments-list {
-  background: #f8fafc;
-  border-radius: 12px;
-  padding: 16px;
-  border: 1px solid #e2e8f0;
-}
-
-.payment-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #e2e8f0;
-  
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
-.payment-date {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #6b7280;
-  font-size: 0.9rem;
-}
-
-.payment-amount {
-  font-weight: 700;
-  color: #059669;
-  font-size: 0.95rem;
-}
-
-.no-payments {
-  text-align: center;
-  color: #9ca3af;
-  padding: 24px;
-  background: #f9fafb;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding-top: 20px;
-  border-top: 1px solid #e5e7eb;
-}
-
-.cancel-btn, .details-btn {
-  flex: 1;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-weight: 600;
-  border-radius: 8px;
-  font-size: 0.9rem;
-}
-
-.cancel-btn {
-  color: #6b7280;
-  border-color: #d1d5db;
-  
-  &:hover {
-    color: #374151;
-    border-color: #9ca3af;
-  }
-}
-
-.details-btn {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  border-color: #667eea;
 }
 
 /* Angular Modal Overrides */
@@ -1217,7 +2025,8 @@
     background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
   }
   
-  .subscription-container {
+  .subscription-container,
+  .subscription-wrapper {
     background: rgba(30, 41, 59, 0.95);
     color: #f1f5f9;
   }
@@ -1295,6 +2104,76 @@
       border-color: #6366f1;
     }
   }
+  
+  .pagination-container {
+    background: linear-gradient(135deg, #1e293b, #334155) !important;
+    
+    /* Éléments de pagination en mode sombre */
+    ::ng-deep .ant-pagination-item {
+      background: rgba(71, 85, 105, 0.5) !important;
+      border-color: rgba(148, 163, 184, 0.3) !important;
+    }
+    
+    ::ng-deep .ant-pagination-prev,
+    ::ng-deep .ant-pagination-next {
+      background: rgba(71, 85, 105, 0.5) !important;
+      border-color: rgba(148, 163, 184, 0.3) !important;
+    }
+    
+    ::ng-deep .ant-pagination-options-quick-jumper input {
+      background: rgba(71, 85, 105, 0.5) !important;
+      border-color: rgba(148, 163, 184, 0.3) !important;
+    }
+    
+    ::ng-deep .ant-pagination-options-size-changer .ant-select-selector {
+      background: rgba(71, 85, 105, 0.5) !important;
+      border-color: rgba(148, 163, 184, 0.3) !important;
+    }
+  }
+
+  /* ===== DARK MODE MODAL COMPACT ===== */
+  .subscription-info-compact {
+    background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+    border-color: #4b5563;
+  }
+
+  .subscription-title-compact {
+    color: #60a5fa;
+  }
+
+  .label-compact {
+    color: #d1d5db;
+  }
+
+  .value-compact {
+    color: #f9fafb;
+  }
+
+  .amount-item-compact {
+    background: rgba(75, 85, 99, 0.3);
+  }
+
+  .payment-item-compact {
+    background: #374151;
+    border-color: #4b5563;
+  }
+
+  .payment-item-compact:hover {
+    background: #475569;
+    border-color: #60a5fa;
+  }
+
+  .detail-compact {
+    background: #4b5563;
+    border-color: #6b7280;
+    color: #d1d5db;
+  }
+
+  .no-payments-compact {
+    background: #374151;
+    border-color: #6b7280;
+    color: #9ca3af;
+  }
 }
 
 /* Print Styles */
@@ -1304,7 +2183,8 @@
     padding: 0 !important;
   }
   
-  .subscription-container {
+  .subscription-container,
+  .subscription-wrapper {
     background: white !important;
     box-shadow: none !important;
     padding: 20px !important;
@@ -1330,9 +2210,15 @@
 .search-input:focus,
 .filter-select:focus,
 .action-btn:focus,
-.pagination-btn:focus {
+.pagination-btn:focus,
+.btn-compact:focus {
   outline: 2px solid #6366f1;
   outline-offset: 2px;
+}
+
+.payment-item-compact:focus-within {
+  outline: 1px solid #1890ff;
+  outline-offset: 1px;
 }
 
 /* Reduced Motion */
@@ -1345,6 +2231,14 @@
   .loading-spinner {
     animation: none !important;
   }
+
+  .payment-item-compact {
+    transition: none;
+  }
+  
+  .payment-item-compact:hover {
+    transform: none;
+  }
 }
 
 /* High DPI Screens */
@@ -1355,45 +2249,5 @@
   
   .status-badge {
     border-radius: 10px !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .stats-bar, .stats-overview {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 8px;
-  }
-  .stat-card {
-    width: 48%;
-    min-width: unset;
-    max-width: unset;
-    box-sizing: border-box;
-    margin: 0;
-    padding: 10px 6px;
-    border-radius: 10px;
-    height: 70px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: center;
-  }
-  .stat-value {
-    font-size: 1.05rem !important;
-    font-weight: 600;
-    line-height: 1.1;
-  }
-  .stat-label {
-    font-size: 0.8rem !important;
-    line-height: 1.1;
-  }
-  .stat-icon {
-    font-size: 1rem !important;
-    margin-bottom: 2px;
-  }
-  .stat-card {
-    width: 48%;
-    height: 35%;
   }
 }
