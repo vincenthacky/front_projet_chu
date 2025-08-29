@@ -630,4 +630,58 @@ export class AuthService {
   ngOnDestroy(): void {
     this.stopInactivityDetection();
   }
+  // À ajouter dans AuthService, pas dans SouscriptionService
+public diagnosticToken(): void {
+  if (!this.isBrowser) {
+    console.log('PAS CÔTÉ NAVIGATEUR');
+    return;
+  }
+
+  console.log('=== DIAGNOSTIC TOKEN ===');
+  
+  console.log('Service state:');
+  console.log('- isAuthenticated():', this.isAuthenticated());
+  console.log('- isSessionValid():', this.isSessionValid());
+  
+  const rawToken = localStorage.getItem('token');
+  const rawUser = localStorage.getItem('user');
+  const rawExpiry = localStorage.getItem('authExpiry');
+  
+  console.log('LocalStorage:');
+  console.log('- token présent:', !!rawToken);
+  console.log('- token length:', rawToken?.length || 0);
+  console.log('- user présent:', !!rawUser);
+  console.log('- expiry présent:', !!rawExpiry);
+  
+  if (rawToken) {
+    console.log('Token analysis:');
+    console.log('- Premier 30 chars:', rawToken.substring(0, 30));
+    console.log('- Format JWT (3 parties):', rawToken.split('.').length === 3);
+    
+    if (rawToken.split('.').length === 3) {
+      try {
+        const parts = rawToken.split('.');
+        const header = JSON.parse(atob(parts[0]));
+        const payload = JSON.parse(atob(parts[1]));
+        console.log('- JWT header:', header);
+        console.log('- JWT payload keys:', Object.keys(payload));
+        
+        if (payload.exp) {
+          const expDate = new Date(payload.exp * 1000);
+          const now = new Date();
+          console.log('- Token expire le:', expDate.toISOString());
+          console.log('- Token expiré:', now > expDate);
+        }
+      } catch (e) {
+        console.log('- ERREUR décodage JWT:', e);
+      }
+    }
+  }
+  
+  const serviceToken = this.getToken();
+  console.log('getToken() result:', serviceToken ? 'TOKEN RETOURNÉ' : 'NULL');
+  console.log('Tokens identiques:', rawToken === serviceToken);
+  
+  console.log('=== FIN DIAGNOSTIC ===');
+}
 }
