@@ -109,7 +109,7 @@ export class DocumentService {
       if (filters.search) params = params.set('search', filters.search);
     }
 
-    return this.http.get<DocumentResponse>(`${this.API_URL}/documents`, { params })
+    return this.http.get<DocumentResponse>(`${this.API_URL}/documents/utilisateur`, { params })
       .pipe(
         tap(response => {
           console.log('Documents récupérés:', response);

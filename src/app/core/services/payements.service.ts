@@ -84,7 +84,7 @@ import { environment } from 'src/environment/environment.prod';
   providedIn: 'root'
 })
 export class PayementsService {
-  private apiUrl = 'http://192.168.252.75:8000/api/paiements'; // ✅ URL directe pour test
+  private apiUrl = 'http://192.168.252.75:8000/api/paiements/utilisateur'; // ✅ URL directe pour test
 
   constructor(private http: HttpClient) {}
 
