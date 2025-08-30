@@ -115,7 +115,7 @@ export class ReclamationService {
       if (filters.search) params = params.set('search', filters.search);
     }
 
-    return this.http.get<ReclamationResponse>(`${this.API_URL}/reclamations/utilisateur`, { params })
+    return this.http.get<ReclamationResponse>(`${this.API_URL}/reclamations`, { params })
       .pipe(
         tap(response => {
           console.log('Réclamations récupérées:', response);
