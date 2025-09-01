@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { NzCardModule } from 'ng-zorro-antd/card';
@@ -18,7 +18,7 @@ import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NzModalService } from 'ng-zorro-antd/modal';
-import { SouscriptionService } from 'src/app/core/services/souscription.service';
+import { ApiSouscription, SouscriptionService } from 'src/app/core/services/souscription.service';
 
 // ✅ Interface Payment améliorée
 interface Payment {
@@ -96,6 +96,12 @@ interface LocalApiSouscription {
   styleUrls: ['./subscription.component.css']
 })
 export class SubscriptionComponent {
+
+  @Input() placeholder: string = 'Sélectionner une souscription';
+  @Input() allowClear: boolean = true;
+  @Input() disabled: boolean = false;
+  @Input() userId?: number;
+  @Output() subscriptionSelected = new EventEmitter<ApiSouscription | null>();
   
   subscriptions: Subscription[] = [];
   filteredSubscriptions: Subscription[] = [];

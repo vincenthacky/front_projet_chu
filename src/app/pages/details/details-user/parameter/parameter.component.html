@@ -157,187 +157,187 @@
     
     <!-- Card de changement de mot de passe -->
     <nz-card 
-      nzTitle="Sécurité du compte" 
-      [nzBordered]="false" 
-      class="password-card card-animated"
-    >
-      <ng-template #passwordTitle>
-        <span nz-icon nzType="lock" nzTheme="outline"></span>
-        Changer le mot de passe
-      </ng-template>
-    
-      <form [formGroup]="passwordForm" (ngSubmit)="onPasswordSubmit()" class="password-form">
-        <!-- Alerte de sécurité -->
-        <nz-alert
-          nzType="info"
-          nzMessage="Sécurité"
-          nzDescription="Votre mot de passe doit contenir au minimum 6 caractères. Pour une sécurité optimale, utilisez une combinaison de lettres, chiffres et caractères spéciaux."
-          nzShowIcon
-          nzClosable="false"
-          class="security-alert"
-        ></nz-alert>
-    
-        <div nz-row [nzGutter]="{ xs: 12, sm: 16, md: 24 }">
-          <!-- Mot de passe actuel -->
-          <div nz-col nzXs="24" nzSm="24" nzMd="8">
-            <nz-form-item>
-              <nz-form-label [nzRequired]="true">
-                <span nz-icon nzType="key" nzTheme="outline" style="margin-right: 10px;"></span>
-                Mot de passe actuel
-              </nz-form-label>
-              <nz-form-control nzErrorTip="Veuillez entrer votre mot de passe actuel">
-                <nz-input-group [nzSuffix]="suffixTemplate1">
-                  <input 
-                    [type]="passwordVisible1 ? 'text' : 'password'"
-                    nz-input 
-                    formControlName="currentPassword" 
-                    placeholder="Votre mot de passe actuel"
-                    autocomplete="current-password"
-                    aria-required="true"
-                  />
-                </nz-input-group>
-                <ng-template #suffixTemplate1>
-                  <span 
-                    nz-icon 
-                    [nzType]="passwordVisible1 ? 'eye-invisible' : 'eye'" 
-                    (click)="passwordVisible1 = !passwordVisible1"
-                    class="password-toggle"
-                    aria-label="Afficher/masquer le mot de passe"
-                  ></span>
-                </ng-template>
-              </nz-form-control>
-            </nz-form-item>
-          </div>
-    
-          <!-- Nouveau mot de passe -->
-          <div nz-col nzXs="24" nzSm="24" nzMd="8">
-            <nz-form-item>
-              <nz-form-label [nzRequired]="true">
-                <span nz-icon nzType="safety-certificate" nzTheme="outline" style="margin-right: 10px;"></span>
-                Nouveau mot de passe
-              </nz-form-label>
-              <nz-form-control nzErrorTip="Le mot de passe doit contenir au minimum 6 caractères">
-                <nz-input-group [nzSuffix]="suffixTemplate2">
-                  <input 
-                    [type]="passwordVisible2 ? 'text' : 'password'"
-                    nz-input 
-                    formControlName="newPassword" 
-                    placeholder="Nouveau mot de passe (min 6 caractères)"
-                    autocomplete="new-password"
-                    aria-required="true"
-                  />
-                </nz-input-group>
-                <ng-template #suffixTemplate2>
-                  <span 
-                    nz-icon 
-                    [nzType]="passwordVisible2 ? 'eye-invisible' : 'eye'" 
-                    (click)="passwordVisible2 = !passwordVisible2"
-                    class="password-toggle"
-                    aria-label="Afficher/masquer le nouveau mot de passe"
-                  ></span>
-                </ng-template>
-              </nz-form-control>
-            </nz-form-item>
-          </div>
-    
-          <!-- Confirmation du mot de passe -->
-          <div nz-col nzXs="24" nzSm="24" nzMd="8">
-            <nz-form-item>
-              <nz-form-label [nzRequired]="true">
-                <span nz-icon nzType="check-circle" nzTheme="outline" style="margin-right: 10px;"></span>
-                Confirmer le mot de passe
-              </nz-form-label>
-              <nz-form-control 
-                [nzErrorTip]="passwordForm.hasError('passwordMismatch') ? 'Les mots de passe ne correspondent pas' : 'Veuillez confirmer le mot de passe'"
-              >
-                <nz-input-group [nzSuffix]="suffixTemplate3">
-                  <input 
-                    [type]="passwordVisible3 ? 'text' : 'password'"
-                    nz-input 
-                    formControlName="confirmPassword" 
-                    placeholder="Confirmez votre nouveau mot de passe"
-                    autocomplete="new-password"
-                    aria-required="true"
-                  />
-                </nz-input-group>
-                <ng-template #suffixTemplate3>
-                  <span 
-                    nz-icon 
-                    [nzType]="passwordVisible3 ? 'eye-invisible' : 'eye'" 
-                    (click)="passwordVisible3 = !passwordVisible3"
-                    class="password-toggle"
-                    aria-label="Afficher/masquer la confirmation du mot de passe"
-                  ></span>
-                </ng-template>
-              </nz-form-control>
-            </nz-form-item>
-          </div>
+    nzTitle="Sécurité du compte" 
+    [nzBordered]="false" 
+    class="password-card card-animated"
+  >
+    <ng-template #passwordTitle>
+      <span nz-icon nzType="lock" nzTheme="outline"></span>
+      Changer le mot de passe
+    </ng-template>
+  
+    <form [formGroup]="passwordForm" (ngSubmit)="onPasswordSubmit()" class="password-form">
+      <!-- Alerte de sécurité -->
+      <nz-alert
+        nzType="info"
+        nzMessage="Sécurité"
+        nzDescription="Votre mot de passe doit contenir au minimum 8 caractères. Pour une sécurité optimale, utilisez une combinaison de lettres, chiffres et caractères spéciaux."
+        nzShowIcon
+        nzClosable="false"
+        class="security-alert"
+      ></nz-alert>
+  
+      <div nz-row [nzGutter]="{ xs: 12, sm: 16, md: 24 }">
+        <!-- Mot de passe actuel -->
+        <div nz-col nzXs="24" nzSm="24" nzMd="8">
+          <nz-form-item>
+            <nz-form-label [nzRequired]="true">
+              <span nz-icon nzType="key" nzTheme="outline" style="margin-right: 10px;"></span>
+              Mot de passe actuel
+            </nz-form-label>
+            <nz-form-control nzErrorTip="Veuillez entrer votre mot de passe actuel">
+              <nz-input-group [nzSuffix]="suffixTemplate1">
+                <input 
+                  [type]="passwordVisible1 ? 'text' : 'password'"
+                  nz-input 
+                  formControlName="currentPassword" 
+                  placeholder="Votre mot de passe actuel"
+                  autocomplete="current-password"
+                  aria-required="true"
+                />
+              </nz-input-group>
+              <ng-template #suffixTemplate1>
+                <span 
+                  nz-icon 
+                  [nzType]="passwordVisible1 ? 'eye-invisible' : 'eye'" 
+                  (click)="passwordVisible1 = !passwordVisible1"
+                  class="password-toggle"
+                  aria-label="Afficher/masquer le mot de passe"
+                ></span>
+              </ng-template>
+            </nz-form-control>
+          </nz-form-item>
         </div>
-    
-        <!-- Indicateur de force du mot de passe -->
-        <div class="password-strength" *ngIf="passwordForm.get('newPassword')?.value">
-          <div class="strength-label">Force du mot de passe :</div>
-          <nz-progress 
-            [nzPercent]="getPasswordStrength()" 
-            [nzStatus]="getPasswordStrengthStatus()"
-            [nzShowInfo]="false"
-            nzSize="small"
-            class="strength-meter"
-          ></nz-progress>
-          <span class="strength-text" [ngClass]="getPasswordStrengthClass()">
-            {{ getPasswordStrengthText() }}
-          </span>
+  
+        <!-- Nouveau mot de passe -->
+        <div nz-col nzXs="24" nzSm="24" nzMd="8">
+          <nz-form-item>
+            <nz-form-label [nzRequired]="true">
+              <span nz-icon nzType="safety-certificate" nzTheme="outline" style="margin-right: 10px;"></span>
+              Nouveau mot de passe
+            </nz-form-label>
+            <nz-form-control nzErrorTip="Le mot de passe doit contenir au minimum 6 caractères">
+              <nz-input-group [nzSuffix]="suffixTemplate2">
+                <input 
+                  [type]="passwordVisible2 ? 'text' : 'password'"
+                  nz-input 
+                  formControlName="newPassword" 
+                  placeholder="Nouveau mot de passe (min 8 caractères)"
+                  autocomplete="new-password"
+                  aria-required="true"
+                />
+              </nz-input-group>
+              <ng-template #suffixTemplate2>
+                <span 
+                  nz-icon 
+                  [nzType]="passwordVisible2 ? 'eye-invisible' : 'eye'" 
+                  (click)="passwordVisible2 = !passwordVisible2"
+                  class="password-toggle"
+                  aria-label="Afficher/masquer le nouveau mot de passe"
+                ></span>
+              </ng-template>
+            </nz-form-control>
+          </nz-form-item>
         </div>
-    
-        <!-- Actions -->
-        <div class="password-actions">
-          <button 
-            nz-button 
-            nzType="primary" 
-            [nzLoading]="isPasswordSubmitting" 
-            [disabled]="!passwordForm.valid"
-            type="submit"
-            aria-label="Changer le mot de passe"
-          >
-            <span nz-icon nzType="safety-certificate" nzTheme="outline" *ngIf="!isPasswordSubmitting"></span>
-            {{ isPasswordSubmitting ? 'Modification...' : 'Changer le mot de passe' }}
-          </button>
+  
+        <!-- Confirmation du mot de passe -->
+        <div nz-col nzXs="24" nzSm="24" nzMd="8">
+          <nz-form-item>
+            <nz-form-label [nzRequired]="true">
+              <span nz-icon nzType="check-circle" nzTheme="outline" style="margin-right: 10px;"></span>
+              Confirmer le mot de passe
+            </nz-form-label>
+            <nz-form-control 
+              [nzErrorTip]="passwordForm.hasError('passwordMismatch') ? 'Les mots de passe ne correspondent pas' : 'Veuillez confirmer le mot de passe'"
+            >
+              <nz-input-group [nzSuffix]="suffixTemplate3">
+                <input 
+                  [type]="passwordVisible3 ? 'text' : 'password'"
+                  nz-input 
+                  formControlName="confirmPassword" 
+                  placeholder="Confirmez votre nouveau mot de passe"
+                  autocomplete="new-password"
+                  aria-required="true"
+                />
+              </nz-input-group>
+              <ng-template #suffixTemplate3>
+                <span 
+                  nz-icon 
+                  [nzType]="passwordVisible3 ? 'eye-invisible' : 'eye'" 
+                  (click)="passwordVisible3 = !passwordVisible3"
+                  class="password-toggle"
+                  aria-label="Afficher/masquer la confirmation du mot de passe"
+                ></span>
+              </ng-template>
+            </nz-form-control>
+          </nz-form-item>
         </div>
-      </form>
-    </nz-card>
+      </div>
+  
+      <!-- Indicateur de force du mot de passe -->
+      <div class="password-strength" *ngIf="passwordForm.get('newPassword')?.value">
+        <div class="strength-label">Force du mot de passe :</div>
+        <nz-progress 
+          [nzPercent]="getPasswordStrength()" 
+          [nzStatus]="getPasswordStrengthStatus()"
+          [nzShowInfo]="false"
+          nzSize="small"
+          class="strength-meter"
+        ></nz-progress>
+        <span class="strength-text" [ngClass]="getPasswordStrengthClass()">
+          {{ getPasswordStrengthText() }}
+        </span>
+      </div>
+  
+      <!-- Actions -->
+      <div class="password-actions">
+        <button 
+          nz-button 
+          nzType="primary" 
+          [nzLoading]="isPasswordSubmitting" 
+          [disabled]="!passwordForm.valid"
+          type="submit"
+          aria-label="Changer le mot de passe"
+        >
+          <span nz-icon nzType="safety-certificate" nzTheme="outline" *ngIf="!isPasswordSubmitting"></span>
+          {{ isPasswordSubmitting ? 'Modification...' : 'Changer le mot de passe' }}
+        </button>
+      </div>
+    </form>
+  </nz-card>
     
     <!-- Card informations supplémentaires -->
     <nz-card 
-      nzTitle="Informations du compte" 
-      [nzBordered]="false" 
-      class="info-card card-animated"
-      *ngIf="showAdditionalInfo"
-    >
-      <nz-descriptions [nzBordered]="true" [nzColumn]="1" class="vertical-descriptions">
-        <nz-descriptions-item nzTitle="Membre depuis">
-          <nz-tag nzColor="blue">
-            <span nz-icon nzType="calendar" nzTheme="outline"></span>
-            {{ memberSince | date:'dd/MM/yyyy' }}
-          </nz-tag>
-        </nz-descriptions-item>
-        <nz-descriptions-item nzTitle="Dernière connexion">
-          <nz-tag nzColor="green">
-            <span nz-icon nzType="clock-circle" nzTheme="outline"></span>
-            {{ lastConnection | date:'dd/MM/yyyy HH:mm' }}
-          </nz-tag>
-        </nz-descriptions-item>
-        <nz-descriptions-item nzTitle="Statut du compte">
-          <nz-tag nzColor="success">
-            <span nz-icon nzType="check-circle" nzTheme="outline"></span>
-            Actif
-          </nz-tag>
-        </nz-descriptions-item>
-        <nz-descriptions-item nzTitle="Niveau de sécurité">
-          <nz-tag [nzColor]="getSecurityLevelColor()">
-            <span nz-icon nzType="safety-certificate" nzTheme="outline"></span>
-            {{ getSecurityLevel() }}
-          </nz-tag>
-        </nz-descriptions-item>
-      </nz-descriptions>
-    </nz-card>
+  nzTitle="Informations du compte" 
+  [nzBordered]="false" 
+  class="info-card card-animated"
+  *ngIf="showAdditionalInfo"
+>
+  <nz-descriptions [nzBordered]="true" [nzColumn]="1" class="vertical-descriptions">
+    <nz-descriptions-item nzTitle="Membre depuis">
+      <nz-tag nzColor="blue">
+        <span nz-icon nzType="calendar" nzTheme="outline"></span>
+        {{ memberSince | date:'dd/MM/yyyy' }}
+      </nz-tag>
+    </nz-descriptions-item>
+    <nz-descriptions-item nzTitle="Dernière connexion">
+      <nz-tag nzColor="green">
+        <span nz-icon nzType="clock-circle" nzTheme="outline"></span>
+        {{ lastConnection | date:'dd/MM/yyyy HH:mm' }}
+      </nz-tag>
+    </nz-descriptions-item>
+    <nz-descriptions-item nzTitle="Statut du compte">
+      <nz-tag [nzColor]="getAccountStatusColor()">
+        <span nz-icon nzType="check-circle" nzTheme="outline"></span>
+        {{ getAccountStatusText() }}
+      </nz-tag>
+    </nz-descriptions-item>
+    <nz-descriptions-item nzTitle="Niveau de sécurité">
+      <nz-tag [nzColor]="getSecurityLevelColor()">
+        <span nz-icon nzType="safety-certificate" nzTheme="outline"></span>
+        {{ getSecurityLevel() }}
+      </nz-tag>
+    </nz-descriptions-item>
+  </nz-descriptions>
+</nz-card>
   </div>

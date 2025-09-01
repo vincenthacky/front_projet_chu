@@ -1,6 +1,6 @@
 import { ApplicationConfig, provideZoneChangeDetection, importProvidersFrom } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { provideHttpClient, HTTP_INTERCEPTORS, withInterceptorsFromDi } from '@angular/common/http';
 
 import { routes } from './app.routes';
 import { provideClientHydration } from '@angular/platform-browser';
@@ -12,13 +12,13 @@ import fr from '@angular/common/locales/fr';
 import { FormsModule } from '@angular/forms';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
-// Import des interceptors
+// CORRECTION: Imports avec les bons chemins
+
+
+// Import du service d'authentification avec le bon chemin
+import { AuthService } from './core/services/auth.service';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { UnicodeDecodeInterceptor } from './interceptors/unicode-decode.interceptor';
-
-
-// Import du service d'authentification
-import { AuthService } from './core/services/auth.service';
 
 registerLocaleData(fr);
 
@@ -31,20 +31,22 @@ export const appConfig: ApplicationConfig = {
     provideNzI18n(fr_FR), 
     importProvidersFrom(FormsModule), 
     provideAnimationsAsync(), 
-    provideHttpClient(),
+    
+    // CORRECTION: Configuration HTTP avec support des interceptors
+    provideHttpClient(withInterceptorsFromDi()),
     
     // Services
     AuthService,
     
-    // Interceptors - L'ORDRE EST IMPORTANT !
-    // 1. AuthInterceptor en premier (ajoute le token aux requêtes sortantes)
+    // CORRECTION: Ordre des interceptors - CRITIQUE pour le bon fonctionnement
+    // 1. AuthInterceptor (ajoute le token Authorization aux requêtes sortantes)
     {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptor,
       multi: true
     },
     
-    // 2. UnicodeDecodeInterceptor en second (décode les réponses entrantes)
+    // 2. UnicodeDecodeInterceptor (décode les réponses Unicode entrantes) 
     {
       provide: HTTP_INTERCEPTORS,
       useClass: UnicodeDecodeInterceptor,
