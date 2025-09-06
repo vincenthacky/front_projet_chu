@@ -18,5 +18,6 @@ export const DETAILS_ADMIN_ROUTES: Routes = [
   { path : 'profile-admin', loadComponent: () => import('./profile-admin/profile-admin.component').then(m => m.ProfileAdminComponent) },
   { path : 'new-user-admin', loadComponent: () => import('./new-users/new-users.component').then(m => m.NewUsersComponent) },
   {path : 'log-admin', loadComponent: () => import('./log-admin/log-admin.component').then(m => m.LogAdminComponent) },
+  {path : 'paiement-details-admin', loadComponent: () => import('./paiement-details-admin/paiement-details-admin.component').then(m => m.PaiementDetailsAdminComponent) },
 
 ]; 
