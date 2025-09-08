@@ -187,3 +187,117 @@
     </nz-collapse-panel>
   </nz-collapse>
 </div>
+
+<nz-modal 
+[(nzVisible)]="isVisible"
+nzTitle="Détails des paiements"
+nzWidth="450px"
+[nzFooter]="null"
+(nzOnCancel)="handleCancel()"
+nzCentered
+nzClassName="compact-modal">
+
+<ng-container *nzModalContent>
+  <div class="modal-content-compact">
+    <!-- ✅ Section informations souscription compacte -->
+    <div class="subscription-info-compact" *ngIf="selectedSubscriptionInfo">
+      <div class="subscription-header-compact">
+        <div class="subscription-title-compact">
+          <i class="fas fa-map-marked-alt"></i>
+          {{ selectedSubscriptionId }}
+        </div>
+        <nz-tag [nzColor]="getStatusColor(selectedSubscriptionInfo.statut)" class="status-tag-compact">
+          {{ getStatusLabel(selectedSubscriptionInfo.statut) }}
+        </nz-tag>
+      </div>
+      
+      <div class="terrain-details-compact">
+        <div class="terrain-row">
+          <span class="label-compact">Terrain:</span>
+          <span class="value-compact">{{ selectedSubscriptionInfo.terrain }}</span>
+        </div>
+        <div class="terrain-row">
+          <span class="label-compact">Surface:</span>
+          <span class="value-compact">{{ selectedSubscriptionInfo.surface }} m²</span>
+        </div>
+        <div class="terrain-row">
+          <span class="label-compact">Progression:</span>
+          <span class="value-compact">{{ selectedSubscriptionInfo.progression }}%</span>
+        </div>
+      </div>
+
+      <div class="amounts-summary-compact">
+        <div class="amount-item-compact">
+          <span class="amount-label">Payé:</span>
+          <span class="amount-value paid">{{ formatAmount(selectedSubscriptionInfo.montantPaye) }}</span>
+        </div>
+        <div class="amount-item-compact">
+          <span class="amount-label">Reste:</span>
+          <span class="amount-value remaining">{{ formatAmount(selectedSubscriptionInfo.resteAPayer) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ✅ Section historique des paiements compacte -->
+    <div class="payments-section-compact">
+      <div class="payments-header-compact">
+        <div class="payments-title-compact">
+          <i class="fas fa-history"></i>
+          Derniers paiements
+        </div>
+        <div class="payments-count-compact" *ngIf="lastFivePayments.length > 0">
+          {{ lastFivePayments.length }}
+        </div>
+      </div>
+
+      <!-- ✅ Liste des paiements compacte -->
+      <div class="payments-list-compact" *ngIf="lastFivePayments.length > 0">
+        <div class="payment-item-compact" *ngFor="let payment of lastFivePayments; trackBy: trackByPayment">
+          <div class="payment-main-compact">
+            <div class="payment-date-compact">
+              <i class="fas fa-calendar-alt"></i>
+              {{ payment.date }}
+            </div>
+            <div class="payment-amount-compact">
+              {{ formatAmount(payment.amount) }}
+            </div>
+          </div>
+          
+          <div class="payment-details-compact" *ngIf="payment.numero_mensualite || payment.mode_paiement">
+            <span class="detail-compact" *ngIf="payment.numero_mensualite">
+              Mensualité #{{ payment.numero_mensualite }}
+            </span>
+            <span class="detail-compact" *ngIf="payment.mode_paiement">
+              {{ formatPaymentMode(payment.mode_paiement) }}
+            </span>
+            <nz-tag 
+              *ngIf="payment.statut_versement"
+              [nzColor]="getPaymentStatusColor(payment.statut_versement)"
+              class="status-tag-small">
+              {{ formatPaymentStatus(payment.statut_versement) }}
+            </nz-tag>
+          </div>
+        </div>
+      </div>
+
+      <!-- ✅ Message compact quand aucun paiement -->
+      <div class="no-payments-compact" *ngIf="lastFivePayments.length === 0">
+        <i class="fas fa-info-circle"></i>
+        <span>Aucun paiement effectué</span>
+      </div>
+    </div>
+
+    <!-- ✅ Actions du modal compactes -->
+    <div class="modal-actions-compact">
+      <button nz-button nzType="default" class="btn-compact cancel-btn-compact" (click)="handleCancel()">
+        <i class="fas fa-times"></i>
+        Fermer
+      </button>
+      <button nz-button nzType="primary" class="btn-compact details-btn-compact" (click)="handleOk()">
+        <i class="fas fa-eye"></i>
+        Détails
+      </button>
+    </div>
+  </div>
+</ng-container>
+</nz-modal>

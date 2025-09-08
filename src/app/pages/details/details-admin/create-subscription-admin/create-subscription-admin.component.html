@@ -1,2 +1,169 @@
-<!-- create-subscription-admin.component.html -->
-<p>create souscription</p>
+<div nz-row [nzGutter]="{ xs: 8, sm: 16, md: 24 }">
+    <div nz-col nzSpan="24">
+      <nz-card
+        nzTitle="Créer une nouvelle souscription"
+        [nzBordered]="false"
+        class="subscription-card"
+      >
+        <ng-template #subscriptionTitle>
+          <span nz-icon nzType="form" nzTheme="outline"></span>
+          Nouvelle souscription
+        </ng-template>
+  
+        <form nz-form [formGroup]="subscriptionForm" (ngSubmit)="onSubmit()">
+          <div nz-row [nzGutter]="{ xs: 12, sm: 16, md: 24 }">
+            <!-- Utilisateur -->
+            <div nz-col nzXs="24" nzSm="12">
+              <nz-form-item>
+                <nz-form-label nzRequired>Planteur</nz-form-label>
+                <nz-form-control nzErrorTip="Veuillez sélectionner un planteur">
+                  <nz-select formControlName="id_utilisateur" nzPlaceHolder="Sélectionner un planteur">
+                    <nz-option
+                      *ngFor="let user of users"
+                      [nzValue]="user.id_utilisateur"
+                      [nzLabel]="user.nom + ' ' + user.prenom"
+                    ></nz-option>
+                  </nz-select>
+                </nz-form-control>
+              </nz-form-item>
+            </div>
+  
+            <!-- Terrain -->
+            <div nz-col nzXs="24" nzSm="12">
+              <nz-form-item>
+                <nz-form-label nzRequired>Terrain</nz-form-label>
+                <nz-form-control nzErrorTip="Veuillez sélectionner un terrain">
+                  <nz-select formControlName="id_terrain" nzPlaceHolder="Sélectionner un terrain">
+                    <nz-option
+                      *ngFor="let terrain of terrains"
+                      [nzValue]="terrain.id_terrain"
+                      [nzLabel]="terrain.libelle"
+                    ></nz-option>
+                  </nz-select>
+                </nz-form-control>
+              </nz-form-item>
+            </div>
+  
+            <!-- Administrateur -->
+            <div nz-col nzXs="24" nzSm="12">
+              <nz-form-item>
+                <nz-form-label nzRequired>Administrateur</nz-form-label>
+                <nz-form-control nzErrorTip="Veuillez sélectionner un administrateur">
+                  <nz-select formControlName="id_admin" nzPlaceHolder="Sélectionner un administrateur">
+                    <nz-option
+                      *ngFor="let admin of admins"
+                      [nzValue]="admin.id_utilisateur"
+                      [nzLabel]="admin.nom + ' ' + admin.prenom"
+                    ></nz-option>
+                  </nz-select>
+                </nz-form-control>
+              </nz-form-item>
+            </div>
+  
+            <!-- Nombre de terrains -->
+            <div nz-col nzXs="24" nzSm="12">
+              <nz-form-item>
+                <nz-form-label nzRequired>Nombre de terrains</nz-form-label>
+                <nz-form-control nzErrorTip="Veuillez entrer un nombre valide (minimum 1)">
+                  <input nz-input formControlName="nombre_terrains" type="number" min="1" />
+                </nz-form-control>
+              </nz-form-item>
+            </div>
+  
+            <!-- Montant mensuel -->
+            <div nz-col nzXs="24" nzSm="12">
+              <nz-form-item>
+                <nz-form-label nzRequired>Montant mensuel (CFA)</nz-form-label>
+                <nz-form-control nzErrorTip="Veuillez entrer un montant valide">
+                  <input nz-input formControlName="montant_mensuel" type="number" step="0.01" min="0" />
+                </nz-form-control>
+              </nz-form-item>
+            </div>
+  
+            <!-- Nombre de mensualités -->
+            <div nz-col nzXs="24" nzSm="12">
+              <nz-form-item>
+                <nz-form-label nzRequired>Nombre de mensualités</nz-form-label>
+                <nz-form-control nzErrorTip="Veuillez entrer un nombre valide (minimum 1)">
+                  <input nz-input formControlName="nombre_mensualites" type="number" min="1" />
+                </nz-form-control>
+              </nz-form-item>
+            </div>
+  
+            <!-- Date de souscription -->
+            <div nz-col nzXs="24" nzSm="12">
+              <nz-form-item>
+                <nz-form-label nzRequired>Date de souscription</nz-form-label>
+                <nz-form-control nzErrorTip="Veuillez sélectionner une date">
+                  <nz-date-picker
+                    formControlName="date_souscription"
+                    nzFormat="yyyy-MM-dd HH:mm:ss"
+                    [nzShowTime]="true"
+                  ></nz-date-picker>
+                </nz-form-control>
+              </nz-form-item>
+            </div>
+  
+            <!-- Date de début de paiement -->
+            <div nz-col nzXs="24" nzSm="12">
+              <nz-form-item>
+                <nz-form-label nzRequired>Date de début de paiement</nz-form-label>
+                <nz-form-control nzErrorTip="Veuillez sélectionner une date">
+                  <nz-date-picker
+                    formControlName="date_debut_paiement"
+                    nzFormat="yyyy-MM-dd"
+                  ></nz-date-picker>
+                </nz-form-control>
+              </nz-form-item>
+            </div>
+  
+            <!-- Statut de souscription -->
+            <div nz-col nzXs="24" nzSm="12">
+              <nz-form-item>
+                <nz-form-label nzRequired>Statut</nz-form-label>
+                <nz-form-control nzErrorTip="Veuillez sélectionner un statut">
+                  <nz-select formControlName="statut_souscription" nzPlaceHolder="Sélectionner un statut">
+                    <nz-option *ngFor="let statut of statutOptions" [nzValue]="statut" [nzLabel]="statut"></nz-option>
+                  </nz-select>
+                </nz-form-control>
+              </nz-form-item>
+            </div>
+  
+            <!-- Groupe de souscription -->
+            <div nz-col nzXs="24" nzSm="12">
+              <nz-form-item>
+                <nz-form-label nzRequired>Groupe de souscription</nz-form-label>
+                <nz-form-control nzErrorTip="Veuillez entrer un groupe">
+                  <input nz-input formControlName="groupe_souscription" />
+                </nz-form-control>
+              </nz-form-item>
+            </div>
+  
+            <!-- Notes admin -->
+            <div nz-col nzXs="24">
+              <nz-form-item>
+                <nz-form-label>Notes de l'administrateur</nz-form-label>
+                <nz-form-control>
+                  <textarea nz-input formControlName="notes_admin" rows="4"></textarea>
+                </nz-form-control>
+              </nz-form-item>
+            </div>
+          </div>
+  
+          <!-- Actions -->
+          <div class="form-actions">
+            <button
+              nz-button
+              nzType="primary"
+              [nzLoading]="isSubmitting"
+              [disabled]="subscriptionForm.invalid"
+              type="submit"
+            >
+              <span nz-icon nzType="save" nzTheme="outline" *ngIf="!isSubmitting"></span>
+              {{ isSubmitting ? 'Création...' : 'Créer la souscription' }}
+            </button>
+          </div>
+        </form>
+      </nz-card>
+    </div>
+  </div>

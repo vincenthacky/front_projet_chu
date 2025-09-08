@@ -8,7 +8,9 @@ import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzModalModule } from 'ng-zorro-antd/modal'; // Ajout pour le modal
 
+import { Router } from '@angular/router';
 import { ApiSouscription, SouscriptionFilters, SouscriptionService, SouscriptionResponse } from 'src/app/core/services/souscription.service';
 
 // Interface pour les utilisateurs groupés
@@ -22,6 +24,39 @@ interface GroupedUser {
   totalInDelay: number;
 }
 
+// Interfaces pour le modal (ajoutées)
+interface Subscription {
+  id: string;
+  terrain: string;
+  surface: string;
+  prixTotal: number;
+  montantPaye: number;
+  resteAPayer: number;
+  dateDebut: string;
+  prochainPaiement: string;
+  statut: 'en-cours' | 'en-retard' | 'termine';
+  progression: number;
+  payments: Payment[];
+}
+
+interface Payment {
+  date: string;
+  amount: number;
+  numero_mensualite?: number;
+  mode_paiement?: string;
+  reference_paiement?: string;
+  statut_versement?: string;
+}
+
+interface SelectedSubscriptionInfo {
+  terrain: string;
+  surface: string;
+  progression: number;
+  montantPaye: number;
+  resteAPayer: number;
+  statut: string;
+}
+
 @Component({
   selector: 'app-admin-souscription',
   standalone: true,
@@ -32,7 +67,8 @@ interface GroupedUser {
     NzAvatarModule,
     NzTableModule,
     NzTagModule,
-    NzButtonModule
+    NzButtonModule,
+    NzModalModule // Ajout pour le modal
   ],
   templateUrl: './admin-souscription.component.html',
   styleUrls: ['./admin-souscription.component.scss']
@@ -54,7 +90,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   // Propriétés pour les filtres
   filters: SouscriptionFilters = {
     page: 1,
-    per_page: 100 // Augmenté pour récupérer plus de données
+    per_page: 100
   };
 
   // Variables pour les filtres du template
@@ -64,13 +100,21 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   dateDebut: string = '';
   dateFin: string = '';
 
+  // Propriétés pour le modal (ajoutées)
+  isVisible = false;
+  selectedSubscriptionId: string | null = null;
+  selectedSubscriptionInfo: SelectedSubscriptionInfo | null = null;
+  lastFivePayments: Payment[] = [];
+
   // Propriété pour utiliser Math dans le template
   Math = Math;
 
   // Pour le debounce de recherche
   private searchTimeout: any;
 
-  constructor(private souscriptionService: SouscriptionService) { }
+  constructor(private souscriptionService: SouscriptionService,
+              private router: Router,
+  ) { }
 
   ngOnInit(): void {
     this.loadSouscriptions();
@@ -343,6 +387,184 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Voir les détails d'une souscription - MODIFIÉE pour ouvrir le modal
+   */
+  viewDetails(souscriptionId: number): void {
+    console.log('🔍 Ouverture modal pour ID:', souscriptionId);
+    
+    // Trouver la souscription dans les données
+    const souscription = this.souscriptions.find(s => s.id_souscription === souscriptionId);
+    
+    if (!souscription) {
+      console.error('❌ Souscription non trouvée:', souscriptionId);
+      return;
+    }
+
+    // Convertir ApiSouscription vers le format Subscription attendu par le modal
+    const subscriptionForModal: Subscription = this.convertToSubscriptionFormat(souscription);
+    
+    // Ouvrir le modal avec les données converties
+    this.showModal(subscriptionForModal);
+  }
+
+  /**
+   * NOUVELLE MÉTHODE: Convertir ApiSouscription vers le format Subscription
+   */
+  private convertToSubscriptionFormat(apiSouscription: ApiSouscription): Subscription {
+    console.log('🔄 Conversion de ApiSouscription vers Subscription:', apiSouscription);
+    
+    // Mapper le statut
+    let statut: 'en-cours' | 'en-retard' | 'termine' = 'en-cours';
+    const statusDisplay = this.getStatusDisplay(apiSouscription);
+    
+    switch(statusDisplay.status.toLowerCase()) {
+      case 'termine':
+      case 'terminé':
+        statut = 'termine';
+        break;
+      case 'en_retard':
+        statut = 'en-retard';
+        break;
+      default:
+        statut = 'en-cours';
+        break;
+    }
+
+    // Créer des paiements fictifs ou récupérer les vrais si disponibles
+    const payments: Payment[] = this.generateMockPayments(apiSouscription);
+
+    const subscription: Subscription = {
+      id: apiSouscription.id_souscription.toString(),
+      terrain: apiSouscription.terrain?.libelle || 'Terrain non défini',
+      surface: apiSouscription.terrain?.superficie || '0m²',
+      prixTotal: this.souscriptionService.parseAmount(apiSouscription.montant_total_souscrit),
+      montantPaye: this.souscriptionService.parseAmount(apiSouscription.montant_paye),
+      resteAPayer: apiSouscription.reste_a_payer || 0,
+      dateDebut: apiSouscription.date_souscription || new Date().toISOString(),
+      prochainPaiement: apiSouscription.date_prochain || '',
+      statut: statut,
+      progression: this.getCompletionPercentage(apiSouscription),
+      payments: payments
+    };
+
+    console.log('✅ Subscription convertie:', subscription);
+    return subscription;
+  }
+
+  /**
+   * NOUVELLE MÉTHODE: Générer des paiements fictifs (à remplacer par de vraies données)
+   */
+  private generateMockPayments(souscription: ApiSouscription): Payment[] {
+    console.log('🎭 Génération de paiements fictifs pour:', souscription.id_souscription);
+    
+    // Si vous avez de vrais paiements dans votre API, remplacez cette méthode
+    // par un appel à votre service pour récupérer les paiements réels
+    
+    const montantPaye = this.souscriptionService.parseAmount(souscription.montant_paye);
+    const montantTotal = this.souscriptionService.parseAmount(souscription.montant_total_souscrit);
+    
+    if (montantPaye === 0) {
+      return [];
+    }
+
+    // Générer quelques paiements fictifs basés sur le montant payé
+    const payments: Payment[] = [];
+    const moyenneMensuelle = 500000; // 500k CFA par mois par exemple
+    const nombrePaiements = Math.min(5, Math.ceil(montantPaye / moyenneMensuelle));
+    
+    for (let i = 0; i < nombrePaiements; i++) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - (nombrePaiements - i - 1));
+      
+      const montant = i === nombrePaiements - 1 
+        ? montantPaye - (moyenneMensuelle * (nombrePaiements - 1)) // Dernier paiement = reste
+        : moyenneMensuelle;
+
+      payments.push({
+        date: date.toISOString().split('T')[0],
+        amount: montant,
+        numero_mensualite: i + 1,
+        mode_paiement: ['Virement', 'Espèces', 'Chèque'][Math.floor(Math.random() * 3)],
+        reference_paiement: `PAY-${souscription.id_souscription}-${String(i + 1).padStart(3, '0')}`,
+        statut_versement: 'valide'
+      });
+    }
+
+    console.log('💳 Paiements générés:', payments);
+    return payments.reverse(); // Plus récents en premier
+  }
+
+  /**
+   * NOUVELLE MÉTHODE: Afficher le modal (copiée de votre exemple)
+   */
+  showModal(subscription: Subscription): void {
+    console.log('🔍 Ouverture modal pour:', subscription.id);
+    console.log('💳 Paiements disponibles:', subscription.payments);
+    
+    if (subscription.payments && Array.isArray(subscription.payments)) {
+      // Prendre les 5 derniers paiements (déjà triés par numéro de mensualité décroissant)
+      this.lastFivePayments = subscription.payments.slice(0, 5).map(payment => ({
+        date: payment.date,
+        amount: payment.amount,
+        numero_mensualite: payment.numero_mensualite,
+        mode_paiement: payment.mode_paiement,
+        reference_paiement: payment.reference_paiement,
+        statut_versement: payment.statut_versement
+      }));
+      
+      console.log('📋 5 derniers paiements sélectionnés:', this.lastFivePayments);
+    } else {
+      this.lastFivePayments = [];
+      console.log('⚠️ Aucun paiement trouvé pour cette souscription');
+    }
+
+    // Stocker les informations de la souscription pour l'affichage
+    this.selectedSubscriptionId = subscription.id;
+    this.selectedSubscriptionInfo = {
+      terrain: subscription.terrain,
+      surface: subscription.surface,
+      progression: subscription.progression,
+      montantPaye: subscription.montantPaye,
+      resteAPayer: subscription.resteAPayer,
+      statut: subscription.statut
+    };
+
+    this.isVisible = true;
+  }
+
+  /**
+   * NOUVELLE MÉTHODE: Fermer le modal
+   */
+  handleCancel(): void {
+    console.log('❌ Fermeture du modal');
+    this.isVisible = false;
+    this.selectedSubscriptionId = '';
+    this.selectedSubscriptionInfo = null;
+    this.lastFivePayments = [];
+  }
+
+  /**
+   * NOUVELLE MÉTHODE: Action OK du modal (voir détails complets)
+   */
+   // ✅ Amélioration handleOk avec navigation correcte
+   handleOk(): void {
+    this.isVisible = false;
+    this.lastFivePayments = [];
+    
+    if (this.selectedSubscriptionId) {
+      // Extraire l'ID numérique de la souscription
+      const numericId = this.selectedSubscriptionId.replace('SUB', '').replace(/^0+/, '');
+      console.log('🔗 Navigation vers détails paiement admin:', numericId);
+      
+      // CORRECTION: Navigation vers la route admin
+      this.router.navigate(['/dashboard/admin/details/paiement-details-admin', numericId]);
+    }
+    
+    this.selectedSubscriptionId = null;
+    this.selectedSubscriptionInfo = null;
+  }
+
+  /**
    * Pagination - Changer de page
    */
   onPageChange(page: number): void {
@@ -465,22 +687,6 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
       default:
         return { status: finalStatus, color: 'default', label: finalStatus };
     }
-  }
-
-  /**
-   * Voir les détails d'une souscription
-   */
-  viewDetails(souscriptionId: number): void {
-    this.souscriptionService.getSouscriptionById(souscriptionId).subscribe({
-      next: (response) => {
-        if (response.success) {
-          console.log('Détails souscription:', response.data);
-        }
-      },
-      error: (error) => {
-        console.error('Erreur chargement détails:', error);
-      }
-    });
   }
 
   /**
@@ -656,5 +862,82 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   onSurfaceFilterChange(): void {
     const surface = this.surfaceFilter === '' ? undefined : Number(this.surfaceFilter);
     this.filterBySuperficie(surface);
+  }
+
+  /**
+   * NOUVELLES MÉTHODES pour les fonctions utilisées dans le template du modal
+   */
+  
+  getStatusColor(statut: string): string {
+    switch(statut.toLowerCase()) {
+      case 'termine':
+      case 'terminé':
+        return 'green';
+      case 'en-retard':
+      case 'en_retard':
+        return 'red';
+      case 'en-cours':
+      case 'en_cours':
+        return 'blue';
+      default:
+        return 'default';
+    }
+  }
+
+  getStatusLabel(statut: string): string {
+    switch(statut.toLowerCase()) {
+      case 'termine':
+      case 'terminé':
+        return 'Terminé';
+      case 'en-retard':
+      case 'en_retard':
+        return 'En retard';
+      case 'en-cours':
+      case 'en_cours':
+        return 'En cours';
+      default:
+        return statut;
+    }
+  }
+
+  formatAmount(amount: number): string {
+    return this.formatCurrency(amount);
+  }
+
+  trackByPayment(index: number, payment: Payment): string {
+    return `${payment.date}-${payment.amount}-${index}`;
+  }
+
+  formatPaymentMode(mode: string | undefined): string {
+    if (!mode) return 'Non défini';
+    return mode;
+  }
+
+  formatPaymentStatus(statut: string | undefined): string {
+    if (!statut) return 'Non défini';
+    switch(statut.toLowerCase()) {
+      case 'valide':
+        return 'Validé';
+      case 'en_attente':
+        return 'En attente';
+      case 'rejete':
+        return 'Rejeté';
+      default:
+        return statut;
+    }
+  }
+
+  getPaymentStatusColor(statut: string | undefined): string {
+    if (!statut) return 'default';
+    switch(statut.toLowerCase()) {
+      case 'valide':
+        return 'green';
+      case 'en_attente':
+        return 'orange';
+      case 'rejete':
+        return 'red';
+      default:
+        return 'default';
+    }
   }
 }

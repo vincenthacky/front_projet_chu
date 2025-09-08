@@ -156,6 +156,28 @@ export interface PlanPaiement {
   updated_at: string;
 }
 
+
+export interface Terrain {
+  id_terrain: number;
+  libelle: string;
+  localisation: string;
+  superficie: string;
+  prix_unitaire: string;
+  description: string;
+  statut_terrain: string;
+  coordonnees_gps: string;
+  date_creation: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TerrainResponse {
+  success: boolean;
+  status_code: number;
+  message: string;
+  data: Terrain[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -492,4 +514,13 @@ export class SouscriptionService {
         return { status, color: 'info', label: 'En attente' };
     }
   }
+
+
+  // Ajouter cette méthode à SouscriptionService
+getTerrains(): Observable<Terrain[]> {
+  return this.http.get<TerrainResponse>(`${this.API_URL}/terrains`).pipe(
+    map(response => response.data),
+    tap(terrains => console.log('🌍 Terrains récupérés:', terrains))
+  );
+}
 }
