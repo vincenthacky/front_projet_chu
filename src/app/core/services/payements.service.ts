@@ -84,12 +84,12 @@ import { environment } from 'src/environment/environment.prod';
   providedIn: 'root'
 })
 export class PayementsService {
-  private apiUrl = 'http://192.168.252.75:8000/api/paiements'; // ✅ URL directe pour test
+  private apiUrl = 'http://192.168.252.75:8000/api/paiements'; // ✅ Updated to new endpoint
 
   constructor(private http: HttpClient) {}
 
   /**
-   * Récupérer tous les paiements d'un utilisateur
+   * Récupérer tous les paiements
    */
   getMesPaiements(filters?: PaiementsFilters): Observable<PaiementsResponse> {
     let params = new HttpParams();

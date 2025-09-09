@@ -3,11 +3,34 @@
 <div class="document-list">
   <div class="document-item" *ngFor="let doc of documents; let i = index">
     <div class="document-info">
-      <strong>{{ doc.titre }}</strong>
-      <small>Publié le {{ doc.date | date:'dd MMM yyyy' }}</small>
+      <strong>{{ doc.nom_original }}</strong>
+      <small>Publié le {{ doc.date_telechargement | date:'dd MMM yyyy' }}</small>
     </div>
     <button nz-button nzType="primary" class="btn" (click)="onConsulter(doc)">
-      {{ doc.action }}
+      <i nz-icon></i> Consulter
     </button>
   </div>
+  
+  <!-- Message si pas de documents -->
+  <div *ngIf="documents.length === 0 && !loading" class="no-documents">
+    <p>Aucun document trouvé.</p>
+  </div>
+  
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading">
+    <p>Chargement des documents...</p>
+  </div>
+</div>
+
+<!-- Pagination -->
+<div class="pagination-container" *ngIf="totalDocuments > pageSize " style="margin-top: 20px;">
+  <nz-pagination 
+    [(nzPageIndex)]="currentPage"
+    [nzTotal]="totalDocuments"
+    [nzPageSize]="pageSize"
+    nzShowSizeChanger="false"
+    nzShowQuickJumper="false" 
+    nzSize="small"
+    (nzPageIndexChange)="onPageChange($event)">
+  </nz-pagination>
 </div>

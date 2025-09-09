@@ -1,8 +1,7 @@
-// services/auth.service.ts
 import { Injectable, inject, Inject, PLATFORM_ID } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, tap, interval, Subscription, catchError, throwError, map } from 'rxjs';
+import { BehaviorSubject, Observable, tap, catchError, throwError, map } from 'rxjs';
 import { isPlatformBrowser } from '@angular/common';
 
 export interface User {
@@ -13,7 +12,7 @@ export interface User {
   email: string;
   telephone?: string;
   poste?: string;
-  type: string; // 'superAdmin', 'admin', 'user', etc.
+  type: string;
   service?: string;
   date_inscription: string;
   derniere_connexion?: string | null;
@@ -21,6 +20,27 @@ export interface User {
   statut_utilisateur: 'actif' | 'suspendu' | 'inactif';
   created_at: string;
   updated_at: string;
+}
+
+export interface UserProfileResponse {
+  success: boolean;
+  status_code: number;
+  message: string;
+  data: User;
+}
+
+export interface UsersResponse {
+  success: boolean;
+  status_code: number;
+  message: string;
+  data: User[];
+}
+
+export interface UserUpdateResponse {
+  success: boolean;
+  status_code: number;
+  message: string;
+  data: User;
 }
 
 export interface LoginResponse {
@@ -64,58 +84,40 @@ export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
 
-  // BehaviorSubject pour gérer l'état de connexion
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
   
-  // Gestion de l'inactivité
   private inactivityTimer?: number;
   private lastActivityTime: number = 0;
-  private readonly INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes en millisecondes
+  private readonly INACTIVITY_TIMEOUT = 30 * 60 * 1000;
   private activityListeners: (() => void)[] = [];
   
-  // Vérification si on est côté navigateur
   private isBrowser: boolean;
 
-  // Observables publics
   public currentUser$ = this.currentUserSubject.asObservable();
   public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {
     this.isBrowser = isPlatformBrowser(this.platformId);
     
-    // Seulement exécuter côté navigateur
     if (this.isBrowser) {
-      // Vérifier si l'utilisateur est déjà connecté au démarrage
       this.checkAuthStatus();
-      // Démarrer la surveillance d'inactivité
       this.setupInactivityDetection();
     }
   }
 
-  /**
-   * MÉTHODES DE DÉCODAGE UNICODE AMÉLIORÉES
-   */
-  
-  /**
-   * Décode les caractères Unicode échappés dans une chaîne
-   * Méthode améliorée pour gérer tous les cas d'encodage Unicode
-   */
   private decodeUnicodeString(str: string): string {
     if (!str || typeof str !== 'string') return str;
     
     try {
-      // Méthode 1: Décoder les séquences \uXXXX
       let decoded = str.replace(/\\u([\dA-Fa-f]{4})/g, (match, grp) => {
         return String.fromCharCode(parseInt(grp, 16));
       });
       
-      // Méthode 2: Décoder les entités HTML si présentes
       decoded = decoded.replace(/&#(\d+);/g, (match, dec) => {
         return String.fromCharCode(dec);
       });
       
-      // Méthode 3: Décoder les entités HTML nommées courantes
       const htmlEntities: { [key: string]: string } = {
         '&eacute;': 'é',
         '&egrave;': 'è',
@@ -139,7 +141,6 @@ export class AuthService {
         decoded = decoded.replace(new RegExp(entity, 'g'), char);
       }
       
-      // Méthode 4: Utiliser decodeURIComponent pour les caractères encodés en URL
       try {
         if (decoded.includes('%')) {
           decoded = decodeURIComponent(decoded);
@@ -155,10 +156,6 @@ export class AuthService {
     }
   }
 
-  /**
-   * Décode récursivement les caractères Unicode dans un objet
-   * Version améliorée qui gère mieux les structures complexes
-   */
   private decodeUnicodeInObject(obj: any): any {
     if (obj === null || obj === undefined) {
       return obj;
@@ -176,7 +173,6 @@ export class AuthService {
       const decoded: any = {};
       for (const key in obj) {
         if (Object.prototype.hasOwnProperty.call(obj, key)) {
-          // Décoder aussi les clés si nécessaire
           const decodedKey = this.decodeUnicodeString(key);
           decoded[decodedKey] = this.decodeUnicodeInObject(obj[key]);
         }
@@ -187,9 +183,6 @@ export class AuthService {
     return obj;
   }
 
-  /**
-   * Test de la fonction de décodage (pour debug)
-   */
   public testDecoding(): void {
     const testStrings = [
       'Connexion r\\u00e9ussie',
@@ -204,23 +197,18 @@ export class AuthService {
     });
   }
 
-  /**
-   * Connexion de l'utilisateur
-   */
   login(credentials: { identifiant: string; mot_de_passe: string }): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.API_URL}/login`, credentials)
       .pipe(
         tap(response => {
           console.log('📨 Réponse API brute:', response);
         }),
-        // Décoder TOUTE la réponse
         map(response => {
           const decodedResponse = this.decodeUnicodeInObject(response) as LoginResponse;
           console.log('📨 Réponse API décodée:', decodedResponse);
           return decodedResponse;
         }),
         tap(decodedResponse => {
-          // Traitement après décodage
           if (decodedResponse.success === true && decodedResponse.data && decodedResponse.data.user && decodedResponse.data.token) {
             console.log('✅ Connexion réussie, stockage des données...');
             this.setAuthData(decodedResponse.data.user, decodedResponse.data.token);
@@ -230,7 +218,6 @@ export class AuthService {
         }),
         catchError(error => {
           console.error('❌ Erreur de connexion:', error);
-          // Décoder aussi les messages d'erreur
           if (error.error) {
             error.error = this.decodeUnicodeInObject(error.error);
           }
@@ -239,9 +226,6 @@ export class AuthService {
       );
   }
 
-  /**
-   * Déconnexion de l'utilisateur avec invalidation côté backend
-   */
   logout(): void {
     console.log('🚪 Déconnexion en cours...');
     
@@ -257,7 +241,6 @@ export class AuthService {
       };
       
       this.http.post<LogoutResponse>(`${this.API_URL}/logout`, {}, { headers }).pipe(
-        // Décoder la réponse de logout aussi
         map(response => this.decodeUnicodeInObject(response) as LogoutResponse)
       ).subscribe({
         next: (response: LogoutResponse) => {
@@ -267,7 +250,6 @@ export class AuthService {
         },
         error: (error: any) => {
           console.log('📊 ERREUR logout backend:', error);
-          // Décoder le message d'erreur
           if (error.error) {
             error.error = this.decodeUnicodeInObject(error.error);
           }
@@ -281,9 +263,6 @@ export class AuthService {
     }
   }
 
-  /**
-   * Finaliser la déconnexion (nettoyage local)
-   */
   private completeLogout(): void {
     this.stopInactivityDetection();
     
@@ -303,31 +282,21 @@ export class AuthService {
     }
   }
 
-  /**
-   * Déconnexion manuelle
-   */
   manualLogout(): void {
     this.logout();
   }
 
-  /**
-   * Déconnexion forcée
-   */
   forceLogout(): void {
     console.log('🚪 Déconnexion forcée (token invalide)');
     this.completeLogout();
   }
 
-  /**
-   * Stockage des données d'authentification
-   */
   private setAuthData(user: User, token: string): void {
     if (!this.isBrowser) return;
     
-    // Décoder l'utilisateur avant stockage
     const decodedUser = this.decodeUnicodeInObject(user) as User;
     
-    const expiryTime = new Date().getTime() + (24 * 60 * 60 * 1000); // 24 heures
+    const expiryTime = new Date().getTime() + (24 * 60 * 60 * 1000);
     
     console.log('📝 Stockage utilisateur décodé:', decodedUser);
     console.log('⏰ Expiration token prévue à:', new Date(expiryTime));
@@ -342,9 +311,6 @@ export class AuthService {
     this.startInactivityDetection();
   }
 
-  /**
-   * Vérification du statut d'authentification
-   */
   private checkAuthStatus(): void {
     if (!this.isBrowser) return;
     
@@ -359,7 +325,6 @@ export class AuthService {
       if (now < expiryTime) {
         try {
           let userData: User = JSON.parse(user);
-          // Décoder l'utilisateur au cas où il serait encore encodé
           userData = this.decodeUnicodeInObject(userData) as User;
           
           this.currentUserSubject.next(userData);
@@ -379,16 +344,12 @@ export class AuthService {
     }
   }
 
-  /**
-   * Envoi du token de réinitialisation de mot de passe
-   */
   forgotPassword(email: string): Observable<ForgotPasswordResponse> {
     return this.http.post<ForgotPasswordResponse>(`${this.API_URL}/password/send-token`, { email })
       .pipe(
         tap(response => {
           console.log('📧 Réponse brute envoi token:', response);
         }),
-        // Décoder les caractères Unicode
         map(response => {
           const decoded = this.decodeUnicodeInObject(response) as ForgotPasswordResponse;
           console.log('📧 Réponse décodée envoi token:', decoded);
@@ -404,9 +365,6 @@ export class AuthService {
       );
   }
 
-  /**
-   * Réinitialisation du mot de passe avec token
-   */
   resetPassword(token: string, password: string, password_confirmation: string): Observable<ResetPasswordResponse> {
     console.log('🔐 Service resetPassword appelé avec:');
     console.log('   - Token (longueur):', token ? token.length : 'null/undefined');
@@ -421,7 +379,6 @@ export class AuthService {
       tap(response => {
         console.log('🔐 Réponse brute réinitialisation:', response);
       }),
-      // Décoder les caractères Unicode dans la réponse
       map(response => {
         const decoded = this.decodeUnicodeInObject(response) as ResetPasswordResponse;
         console.log('🔐 Réponse décodée réinitialisation:', decoded);
@@ -437,9 +394,6 @@ export class AuthService {
     );
   }
 
-  /**
-   * Mise à jour du profil utilisateur
-   */
   updateProfile(userData: Partial<User>): Observable<{ user: User }> {
     return this.http.put<{ user: User }>(`${this.API_URL}/profile`, userData)
       .pipe(
@@ -465,9 +419,35 @@ export class AuthService {
       );
   }
 
-  // === MÉTHODES INCHANGÉES ===
-  // [Les méthodes suivantes restent identiques]
-  
+  updatePassword(data: {
+    ancien_mot_de_passe: string;
+    nouveau_mot_de_passe: string;
+    nouveau_mot_de_passe_confirmation: string;
+  }): Observable<any> {
+    const token = this.getToken();
+    if (!token) {
+      console.error('❌ Aucun token d’authentification trouvé');
+      return throwError(() => new Error('Utilisateur non authentifié'));
+    }
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    });
+
+    return this.http.post(`${this.API_URL}/password/update`, data, { headers }).pipe(
+      tap(response => console.log('📨 Réponse brute mise à jour mot de passe:', response)),
+      map(response => this.decodeUnicodeInObject(response)),
+      catchError(error => {
+        console.error('❌ Erreur mise à jour mot de passe:', error);
+        if (error.error) {
+          error.error = this.decodeUnicodeInObject(error.error);
+        }
+        return throwError(() => new Error(error.error?.message || 'Erreur serveur'));
+      })
+    );
+  }
+
   private setupInactivityDetection(): void {
     if (!this.isBrowser) return;
     
@@ -542,7 +522,9 @@ export class AuthService {
   }
 
   getCurrentUser(): User | null {
-    return this.currentUserSubject.value;
+    const user = this.currentUserSubject.value;
+    console.log('🔍 Utilisateur connecté récupéré:', user);
+    return user;
   }
 
   isAuthenticated(): boolean {
@@ -553,9 +535,11 @@ export class AuthService {
     const user = this.getCurrentUser();
     if (!user) return false;
     
-    return user.est_administrateur || 
-           user.type === 'superAdmin' || 
-           user.type === 'admin';
+    const isAdmin = user.est_administrateur || 
+                    user.type === 'superAdmin' || 
+                    user.type === 'admin';
+    console.log('🔍 Vérification admin:', { userId: user.id_utilisateur, isAdmin });
+    return isAdmin;
   }
 
   isUser(): boolean {
@@ -625,6 +609,170 @@ export class AuthService {
           return throwError(error);
         })
       );
+  }
+
+  public diagnosticToken(): void {
+    if (!this.isBrowser) {
+      console.log('PAS CÔTÉ NAVIGATEUR');
+      return;
+    }
+
+    console.log('=== DIAGNOSTIC TOKEN ===');
+    
+    console.log('Service state:');
+    console.log('- isAuthenticated():', this.isAuthenticated());
+    console.log('- isSessionValid():', this.isSessionValid());
+    
+    const rawToken = localStorage.getItem('token');
+    const rawUser = localStorage.getItem('user');
+    const rawExpiry = localStorage.getItem('authExpiry');
+    
+    console.log('LocalStorage:');
+    console.log('- token présent:', !!rawToken);
+    console.log('- token length:', rawToken?.length || 0);
+    console.log('- user présent:', !!rawUser);
+    console.log('- expiry présent:', !!rawExpiry);
+    
+    if (rawToken) {
+      console.log('Token analysis:');
+      console.log('- Premier 30 chars:', rawToken.substring(0, 30));
+      console.log('- Format JWT (3 parties):', rawToken.split('.').length === 3);
+      
+      if (rawToken.split('.').length === 3) {
+        try {
+          const parts = rawToken.split('.');
+          const header = JSON.parse(atob(parts[0]));
+          const payload = JSON.parse(atob(parts[1]));
+          console.log('- JWT header:', header);
+          console.log('- JWT payload keys:', Object.keys(payload));
+          
+          if (payload.exp) {
+            const expDate = new Date(payload.exp * 1000);
+            const now = new Date();
+            console.log('- Token expire le:', expDate.toISOString());
+            console.log('- Token expiré:', now > expDate);
+          }
+        } catch (e) {
+          console.log('- ERREUR décodage JWT:', e);
+        }
+      }
+    }
+    
+    const serviceToken = this.getToken();
+    console.log('getToken() result:', serviceToken ? 'TOKEN RETOURNÉ' : 'NULL');
+    console.log('Tokens identiques:', rawToken === serviceToken);
+    
+    console.log('=== FIN DIAGNOSTIC ===');
+  }
+
+  getUserProfile(userId: number): Observable<UserProfileResponse> {
+    const token = this.getToken();
+    if (!token) {
+      console.error('❌ Aucun token d\'authentification trouvé');
+      return throwError(() => new Error('Utilisateur non authentifié'));
+    }
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    });
+
+    return this.http.get<UserProfileResponse>(`${this.API_URL}/utilisateurs/${userId}`, { headers }).pipe(
+      tap(response => {
+        console.log('📨 Réponse brute récupération profil:', response);
+      }),
+      map(response => {
+        const decoded = this.decodeUnicodeInObject(response) as UserProfileResponse;
+        console.log('📨 Réponse décodée récupération profil:', decoded);
+        return decoded;
+      }),
+      catchError(error => {
+        console.error('❌ Erreur récupération profil utilisateur:', error);
+        if (error.error) {
+          error.error = this.decodeUnicodeInObject(error.error);
+        }
+        return throwError(() => new Error(error.error?.message || 'Erreur serveur'));
+      })
+    );
+  }
+
+  updateUserProfile(userId: number, userData: Partial<User>): Observable<UserUpdateResponse> {
+    const token = this.getToken();
+    if (!token) {
+      console.error('❌ Aucun token d\'authentification trouvé');
+      return throwError(() => new Error('Utilisateur non authentifié'));
+    }
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    });
+
+    console.log('🔄 Mise à jour du profil utilisateur:', {
+      userId,
+      userData,
+      url: `${this.API_URL}/utilisateurs/${userId}`
+    });
+
+    return this.http.put<UserUpdateResponse>(`${this.API_URL}/utilisateurs/${userId}`, userData, { headers }).pipe(
+      tap(response => {
+        console.log('📨 Réponse brute mise à jour profil:', response);
+      }),
+      map(response => {
+        const decoded = this.decodeUnicodeInObject(response) as UserUpdateResponse;
+        console.log('📨 Réponse décodée mise à jour profil:', decoded);
+        return decoded;
+      }),
+      tap(decodedResponse => {
+        if (decodedResponse.success && decodedResponse.data && this.isBrowser) {
+          const currentUser = this.getCurrentUser();
+          if (currentUser) {
+            const updatedUser = { ...currentUser, ...decodedResponse.data };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            this.currentUserSubject.next(updatedUser);
+            console.log('👤 Données utilisateur mises à jour localement:', updatedUser);
+          }
+        }
+      }),
+      catchError(error => {
+        console.error('❌ Erreur mise à jour profil utilisateur:', error);
+        if (error.error) {
+          error.error = this.decodeUnicodeInObject(error.error);
+        }
+        return throwError(() => new Error(error.error?.message || 'Erreur serveur'));
+      })
+    );
+  }
+
+  getAllUsers(): Observable<User[]> {
+    const token = this.getToken();
+    if (!token) {
+      console.error('❌ Aucun token d\'authentification trouvé');
+      return throwError(() => new Error('Utilisateur non authentifié'));
+    }
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    });
+
+    return this.http.get<UsersResponse>(`${this.API_URL}/utilisateurs`, { headers }).pipe(
+      tap(response => {
+        console.log('📋 Réponse brute récupération utilisateurs:', response);
+      }),
+      map(response => {
+        const decoded = this.decodeUnicodeInObject(response) as UsersResponse;
+        console.log('📋 Réponse décodée récupération utilisateurs:', decoded);
+        return decoded.data;
+      }),
+      catchError(error => {
+        console.error('❌ Erreur récupération utilisateurs:', error);
+        if (error.error) {
+          error.error = this.decodeUnicodeInObject(error.error);
+        }
+        return throwError(() => new Error(error.error?.message || 'Erreur serveur'));
+      })
+    );
   }
 
   ngOnDestroy(): void {

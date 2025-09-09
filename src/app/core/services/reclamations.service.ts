@@ -1,8 +1,8 @@
-// src/app/core/services/reclamation.service.ts
+// src/app/core/services/reclamations.service.ts
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
 
 // Interfaces pour l'API
 export interface ApiReclamation {
@@ -88,7 +88,9 @@ export interface CreateReclamationData {
   titre: string;
   description: string;
   type_reclamation: string;
-  priorite: string;
+  id_statut_reclamation: number; // OBLIGATOIRE
+  priorite?: string; // Facultatif
+  document?: File; // Facultatif - pour upload
 }
 
 @Injectable({
@@ -99,10 +101,6 @@ export class ReclamationService {
 
   constructor(private http: HttpClient) { }
 
-  /**
-   * Récupère toutes les réclamations de l'utilisateur connecté avec pagination et filtres
-   * Le token est automatiquement ajouté par l'AuthInterceptor
-   */
   getMesReclamations(filters?: ReclamationFilters): Observable<ReclamationResponse> {
     let params = new HttpParams();
     
@@ -120,171 +118,96 @@ export class ReclamationService {
     return this.http.get<ReclamationResponse>(`${this.API_URL}/reclamations`, { params })
       .pipe(
         tap(response => {
-          console.log('📋 Réclamations récupérées:', response);
+          console.log('Réclamations récupérées:', response);
         })
       );
   }
 
   /**
-   * Récupère une réclamation spécifique par ID
-   */
-  getReclamationById(id: number): Observable<ReclamationSingleResponse> {
-    return this.http.get<ReclamationSingleResponse>(`${this.API_URL}/reclamations/${id}`)
-      .pipe(
-        tap(response => {
-          console.log('📄 Réclamation récupérée:', response);
-        })
-      );
-  }
-
-  /**
-   * Crée une nouvelle réclamation
+   * Crée une nouvelle réclamation avec support d'upload de fichier
    */
   createReclamation(reclamationData: CreateReclamationData): Observable<ReclamationSingleResponse> {
-    return this.http.post<ReclamationSingleResponse>(`${this.API_URL}/reclamations`, reclamationData)
-      .pipe(
-        tap(response => {
-          console.log('✅ Réclamation créée:', response);
-        })
-      );
-  }
+    // Utiliser FormData si un document est présent
+    if (reclamationData.document) {
+      const formData = new FormData();
+      formData.append('id_souscription', reclamationData.id_souscription.toString());
+      formData.append('titre', reclamationData.titre);
+      formData.append('description', reclamationData.description);
+      formData.append('type_reclamation', reclamationData.type_reclamation);
+      formData.append('id_statut_reclamation', reclamationData.id_statut_reclamation.toString());
+      if (reclamationData.priorite) {
+        formData.append('priorite', reclamationData.priorite);
+      }
+      formData.append('document', reclamationData.document);
+      
+      // Plusieurs tentatives pour le nom original
+      formData.append('nom_original', reclamationData.document.name);
+      formData.append('nom_original_document', reclamationData.document.name);
+      formData.append('original_name', reclamationData.document.name);
+      formData.append('file_original_name', reclamationData.document.name);
 
-  /**
-   * Met à jour une réclamation existante
-   */
-  updateReclamation(id: number, reclamationData: Partial<CreateReclamationData>): Observable<ReclamationSingleResponse> {
-    return this.http.put<ReclamationSingleResponse>(`${this.API_URL}/reclamations/${id}`, reclamationData)
-      .pipe(
-        tap(response => {
-          console.log('✏️ Réclamation mise à jour:', response);
-        })
-      );
-  }
+      console.log('FormData envoyé:', {
+        nom_fichier: reclamationData.document.name,
+        nom_original: reclamationData.document.name,
+        taille: reclamationData.document.size
+      });
 
-  /**
-   * Supprime une réclamation
-   */
-  deleteReclamation(id: number): Observable<{success: boolean; message: string}> {
-    return this.http.delete<{success: boolean; message: string}>(`${this.API_URL}/reclamations/${id}`)
-      .pipe(
-        tap(response => {
-          console.log('🗑️ Réclamation supprimée:', response);
-        })
-      );
-  }
+      return this.http.post<ReclamationSingleResponse>(`${this.API_URL}/reclamations`, formData)
+        .pipe(
+          tap(response => {
+            console.log('Réclamation avec document créée:', response);
+          })
+        );
+    } else {
+      // Envoi JSON classique sans fichier
+      const jsonData = {
+        id_souscription: reclamationData.id_souscription,
+        titre: reclamationData.titre,
+        description: reclamationData.description,
+        type_reclamation: reclamationData.type_reclamation,
+        id_statut_reclamation: reclamationData.id_statut_reclamation,
+        ...(reclamationData.priorite && { priorite: reclamationData.priorite })
+      };
 
-  /**
-   * Recherche dans les réclamations
-   */
-  rechercherReclamations(query: string, filters?: ReclamationFilters): Observable<ReclamationResponse> {
-    let params = new HttpParams().set('search', query);
-    
-    if (filters) {
-      if (filters.page) params = params.set('page', filters.page.toString());
-      if (filters.per_page) params = params.set('per_page', filters.per_page.toString());
-      if (filters.type) params = params.set('type', filters.type);
-      if (filters.statut) params = params.set('statut', filters.statut.toString());
-      if (filters.priorite) params = params.set('priorite', filters.priorite);
+      return this.http.post<ReclamationSingleResponse>(`${this.API_URL}/reclamations`, jsonData)
+        .pipe(
+          tap(response => {
+            console.log('Réclamation créée:', response);
+          })
+        );
     }
-
-    return this.http.get<ReclamationResponse>(`${this.API_URL}/reclamations`, { params })
-      .pipe(
-        tap(response => {
-          console.log('🔍 Résultats de recherche réclamations:', response);
-        })
-      );
   }
 
-  /**
-   * Utilitaires pour le formatage des données
-   */
-  
-  // Obtient la classe CSS pour la priorité
-  getPriorityClass(priorite: string): string {
-    switch(priorite.toLowerCase()) {
-      case 'haute':
-        return 'badge-danger';
-      case 'moyenne':
-        return 'badge-warning';
-      case 'basse':
-        return 'badge-success';
+  getTypeLabel(type: string): string {
+    switch(type) {
+      case 'anomalie_paiement':
+        return 'Anomalie de paiement';
+      case 'information_erronee':
+        return 'Information erronée';
+      case 'document_manquant':
+        return 'Document manquant';
+      case 'avancement_projet':
+        return 'Avancement projet';
+      case 'autre':
+        return 'Autre';
       default:
-        return 'badge-secondary';
+        return type;
     }
   }
 
   // Obtient le libellé français de la priorité
   getPriorityLabel(priorite: string): string {
     switch(priorite.toLowerCase()) {
-      case 'haute':
-        return 'Haute';
-      case 'moyenne':
-        return 'Moyenne';
       case 'basse':
         return 'Basse';
+      case 'normale':
+        return 'Normale';
+      case 'haute':
+        return 'Haute';
+      case 'urgente':
+        return 'Urgente';
       default:
         return priorite;
     }
-  }
-
-  // Obtient la classe CSS pour le type de réclamation
-  getTypeClass(type: string): string {
-    switch(type) {
-      case 'information_erronee':
-        return 'badge-warning';
-      case 'probleme_paiement':
-        return 'badge-danger';
-      case 'demande_information':
-        return 'badge-info';
-      case 'probleme_technique':
-        return 'badge-secondary';
-      default:
-        return 'badge-primary';
-    }
-  }
-
-  // Obtient le libellé français du type de réclamation
-  getTypeLabel(type: string): string {
-    switch(type) {
-      case 'information_erronee':
-        return 'Information erronée';
-      case 'probleme_paiement':
-        return 'Problème de paiement';
-      case 'demande_information':
-        return 'Demande d\'information';
-      case 'probleme_technique':
-        return 'Problème technique';
-      default:
-        return type;
-    }
-  }
-
-  // Détermine si une réclamation est récente (moins de 7 jours)
-  isRecent(dateReclamation: string): boolean {
-    const today = new Date();
-    const reclamationDate = new Date(dateReclamation);
-    const diffDays = Math.ceil((today.getTime() - reclamationDate.getTime()) / (1000 * 60 * 60 * 24));
-    return diffDays <= 7;
-  }
-
-  // Calcule le nombre de jours depuis la réclamation
-  getDaysSince(dateReclamation: string): number {
-    const today = new Date();
-    const reclamationDate = new Date(dateReclamation);
-    return Math.ceil((today.getTime() - reclamationDate.getTime()) / (1000 * 60 * 60 * 24));
-  }
-
-  // Obtient le statut avec style pour l'affichage
-  getStatusWithStyle(reclamation: ApiReclamation): {label: string, color: string, bgColor: string} {
-    const statut = reclamation.statut;
-    
-    // Utilise la couleur définie dans le statut si disponible
-    let color = statut.couleur_statut || '#6c757d';
-    
-    return {
-      label: statut.libelle_statut_reclamation,
-      color: color,
-      bgColor: `${color}20` // Ajoute de la transparence pour le background
-    };
   }
 }

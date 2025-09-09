@@ -11,7 +11,6 @@ import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { AuthService } from '../core/services/auth.service';
 
-
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
   private authService = inject(AuthService);
@@ -19,7 +18,7 @@ export class AuthInterceptor implements HttpInterceptor {
   // URLs qui ne nécessitent PAS de token d'authentification
   private readonly EXCLUDED_URLS = [
     '/api/login',
-    '/api/register',
+    '/api/register', 
     '/api/password/send-token',
     '/api/password/reset',
     '/api/status'
@@ -30,76 +29,82 @@ export class AuthInterceptor implements HttpInterceptor {
     next: HttpHandler
   ): Observable<HttpEvent<any>> {
     
-    console.log('🌐 Interceptor - Requête vers:', request.url);
+    console.log('🔍 INTERCEPTOR: Requête vers', request.url);
 
     // Vérifier si cette URL nécessite un token
     const requiresToken = this.shouldAddToken(request.url);
     
     if (!requiresToken) {
-      console.log('🔓 Interceptor - Requête sans authentification:', request.url);
+      console.log('⚪ INTERCEPTOR: Pas de token requis pour', request.url);
       return next.handle(request);
     }
 
-    // Vérifier si la session est encore valide avant d'ajouter le token
+    // CORRECTION MAJEURE: Vérifier d'abord si la session est valide
     if (!this.authService.isSessionValid()) {
-      console.log('⏰ Interceptor - Session expirée détectée');
-      
-      // Si la session a expiré, déconnecter l'utilisateur
-      if (this.authService.isAuthenticated()) {
-        console.log('🚪 Interceptor - Déconnexion automatique pour session expirée');
-        this.authService.forceLogout(); // Utiliser forceLogout pour éviter la boucle
-      }
-      
-      // Continuer la requête sans token (elle échouera probablement avec 401)
+      console.log('❌ INTERCEPTOR: Session expirée');
+      this.authService.forceLogout();
       return next.handle(request);
     }
 
-    // Ajouter le token d'authentification si disponible et valide
+    // Récupérer le token via la méthode sécurisée
     const token = this.authService.getToken();
 
-    if (token) {
-      console.log('🔑 Interceptor - Ajout du token à la requête');
-      console.log('🔑 Interceptor - Token length:', token.length);
-      
-      request = request.clone({
-        setHeaders: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
-      });
-    } else {
-      console.log('🔑 Interceptor - Aucun token disponible pour requête authentifiée');
+    if (!token) {
+      console.log('❌ INTERCEPTOR: Aucun token valide disponible');
+      this.authService.forceLogout();
+      return next.handle(request);
     }
 
-    return next.handle(request).pipe(
+    console.log('✅ INTERCEPTOR: Token valide trouvé (longueur:', token.length, ')');
+    
+    // CORRECTION: Validation plus stricte du format JWT
+    if (!this.isValidJWT(token)) {
+      console.log('❌ INTERCEPTOR: Format JWT invalide');
+      this.authService.forceLogout();
+      return next.handle(request);
+    }
+
+    // CORRECTION CRITIQUE: Ne pas modifier Content-Type pour FormData
+    const headers: { [key: string]: string } = {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json'
+    };
+
+    // Ajouter Content-Type SEULEMENT si ce n'est pas FormData
+    if (!(request.body instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    // Créer la requête avec les bons headers
+    const authenticatedRequest = request.clone({
+      setHeaders: headers
+    });
+
+    console.log('🔒 INTERCEPTOR: Headers d\'authentification ajoutés');
+
+    return next.handle(authenticatedRequest).pipe(
       catchError((error: HttpErrorResponse) => {
-        console.log('❌ Interceptor - Erreur HTTP:', {
-          status: error.status,
-          url: error.url,
-          message: error.message
-        });
-
-        // Gérer les erreurs d'authentification
-        if (error.status === 401) {
-          console.log('🚫 Interceptor - Erreur 401: Token invalide ou expiré');
-          // Token expiré ou invalide - utiliser forceLogout pour éviter la boucle
+        console.log('💥 INTERCEPTOR ERROR:', error.status, error.message);
+        
+        // Gestion spécifique de l'erreur de parsing du token
+        if (error.status === 500 && error.error?.message?.includes('token could not be parsed')) {
+          console.log('🔴 INTERCEPTOR: Erreur parsing token - token corrompu');
+          this.authService.diagnosticToken(); // Debug
           this.authService.forceLogout();
+          return throwError(() => new Error('Token invalide - Veuillez vous reconnecter'));
         }
 
-        // Gérer les erreurs de permission
+        // Gestion des erreurs d'authentification
+        if (error.status === 401) {
+          console.log('🔴 INTERCEPTOR: Token expiré ou invalide (401)');
+          this.authService.forceLogout();
+          return throwError(() => new Error('Session expirée - Veuillez vous reconnecter'));
+        }
+
+        // Gestion des erreurs de permissions
         if (error.status === 403) {
-          console.error('🚫 Interceptor - Erreur 403: Accès refusé');
-        }
-
-        // Gérer les erreurs serveur
-        if (error.status >= 500) {
-          console.error('🔧 Interceptor - Erreur serveur:', error.status);
-        }
-
-        // Gérer les erreurs de connexion
-        if (error.status === 0) {
-          console.error('🌐 Interceptor - Erreur de connexion: Serveur inaccessible');
+          console.log('🔴 INTERCEPTOR: Accès refusé (403)');
+          return throwError(() => new Error('Accès refusé'));
         }
 
         return throwError(() => error);
@@ -108,10 +113,40 @@ export class AuthInterceptor implements HttpInterceptor {
   }
 
   /**
+   * Vérification stricte du format JWT
+   */
+  private isValidJWT(token: string): boolean {
+    if (!token || typeof token !== 'string') {
+      return false;
+    }
+
+    // Vérifier le format de base (3 parties séparées par des points)
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      return false;
+    }
+
+    // Vérifier que chaque partie est une chaîne base64 valide
+    try {
+      for (const part of parts) {
+        if (!part || part.length === 0) {
+          return false;
+        }
+        // Tentative de décodage base64
+        atob(part.replace(/-/g, '+').replace(/_/g, '/'));
+      }
+      return true;
+    } catch (error) {
+      console.log('❌ INTERCEPTOR: Erreur validation JWT:', error);
+      return false;
+    }
+  }
+
+  /**
    * Détermine si une URL nécessite un token d'authentification
    */
   private shouldAddToken(url: string): boolean {
-    // Vérifier si l'URL est dans la liste des exclusions
-    return !this.EXCLUDED_URLS.some(excludedUrl => url.includes(excludedUrl));
+    const excluded = this.EXCLUDED_URLS.some(excludedUrl => url.includes(excludedUrl));
+    return !excluded;
   }
 }

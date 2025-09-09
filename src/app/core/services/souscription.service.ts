@@ -26,6 +26,23 @@ export interface ApiSouscription {
   montant_paye: string;
   reste_a_payer: number;
   date_prochain: string | null;
+  utilisateur: {
+    id_utilisateur: number;
+    matricule: string;
+    nom: string;
+    prenom: string;
+    email: string;
+    telephone: string;
+    poste: string;
+    type: string;
+    service: string;
+    date_inscription: string;
+    derniere_connexion: string | null;
+    est_administrateur: boolean;
+    statut_utilisateur: string;
+    created_at: string;
+    updated_at: string;
+  };
   terrain: {
     id_terrain: number;
     libelle: string;
@@ -107,6 +124,8 @@ export interface SouscriptionFilters {
   terrain_id?: number;
   search?: string;
   superficie?: number; // Superficie en m², optionnel
+  all_users?: boolean; // Pour récupérer toutes les souscriptions (vue admin)
+  admin_view?: boolean; // Pour la vue administrateur
 }
 
 export interface SouscriptionStats {
@@ -137,6 +156,28 @@ export interface PlanPaiement {
   updated_at: string;
 }
 
+
+export interface Terrain {
+  id_terrain: number;
+  libelle: string;
+  localisation: string;
+  superficie: string;
+  prix_unitaire: string;
+  description: string;
+  statut_terrain: string;
+  coordonnees_gps: string;
+  date_creation: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TerrainResponse {
+  success: boolean;
+  status_code: number;
+  message: string;
+  data: Terrain[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -158,10 +199,12 @@ export class SouscriptionService {
       if (filters.statut) params = params.set('statut', filters.statut);
       if (filters.date_debut) params = params.set('date_debut', filters.date_debut);
       if (filters.date_fin) params = params.set('date_fin', filters.date_fin);
-      // ✅ CORRECTION : Utiliser 'superficie' au lieu de 'page'
       if (filters.superficie) params = params.set('superficie', filters.superficie.toString());
       if (filters.terrain_id) params = params.set('terrain_id', filters.terrain_id.toString());
       if (filters.search) params = params.set('search', filters.search);
+      // Nouveaux paramètres pour la vue admin
+      if (filters.all_users) params = params.set('all_users', 'true');
+      if (filters.admin_view) params = params.set('admin_view', 'true');
     }
 
     return this.http.get<SouscriptionResponse>(`${this.API_URL}/souscriptions`, { params })
@@ -185,7 +228,6 @@ export class SouscriptionService {
       if (filters.statut) params = params.set('statut', filters.statut);
       if (filters.date_debut) params = params.set('date_debut', filters.date_debut);
       if (filters.date_fin) params = params.set('date_fin', filters.date_fin);
-      // ✅ CORRECTION : Utiliser 'superficie' au lieu de 'terrain_id'
       if (filters.superficie) params = params.set('superficie', filters.superficie.toString());
       if (filters.search) params = params.set('search', filters.search);
     }
@@ -417,7 +459,7 @@ export class SouscriptionService {
   }
 
   /**
-   * ✅ NOUVELLE MÉTHODE : Détermine le statut d'une souscription selon la logique métier
+   * Détermine le statut d'une souscription selon la logique métier
    * Logique des statuts :
    * - 'termine' : reste_a_payer = 0
    * - 'en_retard' : date_prochain dépassée
@@ -452,7 +494,7 @@ export class SouscriptionService {
   }
 
   /**
-   * ✅ MÉTHODE UTILITAIRE : Obtient le statut avec couleur pour l'affichage
+   * Obtient le statut avec couleur pour l'affichage
    */
   getStatusWithColor(souscription: ApiSouscription): {status: string, color: string, label: string} {
     const status = this.calculateSouscriptionStatus(souscription);
@@ -472,4 +514,13 @@ export class SouscriptionService {
         return { status, color: 'info', label: 'En attente' };
     }
   }
+
+
+  // Ajouter cette méthode à SouscriptionService
+getTerrains(): Observable<Terrain[]> {
+  return this.http.get<TerrainResponse>(`${this.API_URL}/terrains`).pipe(
+    map(response => response.data),
+    tap(terrains => console.log('🌍 Terrains récupérés:', terrains))
+  );
+}
 }
