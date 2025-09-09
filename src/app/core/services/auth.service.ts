@@ -1,7 +1,7 @@
 import { Injectable, inject, Inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, tap, interval, Subscription, catchError, throwError, map } from 'rxjs';
+import { BehaviorSubject, Observable, tap, catchError, throwError, map } from 'rxjs';
 import { isPlatformBrowser } from '@angular/common';
 
 export interface User {
@@ -22,7 +22,6 @@ export interface User {
   updated_at: string;
 }
 
-// Ajouter cette interface dans votre service d'authentification
 export interface UserProfileResponse {
   success: boolean;
   status_code: number;
@@ -30,6 +29,12 @@ export interface UserProfileResponse {
   data: User;
 }
 
+export interface UsersResponse {
+  success: boolean;
+  status_code: number;
+  message: string;
+  data: User[];
+}
 
 export interface UserUpdateResponse {
   success: boolean;
@@ -517,7 +522,9 @@ export class AuthService {
   }
 
   getCurrentUser(): User | null {
-    return this.currentUserSubject.value;
+    const user = this.currentUserSubject.value;
+    console.log('🔍 Utilisateur connecté récupéré:', user);
+    return user;
   }
 
   isAuthenticated(): boolean {
@@ -528,9 +535,11 @@ export class AuthService {
     const user = this.getCurrentUser();
     if (!user) return false;
     
-    return user.est_administrateur || 
-           user.type === 'superAdmin' || 
-           user.type === 'admin';
+    const isAdmin = user.est_administrateur || 
+                    user.type === 'superAdmin' || 
+                    user.type === 'admin';
+    console.log('🔍 Vérification admin:', { userId: user.id_utilisateur, isAdmin });
+    return isAdmin;
   }
 
   isUser(): boolean {
@@ -656,86 +665,115 @@ export class AuthService {
     console.log('=== FIN DIAGNOSTIC ===');
   }
 
-// Ajouter cette méthode dans votre classe AuthService
-getUserProfile(userId: number): Observable<UserProfileResponse> {
-  const token = this.getToken();
-  if (!token) {
-    console.error('❌ Aucun token d\'authentification trouvé');
-    return throwError(() => new Error('Utilisateur non authentifié'));
-  }
+  getUserProfile(userId: number): Observable<UserProfileResponse> {
+    const token = this.getToken();
+    if (!token) {
+      console.error('❌ Aucun token d\'authentification trouvé');
+      return throwError(() => new Error('Utilisateur non authentifié'));
+    }
 
-  const headers = new HttpHeaders({
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
-  });
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    });
 
-  return this.http.get<UserProfileResponse>(`${this.API_URL}/utilisateurs/${userId}`, { headers }).pipe(
-    tap(response => {
-      console.log('📨 Réponse brute récupération profil:', response);
-    }),
-    map(response => {
-      const decoded = this.decodeUnicodeInObject(response) as UserProfileResponse;
-      console.log('📨 Réponse décodée récupération profil:', decoded);
-      return decoded;
-    }),
-    catchError(error => {
-      console.error('❌ Erreur récupération profil utilisateur:', error);
-      if (error.error) {
-        error.error = this.decodeUnicodeInObject(error.error);
-      }
-      return throwError(() => new Error(error.error?.message || 'Erreur serveur'));
-    })
-  );
-}
-
-// Mettre à jour le profil utilisateur (PUT)
-updateUserProfile(userId: number, userData: Partial<User>): Observable<UserUpdateResponse> {
-  const token = this.getToken();
-  if (!token) {
-    console.error('❌ Aucun token d\'authentification trouvé');
-    return throwError(() => new Error('Utilisateur non authentifié'));
-  }
-
-  const headers = new HttpHeaders({
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
-  });
-
-  console.log('🔄 Mise à jour du profil utilisateur:', {
-    userId,
-    userData,
-    url: `${this.API_URL}/utilisateurs/${userId}`
-  });
-
-  return this.http.put<UserUpdateResponse>(`${this.API_URL}/utilisateurs/${userId}`, userData, { headers }).pipe(
-    tap(response => {
-      console.log('📨 Réponse brute mise à jour profil:', response);
-    }),
-    map(response => {
-      const decoded = this.decodeUnicodeInObject(response) as UserUpdateResponse;
-      console.log('📨 Réponse décodée mise à jour profil:', decoded);
-      return decoded;
-    }),
-    tap(decodedResponse => {
-      // Mettre à jour les données utilisateur en local si la mise à jour réussit
-      if (decodedResponse.success && decodedResponse.data && this.isBrowser) {
-        const currentUser = this.getCurrentUser();
-        if (currentUser) {
-          const updatedUser = { ...currentUser, ...decodedResponse.data };
-          localStorage.setItem('user', JSON.stringify(updatedUser));
-          this.currentUserSubject.next(updatedUser);
-          console.log('👤 Données utilisateur mises à jour localement:', updatedUser);
+    return this.http.get<UserProfileResponse>(`${this.API_URL}/utilisateurs/${userId}`, { headers }).pipe(
+      tap(response => {
+        console.log('📨 Réponse brute récupération profil:', response);
+      }),
+      map(response => {
+        const decoded = this.decodeUnicodeInObject(response) as UserProfileResponse;
+        console.log('📨 Réponse décodée récupération profil:', decoded);
+        return decoded;
+      }),
+      catchError(error => {
+        console.error('❌ Erreur récupération profil utilisateur:', error);
+        if (error.error) {
+          error.error = this.decodeUnicodeInObject(error.error);
         }
-      }
-    }),
-    catchError(error => {
-      console.error('❌ Erreur mise à jour profil utilisateur:', error);
-      if (error.error) {
-        error.error = this.decodeUnicodeInObject(error.error);
-      }
-      return throwError(() => new Error(error.error?.message || 'Erreur serveur'));
-    })
-  );}
+        return throwError(() => new Error(error.error?.message || 'Erreur serveur'));
+      })
+    );
+  }
+
+  updateUserProfile(userId: number, userData: Partial<User>): Observable<UserUpdateResponse> {
+    const token = this.getToken();
+    if (!token) {
+      console.error('❌ Aucun token d\'authentification trouvé');
+      return throwError(() => new Error('Utilisateur non authentifié'));
+    }
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    });
+
+    console.log('🔄 Mise à jour du profil utilisateur:', {
+      userId,
+      userData,
+      url: `${this.API_URL}/utilisateurs/${userId}`
+    });
+
+    return this.http.put<UserUpdateResponse>(`${this.API_URL}/utilisateurs/${userId}`, userData, { headers }).pipe(
+      tap(response => {
+        console.log('📨 Réponse brute mise à jour profil:', response);
+      }),
+      map(response => {
+        const decoded = this.decodeUnicodeInObject(response) as UserUpdateResponse;
+        console.log('📨 Réponse décodée mise à jour profil:', decoded);
+        return decoded;
+      }),
+      tap(decodedResponse => {
+        if (decodedResponse.success && decodedResponse.data && this.isBrowser) {
+          const currentUser = this.getCurrentUser();
+          if (currentUser) {
+            const updatedUser = { ...currentUser, ...decodedResponse.data };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            this.currentUserSubject.next(updatedUser);
+            console.log('👤 Données utilisateur mises à jour localement:', updatedUser);
+          }
+        }
+      }),
+      catchError(error => {
+        console.error('❌ Erreur mise à jour profil utilisateur:', error);
+        if (error.error) {
+          error.error = this.decodeUnicodeInObject(error.error);
+        }
+        return throwError(() => new Error(error.error?.message || 'Erreur serveur'));
+      })
+    );
+  }
+
+  getAllUsers(): Observable<User[]> {
+    const token = this.getToken();
+    if (!token) {
+      console.error('❌ Aucun token d\'authentification trouvé');
+      return throwError(() => new Error('Utilisateur non authentifié'));
+    }
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    });
+
+    return this.http.get<UsersResponse>(`${this.API_URL}/utilisateurs`, { headers }).pipe(
+      tap(response => {
+        console.log('📋 Réponse brute récupération utilisateurs:', response);
+      }),
+      map(response => {
+        const decoded = this.decodeUnicodeInObject(response) as UsersResponse;
+        console.log('📋 Réponse décodée récupération utilisateurs:', decoded);
+        return decoded.data;
+      }),
+      catchError(error => {
+        console.error('❌ Erreur récupération utilisateurs:', error);
+        if (error.error) {
+          error.error = this.decodeUnicodeInObject(error.error);
+        }
+        return throwError(() => new Error(error.error?.message || 'Erreur serveur'));
+      })
+    );
+  }
 
   ngOnDestroy(): void {
     this.stopInactivityDetection();

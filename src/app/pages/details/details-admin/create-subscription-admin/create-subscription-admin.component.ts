@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router'; // Import Router
+import { Router } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzInputModule } from 'ng-zorro-antd/input';
@@ -11,7 +11,8 @@ import { NzGridModule } from 'ng-zorro-antd/grid';
 import { NzCardModule } from 'ng-zorro-antd/card';
 import { CommonModule } from '@angular/common';
 import { AuthService, User } from 'src/app/core/services/auth.service';
-import { SouscriptionService, ApiSouscription, SouscriptionSingleResponse, Terrain } from 'src/app/core/services/souscription.service';
+import { TerrainsService, Terrain, TerrainResponse } from 'src/app/core/services/terrains.service';
+import { SouscriptionService, ApiSouscription, SouscriptionSingleResponse } from 'src/app/core/services/souscription.service';
 
 @Component({
   selector: 'app-create-subscription-admin',
@@ -36,14 +37,15 @@ export class CreateSubscriptionAdminComponent implements OnInit {
   users: User[] = [];
   terrains: Terrain[] = [];
   admins: User[] = [];
-  statutOptions = ['active', 'pending', 'suspendu', 'annule'];
+  statutOptions = ['active', 'suspendu', 'annule'];
 
   constructor(
     private fb: FormBuilder,
+    private terrainsService: TerrainsService,
     private souscriptionService: SouscriptionService,
     private authService: AuthService,
     private message: NzMessageService,
-    private router: Router // Inject Router
+    private router: Router
   ) {
     this.initForm();
   }
@@ -51,7 +53,7 @@ export class CreateSubscriptionAdminComponent implements OnInit {
   ngOnInit(): void {
     if (!this.authService.isAdmin()) {
       this.message.error('Seuls les administrateurs peuvent créer des souscriptions.');
-      this.router.navigate(['/']); // Use injected Router
+      this.router.navigate(['/']);
       return;
     }
     this.loadDropdownData();
@@ -75,41 +77,45 @@ export class CreateSubscriptionAdminComponent implements OnInit {
   }
 
   loadDropdownData(): void {
-    // Récupérer les utilisateurs
-    this.souscriptionService.getAllSouscriptions({ all_users: true }).subscribe({
-      next: (response) => {
-        this.users = response.data.map(s => ({
-          ...s.utilisateur,
-          statut_utilisateur: this.normalizeStatutUtilisateur(s.utilisateur.statut_utilisateur)
-        } as User)).filter((v, i, a) => a.findIndex(t => t.id_utilisateur === v.id_utilisateur) === i);
-        console.log('👥 Utilisateurs chargés:', this.users);
+    // Récupérer les utilisateurs non-administrateurs
+    this.authService.getAllUsers().subscribe({
+      next: (users) => {
+        this.users = users
+          .map(user => ({
+            ...user,
+            statut_utilisateur: this.normalizeStatutUtilisateur(user.statut_utilisateur)
+          } as User))
+          .filter(user => user.type !== 'superAdmin' && user.type !== 'admin');
+        console.log('👥 Utilisateurs non-admin chargés:', this.users);
       },
       error: () => this.message.error('Erreur lors du chargement des utilisateurs.')
     });
 
-    // Récupérer les terrains
-    this.souscriptionService.getTerrains().subscribe({
-      next: (terrains) => {
-        this.terrains = terrains;
-        console.log('🌍 Terrains chargés:', this.terrains);
+    // Récupérer les terrains disponibles
+    this.terrainsService.getAllTerrains().subscribe({
+      next: (response: TerrainResponse) => {
+        this.terrains = response.data.filter(terrain => terrain.statut_terrain === 'disponible');
+        console.log('🌍 Terrains bruts récupérés:', response.data);
+        console.log('🌍 Terrains disponibles chargés:', this.terrains);
       },
       error: () => this.message.error('Erreur lors du chargement des terrains.')
     });
 
-    // Récupérer les administrateurs
-    this.souscriptionService.getAllSouscriptions({ admin_view: true }).subscribe({
-      next: (response) => {
-        this.admins = response.data.map(s => ({
-          ...s.admin,
-          statut_utilisateur: this.normalizeStatutUtilisateur(s.admin.statut_utilisateur)
-        } as User)).filter((v, i, a) => a.findIndex(t => t.id_utilisateur === v.id_utilisateur) === i);
-        console.log('👤 Admins chargés:', this.admins);
-      },
-      error: () => this.message.error('Erreur lors du chargement des administrateurs.')
-    });
+    // Récupérer uniquement l'administrateur connecté
+    const currentUser = this.authService.getCurrentUser();
+    if (currentUser && this.authService.isAdmin()) {
+      this.admins = [{
+        ...currentUser,
+        statut_utilisateur: this.normalizeStatutUtilisateur(currentUser.statut_utilisateur)
+      } as User];
+      console.log('👤 Admin connecté chargé:', this.admins);
+    } else {
+      this.admins = [];
+      console.warn('⚠️ Aucun administrateur connecté ou utilisateur non-admin');
+      this.message.error('Aucun administrateur connecté détecté.');
+    }
   }
 
-  // Normaliser le champ statut_utilisateur pour correspondre à l'interface User
   private normalizeStatutUtilisateur(statut: string): 'actif' | 'suspendu' | 'inactif' {
     const validStatuts = ['actif', 'suspendu', 'inactif'];
     return validStatuts.includes(statut) ? statut as 'actif' | 'suspendu' | 'inactif' : 'inactif';
@@ -117,10 +123,14 @@ export class CreateSubscriptionAdminComponent implements OnInit {
 
   prefillAdmin(): void {
     const currentUser = this.authService.getCurrentUser();
+    console.log('🔍 Pré-remplissage admin - Utilisateur connecté:', currentUser);
     if (currentUser && this.authService.isAdmin()) {
       this.subscriptionForm.patchValue({
         id_admin: currentUser.id_utilisateur
       });
+      console.log('✅ Champ id_admin pré-rempli avec:', currentUser.id_utilisateur);
+    } else {
+      console.warn('⚠️ Aucun admin connecté ou utilisateur non-admin');
     }
   }
 
@@ -154,7 +164,7 @@ export class CreateSubscriptionAdminComponent implements OnInit {
           groupe_souscription: '',
           notes_admin: ''
         });
-        this.router.navigate(['/dashboard/admin/details']); // Use injected Router
+        this.router.navigate(['/dashboard/admin/details/souscription-admin']);
       },
       error: (error) => {
         this.isSubmitting = false;

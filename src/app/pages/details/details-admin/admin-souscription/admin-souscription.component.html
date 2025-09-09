@@ -119,14 +119,15 @@
         >
           <thead>
             <tr class="table-header-row">
-              <th class="table-header-cell id-column">ID</th>
-              <th class="table-header-cell terrain-column">TERRAIN</th>
-              <th class="table-header-cell price-column">PRIX TOTAL</th>
-              <th class="table-header-cell paid-column">MONTANT PAYÉ</th>
-              <th class="table-header-cell remaining-column">RESTE À PAYER</th>
-              <th class="table-header-cell payment-column">PROCHAIN PAIEMENT</th>
-              <th class="table-header-cell status-column">STATUT</th>
-              <th class="table-header-cell action-column">ACTIONS</th>
+              <th class="table-header-cell id-column">Souscriptions</th>
+              <th class="table-header-cell terrain-column">Térrains</th>
+              <th class="table-header-cell price-column">Prix total</th>
+              <th class="table-header-cell paid-column">Montant payé</th>
+              <th class="table-header-cell remaining-column">Reste à payer</th>
+              <th class="table-header-cell progress-column">Date Débuit paiement</th>
+              <th class="table-header-cell payment-column">Prochain paiements</th>
+              <th class="table-header-cell status-column">Status</th>
+              <th class="table-header-cell action-column">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -141,13 +142,13 @@
                   </div>
                   <div class="terrain-details">
                     <div class="terrain-name">{{ souscription.terrain.libelle }}</div>
-                    <div class="terrain-surface">{{ souscription.terrain.superficie }}</div>
+                    <div class="terrain-surface">{{ souscription.terrain.superficie }}m²</div>
                   </div>
                 </div>
               </td>
               <td class="table-data-cell">
                 <div class="price-info">
-                  <div class="price-amount">{{ formatCurrency(souscription.montant_total_souscrit) }}</div>
+                  <div class="price-amount">{{ formatCurrency(souscription.prix_total_terrain) }}</div>
                   <div class="progress-bar">
                     <div class="progress-fill" [style.width.%]="getCompletionPercentage(souscription)"></div>
                   </div>
@@ -158,6 +159,9 @@
               </td>
               <td class="table-data-cell">
                 <span class="amount-remaining">{{ formatCurrency(souscription.reste_a_payer) }}</span>
+              </td>
+              <td class="table-data-cell">
+                <span class="date-debut">{{ formatDate(souscription.date_debut_paiement) }}</span>  <!-- Changez la classe si nécessaire, ex. de "amount-paid" à quelque chose comme "date-value" -->
               </td>
               <td class="table-data-cell">
                 <span class="next-payment-date">{{ formatDate(souscription.date_prochain) }}</span>

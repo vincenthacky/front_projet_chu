@@ -1,0 +1,366 @@
+<div class="terrain-admin-container">
+  <div class="container-header">
+    <h2 class="page-title">
+      <i nz-icon nzType="environment" nzTheme="outline"></i>
+      Gestion des Terrains
+    </h2>
+  </div>
+
+  <div class="main-content" nz-row [nzGutter]="[16, 16]">
+    <!-- Formulaire à gauche -->
+    <div nz-col nzXs="24" nzSm="24" nzMd="12" nzLg="10" nzXl="8">
+      <nz-card 
+        class="form-card"
+        [nzTitle]="isEditMode ? 'Modifier le Terrain' : 'Créer un Nouveau Terrain'"
+        [nzExtra]="formExtraTemplate">
+        
+        <ng-template #formExtraTemplate>
+          <button 
+            *ngIf="isEditMode" 
+            nz-button 
+            nzType="default" 
+            nzSize="small"
+            (click)="resetForm()"
+            nz-tooltip="Annuler la modification">
+            <i nz-icon nzType="close"></i>
+          </button>
+        </ng-template>
+
+        <form nz-form [formGroup]="terrainForm" (ngSubmit)="onSubmit()">
+          <!-- Libellé -->
+          <nz-form-item>
+            <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired nzFor="libelle">
+              Libellé
+            </nz-form-label>
+            <nz-form-control 
+              [nzSm]="18" 
+              [nzXs]="24"
+              [nzErrorTip]="getFieldError('libelle')"
+              [nzValidateStatus]="isFieldError('libelle') ? 'error' : ''">
+              <input 
+                nz-input 
+                formControlName="libelle" 
+                id="libelle"
+                placeholder="Ex: Terrain Alpha">
+            </nz-form-control>
+          </nz-form-item>
+
+          <!-- Localisation -->
+          <nz-form-item>
+            <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired nzFor="localisation">
+              Localisation
+            </nz-form-label>
+            <nz-form-control 
+              [nzSm]="18" 
+              [nzXs]="24"
+              [nzErrorTip]="getFieldError('localisation')"
+              [nzValidateStatus]="isFieldError('localisation') ? 'error' : ''">
+              <input 
+                nz-input 
+                formControlName="localisation" 
+                id="localisation"
+                placeholder="Ex: Abidjan, Cocody">
+            </nz-form-control>
+          </nz-form-item>
+
+          <!-- Superficie -->
+          <nz-form-item>
+            <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired>Superficie (m²)</nz-form-label>
+            <nz-form-control 
+              [nzSm]="18" 
+              [nzXs]="24"
+              [nzErrorTip]="getFieldError('superficie')"
+              [nzValidateStatus]="isFieldError('superficie') ? 'error' : ''">
+              <nz-input-number
+                formControlName="superficie"
+                [nzMin]="1"
+                [nzMax]="999999"
+                [nzStep]="0.01"
+                [nzPrecision]="2"
+                nzPlaceHolder="500.75"
+                style="width: 100%" />
+            </nz-form-control>
+          </nz-form-item>
+
+          <!-- Prix unitaire -->
+          <nz-form-item>
+            <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired>Prix/m² (FCFA)</nz-form-label>
+            <nz-form-control 
+              [nzSm]="18" 
+              [nzXs]="24"
+              [nzErrorTip]="getFieldError('prix_unitaire')"
+              [nzValidateStatus]="isFieldError('prix_unitaire') ? 'error' : ''">
+              <nz-input-number
+                formControlName="prix_unitaire"
+                [nzMin]="1"
+                [nzMax]="999999999"
+                [nzFormatter]="currencyFormatter"
+                [nzParser]="currencyParser"
+                (ngModelChange)="onPrixUnitaireChange($event)"
+                nzPlaceHolder="250000"
+                style="width: 100%" />
+            </nz-form-control>
+          </nz-form-item>
+
+          <!-- Statut -->
+          <nz-form-item>
+            <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired>Statut</nz-form-label>
+            <nz-form-control [nzSm]="18" [nzXs]="24">
+              <nz-select formControlName="statut_terrain" nzPlaceHolder="Sélectionner le statut">
+                <nz-option 
+                  *ngFor="let status of statusOptions" 
+                  [nzLabel]="status.label" 
+                  [nzValue]="status.value">
+                </nz-option>
+              </nz-select>
+            </nz-form-control>
+          </nz-form-item>
+
+          <!-- Coordonnées GPS -->
+          <nz-form-item>
+            <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired>Coordonnées GPS</nz-form-label>
+            <nz-form-control 
+              [nzSm]="18" 
+              [nzXs]="24"
+              [nzErrorTip]="getFieldError('coordonnees_gps')"
+              [nzValidateStatus]="isFieldError('coordonnees_gps') ? 'error' : ''">
+              <input 
+                nz-input 
+                formControlName="coordonnees_gps"
+                placeholder="5.34567,-4.01234">
+            </nz-form-control>
+          </nz-form-item>
+
+          <!-- Description -->
+          <nz-form-item>
+            <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired>Description</nz-form-label>
+            <nz-form-control 
+              [nzSm]="18" 
+              [nzXs]="24"
+              [nzErrorTip]="getFieldError('description')"
+              [nzValidateStatus]="isFieldError('description') ? 'error' : ''">
+              <textarea 
+                nz-input 
+                formControlName="description"
+                [rows]="3"
+                placeholder="Description détaillée du terrain...">
+              </textarea>
+            </nz-form-control>
+          </nz-form-item>
+
+          <!-- Boutons -->
+          <nz-form-item class="form-actions">
+            <nz-form-control [nzOffset]="6" [nzSpan]="18">
+              <button 
+                nz-button 
+                nzType="primary" 
+                type="submit"
+                [nzLoading]="submitting"
+                [disabled]="!terrainForm.valid || submitting">
+                <i nz-icon [nzType]="isEditMode ? 'edit' : 'plus'"></i>
+                {{ isEditMode ? 'Modifier' : 'Créer' }}
+              </button>
+              
+              <button 
+                *ngIf="isEditMode"
+                nz-button 
+                type="button"
+                nzType="default"
+                (click)="resetForm()"
+                style="margin-left: 8px;">
+                <i nz-icon nzType="undo"></i>
+                Annuler
+              </button>
+            </nz-form-control>
+          </nz-form-item>
+        </form>
+      </nz-card>
+    </div>
+
+    <!-- Liste des terrains et détails à droite -->
+    <div nz-col nzXs="24" nzSm="24" nzMd="12" nzLg="14" nzXl="16">
+      <!-- Liste des terrains pour mobile -->
+      <div class="mobile-terrain-list" nz-row [nzGutter]="[8, 8]">
+        <div 
+          *ngFor="let terrain of terrains; trackBy: trackByTerrain" 
+          nz-col nzXs="24" nzSm="12" nzMd="12" nzLg="8" nzXl="6"
+          class="terrain-card-wrapper">
+          <nz-card 
+            class="terrain-mini-card"
+            [class.selected]="selectedTerrain?.id_terrain === terrain.id_terrain"
+            (click)="selectTerrain(terrain)"
+            [nzBodyStyle]="{ padding: '12px' }">
+            
+            <div class="mini-card-header">
+              <h4 class="terrain-libelle">{{ terrain.libelle }}</h4>
+              <div class="card-actions">
+                <button 
+                  nz-button 
+                  nzType="text" 
+                  nzSize="small"
+                  (click)="editTerrain(terrain); $event.stopPropagation()"
+                  nz-tooltip="Modifier">
+                  <i nz-icon nzType="edit" nzTheme="outline"></i>
+                </button>
+                <button 
+                  nz-button 
+                  nzType="text" 
+                  nzSize="small" 
+                  nzDanger
+                  (click)="deleteTerrain(terrain); $event.stopPropagation()"
+                  nz-tooltip="Supprimer">
+                  <i nz-icon nzType="delete" nzTheme="outline"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div class="mini-card-content">
+              <p class="terrain-location">
+                <i nz-icon nzType="environment" nzTheme="outline"></i>
+                {{ terrain.localisation }}
+              </p>
+              <div class="terrain-info">
+                <span class="superficie">{{ formatSuperficie(terrain.superficie) }}</span>
+                <nz-tag [nzColor]="getStatusColor(terrain.statut_terrain)" class="status-tag">
+                  {{ getStatusLabel(terrain.statut_terrain) }}
+                </nz-tag>
+              </div>
+            </div>
+          </nz-card>
+        </div>
+      </div>
+
+      <!-- Card de détail du terrain sélectionné -->
+      <div *ngIf="selectedTerrain" class="terrain-detail-card">
+        <nz-card 
+          class="detail-card"
+          [nzTitle]="selectedTerrain.libelle"
+          [nzExtra]="cardActionsTemplate">
+          
+          <ng-template #cardActionsTemplate>
+            <div class="card-actions-header">
+              <button 
+                nz-button 
+                nzType="text" 
+                nzSize="small"
+                (click)="editTerrain(selectedTerrain!)"
+                nz-tooltip="Modifier ce terrain">
+                <i nz-icon nzType="edit" nzTheme="outline"></i>
+              </button>
+              <button 
+                nz-button 
+                nzType="text" 
+                nzSize="small" 
+                nzDanger
+                (click)="deleteTerrain(selectedTerrain!)"
+                nz-tooltip="Supprimer ce terrain">
+                <i nz-icon nzType="delete" nzTheme="outline"></i>
+              </button>
+            </div>
+          </ng-template>
+
+          <div class="terrain-details">
+            <!-- En-tête avec statut -->
+            <div class="detail-header">
+              <nz-tag [nzColor]="getStatusColor(selectedTerrain.statut_terrain)" class="status-tag-large">
+                {{ getStatusLabel(selectedTerrain.statut_terrain) }}
+              </nz-tag>
+              <span class="creation-date">
+                Créé le {{ formatDate(selectedTerrain.date_creation) }}
+              </span>
+            </div>
+
+            <!-- Informations principales -->
+            <div class="detail-section">
+              <h4>Informations générales</h4>
+              <div class="info-grid">
+                <div class="info-item">
+                  <span class="info-label">
+                    <i nz-icon nzType="environment" nzTheme="outline"></i>
+                    Localisation
+                  </span>
+                  <span class="info-value">{{ selectedTerrain.localisation }}</span>
+                </div>
+                
+                <div class="info-item">
+                  <span class="info-label">
+                    <i nz-icon nzType="border-outer" nzTheme="outline"></i>
+                    Superficie
+                  </span>
+                  <span class="info-value">{{ formatSuperficie(selectedTerrain.superficie) }}</span>
+                </div>
+                
+                <div class="info-item">
+                  <span class="info-label">
+                    <i nz-icon nzType="dollar" nzTheme="outline"></i>
+                    Prix unitaire
+                  </span>
+                  <span class="info-value price">{{ formatPrice(selectedTerrain.prix_unitaire) }}/m²</span>
+                </div>
+                
+                <div class="info-item">
+                  <span class="info-label">
+                    <i nz-icon nzType="calculator" nzTheme="outline"></i>
+                    Prix total estimé
+                  </span>
+                  <span class="info-value total-price">
+                    {{ calculateTotalPrice(selectedTerrain) }}
+                  </span>
+                </div>
+                
+                <div class="info-item">
+                  <span class="info-label">
+                    <i nz-icon nzType="compass" nzTheme="outline"></i>
+                    Coordonnées GPS
+                  </span>
+                  <span class="info-value gps-coords">{{ selectedTerrain.coordonnees_gps }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div class="detail-section">
+              <h4>Description</h4>
+              <p class="description-text">{{ selectedTerrain.description }}</p>
+            </div>
+
+            <!-- Métadonnées -->
+            <div class="detail-section metadata">
+              <h4>Métadonnées</h4>
+              <div class="metadata-grid">
+                <div class="metadata-item">
+                  <span class="metadata-label">ID Terrain:</span>
+                  <span class="metadata-value">#{{ selectedTerrain.id_terrain }}</span>
+                </div>
+                <div class="metadata-item" *ngIf="selectedTerrain.created_at">
+                  <span class="metadata-label">Créé le:</span>
+                  <span class="metadata-value">{{ formatDate(selectedTerrain.created_at) }}</span>
+                </div>
+                <div class="metadata-item" *ngIf="selectedTerrain.updated_at">
+                  <span class="metadata-label">Modifié le:</span>
+                  <span class="metadata-value">{{ formatDate(selectedTerrain.updated_at) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </nz-card>
+      </div>
+
+      <!-- État vide si aucun terrain -->
+      <div *ngIf="!loading && terrains.length === 0" class="empty-state">
+        <nz-card>
+          <div class="empty-content">
+            <i nz-icon nzType="inbox" nzTheme="outline" class="empty-icon"></i>
+            <h3>Aucun terrain disponible</h3>
+            <p>Commencez par créer votre premier terrain en utilisant le formulaire à gauche.</p>
+          </div>
+        </nz-card>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading overlay -->
+  <div *ngIf="loading" class="loading-overlay">
+    <nz-spin nzSize="large" nzTip="Chargement des terrains..."></nz-spin>
+  </div>
+</div>

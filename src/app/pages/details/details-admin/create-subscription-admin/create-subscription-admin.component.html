@@ -15,9 +15,9 @@
             <!-- Utilisateur -->
             <div nz-col nzXs="24" nzSm="12">
               <nz-form-item>
-                <nz-form-label nzRequired>Planteur</nz-form-label>
+                <nz-form-label nzRequired>Utilisateur</nz-form-label>
                 <nz-form-control nzErrorTip="Veuillez sélectionner un planteur">
-                  <nz-select formControlName="id_utilisateur" nzPlaceHolder="Sélectionner un planteur">
+                  <nz-select formControlName="id_utilisateur" nzPlaceHolder="Sélectionner un utilisateur">
                     <nz-option
                       *ngFor="let user of users"
                       [nzValue]="user.id_utilisateur"
@@ -47,14 +47,10 @@
             <!-- Administrateur -->
             <div nz-col nzXs="24" nzSm="12">
               <nz-form-item>
-                <nz-form-label nzRequired>Administrateur</nz-form-label>
-                <nz-form-control nzErrorTip="Veuillez sélectionner un administrateur">
+                <nz-form-label nzFor="id_admin">Administrateur</nz-form-label>
+                <nz-form-control>
                   <nz-select formControlName="id_admin" nzPlaceHolder="Sélectionner un administrateur">
-                    <nz-option
-                      *ngFor="let admin of admins"
-                      [nzValue]="admin.id_utilisateur"
-                      [nzLabel]="admin.nom + ' ' + admin.prenom"
-                    ></nz-option>
+                    <nz-option *ngFor="let admin of admins" [nzValue]="admin.id_utilisateur" [nzLabel]="admin.nom + ' ' + admin.prenom"></nz-option>
                   </nz-select>
                 </nz-form-control>
               </nz-form-item>
