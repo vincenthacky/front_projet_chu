@@ -1,0 +1,881 @@
+/* Variables CSS utilisées */
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    --danger-gradient: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+    --shadow-light: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --border-radius: 16px;
+    --border-radius-small: 8px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --text-primary: #2d3436;
+    --text-secondary: #636e72;
+    --text-light: #b2bec3;
+    --spacing-xs: 8px;
+    --spacing-sm: 16px;
+    --spacing-md: 24px;
+    --spacing-lg: 32px;
+    
+    /* Variables pour la responsivité */
+    --sidebar-width-desktop: 256px;
+    --sidebar-width-tablet: 200px;
+    --sidebar-width-mobile: 160px;
+    --sidebar-collapsed-width: 80px;
+    --header-height: 64px;
+    --header-height-tablet: 56px;
+    --header-height-mobile: 48px;
+  }
+  
+  /* Reset et base styles */
+  * {
+    box-sizing: border-box;
+  }
+  
+  /* Container principal - Responsive avec sidebar */
+  .profile-container {
+    width: 100%;
+    min-height: calc(100vh - var(--header-height));
+    margin: 0 auto;
+    padding: var(--spacing-md);
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    position: relative;
+    transition: var(--transition);
+  }
+  
+  /* Card principale avec glassmorphism */
+  .profile-card {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px);
+    border-radius: var(--border-radius) !important;
+    box-shadow: var(--shadow-light);
+    transition: var(--transition);
+    margin-bottom: var(--spacing-md);
+  }
+  
+  /* Header de profil */
+  .profile-header {
+    background: var(--primary-gradient);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+  }
+  
+  /* Section avatar */
+  .avatar-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+  
+  /* Avatar */
+  .profile-avatar {
+    width: 100px !important;
+    height: 100px !important;
+    border-radius: 50% !important;
+    object-fit: cover;
+    border: 3px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transition: var(--transition);
+  }
+  
+  /* Upload icon */
+  .upload-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100px;
+    height: 100px;
+    border: 2px dashed rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    transition: var(--transition);
+    cursor: pointer;
+  }
+  
+  /* Statistiques utilisateur */
+  .user-stats {
+    display: flex;
+    justify-content: space-around;
+    gap: var(--spacing-sm);
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  /* Formulaire */
+  .profile-form {
+    padding: var(--spacing-md);
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+  
+  /* Actions de profil */
+  .profile-actions {
+    display: flex !important;
+    gap: var(--spacing-sm);
+    justify-content: flex-end;
+    margin-top: var(--spacing-md);
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  /* Forcer l'affichage du bouton Modifier */
+  .profile-actions button {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  /* Card de mot de passe */
+  .password-card {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px);
+    border-radius: var(--border-radius) !important;
+    box-shadow: var(--shadow-light);
+    margin-top: var(--spacing-md) !important;
+  }
+  
+  /* Formulaire de mot de passe */
+  .password-form {
+    padding: var(--spacing-md);
+  }
+  
+  /* Actions de mot de passe */
+  .password-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    justify-content: flex-end;
+    margin-top: var(--spacing-md);
+  }
+  
+  /* Alerte de sécurité */
+  .security-alert {
+    margin-bottom: var(--spacing-md) !important;
+    border-radius: var(--border-radius-small) !important;
+  }
+  
+  /* Indicateur de force du mot de passe */
+  .password-strength {
+    margin: var(--spacing-sm) 0;
+    padding: var(--spacing-sm);
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: var(--border-radius-small);
+  }
+  
+  .strength-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+  }
+  
+  .strength-meter {
+    margin-bottom: var(--spacing-xs) !important;
+  }
+  
+  .strength-text {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .strength-weak { color: #ff4757; }
+  .strength-fair { color: #ffa726; }
+  .strength-good { color: #66bb6a; }
+  .strength-excellent { color: #4caf50; }
+  
+  /* Card d'informations supplémentaires */
+  .info-card {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px);
+    border-radius: var(--border-radius) !important;
+    box-shadow: var(--shadow-light);
+    margin-top: var(--spacing-md) !important;
+  }
+  
+  /* Animation pour les cartes */
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .card-animated {
+    animation: slideInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* Styles NG-ZORRO */
+  ::ng-deep {
+    .ant-card {
+      border-radius: var(--border-radius) !important;
+      box-shadow: var(--shadow-light) !important;
+      border: none !important;
+    }
+  
+    .ant-card-head {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: var(--border-radius) var(--border-radius) 0 0;
+      padding: var(--spacing-sm) var(--spacing-md);
+    }
+  
+    .ant-card-body {
+      padding: var(--spacing-md) !important;
+    }
+  
+    .ant-input {
+      border-radius: var(--border-radius-small) !important;
+      border: 2px solid #e9ecef !important;
+      padding: 10px !important;
+      font-size: 14px;
+    }
+  
+    .ant-btn {
+      border-radius: var(--border-radius-small) !important;
+      padding: 8px 20px !important;
+      min-height: 38px;
+      display: inline-flex !important;
+      align-items: center;
+      visibility: visible !important;
+    }
+  
+    .ant-btn-primary {
+      background: var(--primary-gradient) !important;
+      border: none !important;
+    }
+  
+    .ant-form-item {
+      margin-bottom: var(--spacing-lg) !important;
+    }
+  
+    .ant-form-item-label > label {
+      margin-left: 0 !important;
+    }
+  
+    .ant-statistic-title {
+      font-weight: 500 !important;
+      color: rgba(255, 255, 255, 0.9) !important;
+      margin-bottom: var(--spacing-xs) !important;
+      font-size: 14px;
+    }
+  
+    .ant-statistic-content {
+      color: white !important;
+      font-weight: 600 !important;
+      font-size: 24px;
+    }
+  
+    .ant-progress-line .ant-progress-bg {
+      background: var(--primary-gradient) !important;
+      border-radius: 10px !important;
+    }
+  
+    .ant-progress-line .ant-progress-inner {
+      background: rgba(0, 0, 0, 0.06) !important;
+      border-radius: 10px !important;
+    }
+  
+    .ant-progress-success-bg {
+      background: var(--success-gradient) !important;
+    }
+  
+    .ant-progress-bg[data-status="exception"] {
+      background: var(--danger-gradient) !important;
+    }
+  
+    .ant-descriptions-item-label {
+      font-weight: 600 !important;
+      color: var(--text-primary) !important;
+      background: rgba(102, 126, 234, 0.05) !important;
+      border-radius: var(--border-radius-small) 0 0 var(--border-radius-small);
+    }
+  
+    .ant-descriptions-item-content {
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 0 var(--border-radius-small) var(--border-radius-small) 0;
+    }
+  
+    .ant-tag {
+      border-radius: var(--border-radius-small) !important;
+      font-weight: 500 !important;
+      padding: 4px 12px !important;
+      border: none !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 4px !important;
+    }
+  
+    .ant-alert {
+      border-radius: var(--border-radius-small) !important;
+      border: none !important;
+      backdrop-filter: blur(10px);
+    }
+  
+    .ant-alert-info {
+      background: rgba(24, 144, 255, 0.1) !important;
+      color: #1890ff !important;
+    }
+  }
+  
+  /* ===== RESPONSIVE DESIGN ===== */
+  
+  /* Desktop - Large screens (1200px+) */
+  @media (min-width: 1200px) {
+    .profile-container {
+      padding: var(--spacing-lg);
+      margin-left: 0; /* Pas de décalage car sidebar fixe */
+    }
+    
+    .profile-card,
+    .password-card,
+    .info-card {
+      max-width: 1200px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    .user-stats {
+      max-width: 400px;
+    }
+    
+    .profile-avatar,
+    .upload-icon {
+      width: 120px !important;
+      height: 120px !important;
+    }
+  }
+  
+  /* Desktop - Medium screens (992px - 1199px) */
+  @media (min-width: 992px) and (max-width: 1199px) {
+    .profile-container {
+      padding: var(--spacing-md);
+    }
+    
+    .profile-card,
+    .password-card,
+    .info-card {
+      max-width: 100%;
+    }
+  }
+  
+  /* Tablette - Large (768px - 991px) */
+  @media (min-width: 768px) and (max-width: 991px) {
+    :root {
+      --spacing-xs: 6px;
+      --spacing-sm: 12px;
+      --spacing-md: 20px;
+      --spacing-lg: 28px;
+    }
+    
+    .profile-container {
+      padding: var(--spacing-sm);
+      margin-left: 0;
+    }
+    
+    .profile-form,
+    .password-form {
+      padding: var(--spacing-sm);
+    }
+    
+    .profile-avatar,
+    .upload-icon {
+      width: 90px !important;
+      height: 90px !important;
+    }
+    
+    .user-stats {
+      flex-direction: row;
+      max-width: 280px;
+    }
+    
+    .profile-actions,
+    .password-actions {
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .ant-card-body {
+      padding: var(--spacing-sm) !important;
+    }
+    
+    /* Ajuster les colonnes du formulaire */
+    .password-form [nz-row] {
+      margin-left: -8px;
+      margin-right: -8px;
+    }
+    
+    .password-form [nz-col] {
+      padding-left: 8px;
+      padding-right: 8px;
+    }
+  }
+  
+  /* Tablette - Small (481px - 767px) */
+  @media (min-width: 481px) and (max-width: 767px) {
+    :root {
+      --spacing-xs: 6px;
+      --spacing-sm: 12px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+    }
+    
+    .profile-container {
+      padding: var(--spacing-sm);
+      margin-left: 0;
+    }
+    
+    .profile-form,
+    .password-form {
+      padding: var(--spacing-sm);
+    }
+    
+    .profile-avatar,
+    .upload-icon {
+      width: 80px !important;
+      height: 80px !important;
+    }
+    
+    .user-stats {
+      flex-direction: column;
+      align-items: center;
+      max-width: 250px;
+    }
+    
+    .profile-actions,
+    .password-actions {
+      justify-content: center;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+    }
+    
+    .ant-btn {
+      padding: 6px 16px !important;
+      font-size: 12px;
+      min-height: 36px;
+      width: 100%;
+      justify-content: center;
+    }
+    
+    .ant-card-body {
+      padding: var(--spacing-sm) !important;
+    }
+    
+    /* Forcer une colonne pour les formulaires */
+    .password-form [nz-col] {
+      width: 100% !important;
+      flex: 0 0 100% !important;
+      max-width: 100% !important;
+    }
+    
+    .password-form [nz-row] {
+      margin-left: 0;
+      margin-right: 0;
+    }
+    
+    .password-form [nz-col] {
+      padding-left: 0;
+      padding-right: 0;
+    }
+  }
+  
+  /* Mobile - Large (360px - 480px) */
+  @media (min-width: 360px) and (max-width: 480px) {
+    :root {
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 12px;
+      --spacing-lg: 20px;
+    }
+    
+    .profile-container {
+      padding: var(--spacing-sm);
+      margin-left: 0;
+    }
+    
+    .profile-form,
+    .password-form {
+      padding: var(--spacing-sm);
+    }
+    
+    .profile-avatar,
+    .upload-icon {
+      width: 70px !important;
+      height: 70px !important;
+    }
+    
+    .user-stats {
+      flex-direction: column;
+      align-items: center;
+      max-width: 200px;
+    }
+    
+    .profile-actions,
+    .password-actions {
+      justify-content: center;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+    }
+    
+    .ant-btn {
+      padding: 6px 12px !important;
+      font-size: 11px;
+      min-height: 32px;
+      width: 100%;
+      justify-content: center;
+    }
+    
+    .ant-card-body {
+      padding: var(--spacing-sm) !important;
+    }
+    
+    .ant-statistic-title {
+      font-size: 12px !important;
+    }
+    
+    .ant-statistic-content {
+      font-size: 18px !important;
+    }
+    
+    /* Forcer une colonne pour tous les formulaires */
+    .password-form [nz-col],
+    .profile-form [nz-col] {
+      width: 100% !important;
+      flex: 0 0 100% !important;
+      max-width: 100% !important;
+    }
+    
+    .password-form [nz-row],
+    .profile-form [nz-row] {
+      margin-left: 0;
+      margin-right: 0;
+    }
+    
+    .password-form [nz-col],
+    .profile-form [nz-col] {
+      padding-left: 0;
+      padding-right: 0;
+    }
+  }
+  
+  /* Mobile - Small (320px - 359px) */
+  @media (max-width: 359px) {
+    :root {
+      --spacing-xs: 4px;
+      --spacing-sm: 6px;
+      --spacing-md: 10px;
+      --spacing-lg: 16px;
+    }
+    
+    .profile-container {
+      padding: var(--spacing-sm);
+      margin-left: 0;
+    }
+    
+    .profile-form,
+    .password-form {
+      padding: var(--spacing-sm);
+    }
+    
+    .profile-avatar,
+    .upload-icon {
+      width: 60px !important;
+      height: 60px !important;
+    }
+    
+    .user-stats {
+      flex-direction: column;
+      align-items: center;
+      max-width: 180px;
+    }
+    
+    .profile-actions,
+    .password-actions {
+      justify-content: center;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+    }
+    
+    .ant-btn {
+      padding: 4px 8px !important;
+      font-size: 10px;
+      min-height: 28px;
+      width: 100%;
+      justify-content: center;
+    }
+    
+    .ant-card-body {
+      padding: var(--spacing-sm) !important;
+    }
+    
+    .ant-statistic-title {
+      font-size: 11px !important;
+    }
+    
+    .ant-statistic-content {
+      font-size: 16px !important;
+    }
+    
+    /* Forcer une colonne pour tous les formulaires */
+    .password-form [nz-col],
+    .profile-form [nz-col] {
+      width: 100% !important;
+      flex: 0 0 100% !important;
+      max-width: 100% !important;
+    }
+    
+    .password-form [nz-row],
+    .profile-form [nz-row] {
+      margin-left: 0;
+      margin-right: 0;
+    }
+    
+    .password-form [nz-col],
+    .profile-form [nz-col] {
+      padding-left: 0;
+      padding-right: 0;
+    }
+  }
+  
+  /* ===== ADAPTATION À LA SIDEBAR ===== */
+  
+  /* Quand la sidebar est ouverte sur desktop */
+  @media (min-width: 768px) {
+    .ant-layout-sider:not(.ant-layout-sider-collapsed) + .ant-layout .profile-container {
+      margin-left: 0; /* Pas de décalage car le layout gère déjà l'espace */
+    }
+  }
+  
+  /* Quand la sidebar est fermée sur desktop */
+  @media (min-width: 768px) {
+    .ant-layout-sider.ant-layout-sider-collapsed + .ant-layout .profile-container {
+      margin-left: 0; /* Pas de décalage car le layout gère déjà l'espace */
+    }
+  }
+  
+  /* Sur mobile, la sidebar est gérée différemment */
+  @media (max-width: 767px) {
+    .profile-container {
+      margin-left: 0;
+      width: 100%;
+    }
+  }
+  
+  /* ===== AMÉLIORATIONS SPÉCIFIQUES ===== */
+  
+  /* Espacement vertical entre les champs du formulaire de mot de passe */
+  .password-form .ant-form-item {
+    margin-bottom: 24px !important;
+  }
+  
+  /* Espacement entre les colonnes du formulaire de mot de passe sur desktop */
+  @media (min-width: 768px) {
+    .password-form [nz-row] {
+      margin-left: -12px;
+      margin-right: -12px;
+    }
+    .password-form [nz-col] {
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+  }
+  
+  /* Descriptions verticales */
+  .vertical-descriptions .ant-descriptions-item {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .vertical-descriptions .ant-descriptions-item-label {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+  
+  .vertical-descriptions .ant-descriptions-item-content {
+    width: 100%;
+  }
+  
+  /* Toggle de visibilité du mot de passe */
+  .password-toggle {
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: var(--transition);
+  }
+  
+  .password-toggle:hover {
+    color: var(--text-primary);
+  }
+  
+  /* Accessibilité */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+  
+  /* Amélioration de la lisibilité sur petits écrans */
+  @media (max-width: 480px) {
+    .ant-form-item-label > label {
+      font-size: 13px !important;
+    }
+    
+    .ant-input {
+      font-size: 13px !important;
+    }
+    
+    .ant-btn {
+      font-size: 12px !important;
+    }
+  }
+  
+  /* Optimisation pour les écrans haute densité */
+  @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .profile-avatar,
+    .upload-icon {
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
+    }
+  }
+  
+  /* ===== ADAPTATION OPTIMISÉE À LA SIDEBAR ===== */
+  
+  /* Quand la sidebar est ouverte sur desktop */
+  @media (min-width: 768px) {
+    .ant-layout-sider:not(.ant-layout-sider-collapsed) + .ant-layout .profile-container {
+      margin-left: 0; /* Pas de décalage car le layout gère déjà l'espace */
+      width: calc(100% - var(--sidebar-width-desktop));
+      max-width: calc(100vw - var(--sidebar-width-desktop));
+    }
+  }
+  
+  /* Quand la sidebar est fermée sur desktop */
+  @media (min-width: 768px) {
+    .ant-layout-sider.ant-layout-sider-collapsed + .ant-layout .profile-container {
+      margin-left: 0; /* Pas de décalage car le layout gère déjà l'espace */
+      width: calc(100% - var(--sidebar-collapsed-width));
+      max-width: calc(100vw - var(--sidebar-collapsed-width));
+    }
+  }
+  
+  /* Sur tablette avec sidebar ouverte */
+  @media (min-width: 481px) and (max-width: 767px) {
+    .ant-layout-sider:not(.ant-layout-sider-collapsed) + .ant-layout .profile-container {
+      margin-left: 0;
+      width: calc(100% - var(--sidebar-width-tablet));
+      max-width: calc(100vw - var(--sidebar-width-tablet));
+    }
+  }
+  
+  /* Sur tablette avec sidebar fermée */
+  @media (min-width: 481px) and (max-width: 767px) {
+    .ant-layout-sider.ant-layout-sider-collapsed + .ant-layout .profile-container {
+      margin-left: 0;
+      width: calc(100% - var(--sidebar-collapsed-width));
+      max-width: calc(100vw - var(--sidebar-collapsed-width));
+    }
+  }
+  
+  /* Sur mobile, la sidebar est gérée différemment */
+  @media (max-width: 480px) {
+    .profile-container {
+      margin-left: 0;
+      width: 100%;
+      max-width: 100vw;
+    }
+    
+    /* Quand la sidebar est ouverte sur mobile */
+    .ant-layout-sider:not(.ant-layout-sider-collapsed) + .ant-layout .profile-container {
+      width: calc(100% - var(--sidebar-width-mobile));
+      max-width: calc(100vw - var(--sidebar-width-mobile));
+    }
+    
+    /* Quand la sidebar est fermée sur mobile */
+    .ant-layout-sider.ant-layout-sider-collapsed + .ant-layout .profile-container {
+      width: 100%;
+      max-width: 100vw;
+    }
+  }
+  
+  /* ===== AMÉLIORATIONS SPÉCIFIQUES POUR LA RESPONSIVITÉ ===== */
+  
+  /* Amélioration de la lisibilité sur petits écrans */
+  @media (max-width: 480px) {
+    .ant-form-item-label > label {
+      font-size: 13px !important;
+    }
+    
+    .ant-input {
+      font-size: 13px !important;
+    }
+    
+    .ant-btn {
+      font-size: 12px !important;
+    }
+    
+    /* Réduire l'espacement des cartes sur mobile */
+    .profile-card,
+    .password-card,
+    .info-card {
+      margin-bottom: var(--spacing-sm);
+    }
+    
+    /* Optimiser les descriptions sur mobile */
+    .vertical-descriptions .ant-descriptions-item {
+      margin-bottom: var(--spacing-sm);
+    }
+    
+    .vertical-descriptions .ant-descriptions-item-label {
+      font-size: 12px;
+    }
+    
+    .vertical-descriptions .ant-descriptions-item-content {
+      font-size: 13px;
+    }
+  }
+  
+  /* Optimisation pour les écrans tactiles */
+  @media (hover: none) and (pointer: coarse) {
+    .ant-btn {
+      min-height: 44px; /* Taille minimale recommandée pour le touch */
+    }
+    
+    .ant-input {
+      min-height: 44px;
+    }
+    
+    .password-toggle {
+      min-width: 44px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+  
+  /* Amélioration de l'accessibilité */
+  @media (prefers-contrast: high) {
+    .profile-card,
+    .password-card,
+    .info-card {
+      border: 2px solid var(--text-primary);
+    }
+    
+    .ant-btn {
+      border: 2px solid currentColor;
+    }
+  }
+  
+  
+  .input{
+    margin-left: 15px;
+  }

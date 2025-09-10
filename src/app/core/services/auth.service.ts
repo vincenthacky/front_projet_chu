@@ -775,6 +775,43 @@ export class AuthService {
     );
   }
 
+
+  createUser(userData: any): Observable<UserUpdateResponse> {
+    const token = this.getToken();
+    if (!token) {
+      console.error('❌ Aucun token d\'authentification trouvé');
+      return throwError(() => new Error('Utilisateur non authentifié'));
+    }
+  
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    });
+  
+    console.log('🔄 Création d\'un nouvel utilisateur:', {
+      userData,
+      url: `${this.API_URL}/utilisateurs`
+    });
+  
+    return this.http.post<UserUpdateResponse>(`${this.API_URL}/utilisateurs`, userData, { headers }).pipe(
+      tap(response => {
+        console.log('📨 Réponse brute création utilisateur:', response);
+      }),
+      map(response => {
+        const decoded = this.decodeUnicodeInObject(response) as UserUpdateResponse;
+        console.log('📨 Réponse décodée création utilisateur:', decoded);
+        return decoded;
+      }),
+      catchError(error => {
+        console.error('❌ Erreur création utilisateur:', error);
+        if (error.error) {
+          error.error = this.decodeUnicodeInObject(error.error);
+        }
+        return throwError(() => new Error(error.error?.message || 'Erreur serveur'));
+      })
+    );
+  }
+
   ngOnDestroy(): void {
     this.stopInactivityDetection();
   }
