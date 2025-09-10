@@ -1,7 +1,7 @@
 import { Injectable, inject, Inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, tap, catchError, throwError, map } from 'rxjs';
+import { BehaviorSubject, Observable, tap, catchError, throwError, map, of } from 'rxjs';
 import { isPlatformBrowser } from '@angular/common';
 
 export interface User {
@@ -808,6 +808,29 @@ export class AuthService {
           error.error = this.decodeUnicodeInObject(error.error);
         }
         return throwError(() => new Error(error.error?.message || 'Erreur serveur'));
+      })
+    );
+  }
+
+  checkEmailExists(email: string): Observable<boolean> {
+    const token = this.getToken();
+    if (!token) {
+      return throwError(() => new Error('Utilisateur non authentifié'));
+    }
+  
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    });
+  
+    return this.http.get<{exists: boolean}>(`${this.API_URL}/check-email`, {
+      headers,
+      params: { email }
+    }).pipe(
+      map(response => response.exists),
+      catchError(error => {
+        console.error('❌ Erreur vérification email:', error);
+        return of(false);
       })
     );
   }

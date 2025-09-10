@@ -8,7 +8,9 @@ import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzButtonModule } from 'ng-zorro-antd/button';
-import { NzModalModule } from 'ng-zorro-antd/modal'; // Ajout pour le modal
+import { NzModalModule } from 'ng-zorro-antd/modal';
+import { NzSpaceModule } from 'ng-zorro-antd/space';
+import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 
 import { Router } from '@angular/router';
 import { ApiSouscription, SouscriptionFilters, SouscriptionService, SouscriptionResponse } from 'src/app/core/services/souscription.service';
@@ -24,7 +26,7 @@ interface GroupedUser {
   totalInDelay: number;
 }
 
-// Interfaces pour le modal (ajoutées)
+// Interfaces pour le modal
 interface Subscription {
   id: string;
   terrain: string;
@@ -68,13 +70,14 @@ interface SelectedSubscriptionInfo {
     NzTableModule,
     NzTagModule,
     NzButtonModule,
-    NzModalModule // Ajout pour le modal
+    NzModalModule,
+    NzSpaceModule,
+    NzDropDownModule
   ],
   templateUrl: './admin-souscription.component.html',
   styleUrls: ['./admin-souscription.component.scss']
 })
 export class AdminSouscriptionComponent implements OnInit, OnDestroy {
-  
   // Propriétés pour les données
   souscriptions: ApiSouscription[] = [];
   groupedUsers: GroupedUser[] = [];
@@ -100,7 +103,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   dateDebut: string = '';
   dateFin: string = '';
 
-  // Propriétés pour le modal (ajoutées)
+  // Propriétés pour le modal
   isVisible = false;
   selectedSubscriptionId: string | null = null;
   selectedSubscriptionInfo: SelectedSubscriptionInfo | null = null;
@@ -112,13 +115,14 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   // Pour le debounce de recherche
   private searchTimeout: any;
 
-  constructor(private souscriptionService: SouscriptionService,
-              private router: Router,
-  ) { }
+  constructor(
+    private souscriptionService: SouscriptionService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.loadSouscriptions();
-    
+
     // Test avec des données mockées après 2 secondes (optionnel maintenant)
     setTimeout(() => {
       this.testWithMockData();
@@ -139,14 +143,12 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.error = null;
 
-    // DÉBOGAGE: Ajouter des paramètres pour forcer l'obtention de toutes les souscriptions
-    const searchFilters = { 
-      ...this.filters, 
+    const searchFilters = {
+      ...this.filters,
       ...filters,
-      // Essayez d'ajouter ces paramètres pour avoir toutes les souscriptions
-      all_users: true,           // Si votre API supporte ce paramètre
-      admin_view: true,          // Pour la vue admin
-      per_page: 100             // Augmenter la limite pour être sûr d'avoir toutes les données
+      all_users: true,
+      admin_view: true,
+      per_page: 100
     };
 
     console.log('📤 Filtres envoyés à l\'API:', searchFilters);
@@ -154,31 +156,29 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
     this.souscriptionService.getAllSouscriptions(searchFilters).subscribe({
       next: (response: SouscriptionResponse) => {
         console.log('📡 Réponse complète de l\'API:', response);
-        
+
         if (response.success) {
           this.souscriptions = response.data;
-          
-          // DÉBOGAGE APPROFONDI
+
           console.log('🔍 ANALYSE DES DONNÉES REÇUES:');
           console.log('- Nombre total de souscriptions:', this.souscriptions.length);
-          
+
           const userIds = this.souscriptions.map(s => s.id_utilisateur);
           const uniqueUserIds = [...new Set(userIds)];
           console.log('- IDs utilisateurs dans les données:', userIds);
           console.log('- IDs utilisateurs uniques:', uniqueUserIds);
           console.log('- Nombre d\'utilisateurs uniques:', uniqueUserIds.length);
-          
+
           if (uniqueUserIds.length === 1) {
             console.warn('⚠️ ATTENTION: L\'API ne retourne que les souscriptions d\'un seul utilisateur!');
             console.warn('C\'est normal si cet utilisateur a toutes les souscriptions dans la BDD');
           }
-          
+
           this.totalSouscriptions = response.pagination.total;
           this.currentPage = response.pagination.current_page;
           this.totalPages = response.pagination.last_page;
-          
+
           this.groupSouscriptionsByUser();
-          
         } else {
           console.error('❌ Erreur API:', response.message);
           this.error = response.message || 'Erreur lors du chargement des souscriptions';
@@ -202,17 +202,16 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
    */
   testWithMockData(): void {
     console.log('🧪 TEST AVEC DONNÉES SIMULÉES');
-    
+
     if (this.souscriptions.length === 0) {
       console.log('Aucune souscription existante, impossible de créer des données de test');
       return;
     }
-        
+
     const userIds = this.souscriptions.map(s => s.id_utilisateur);
     const uniqueUserIds = [...new Set(userIds)];
     console.log('- Nouveaux IDs utilisateurs uniques:', uniqueUserIds);
-    
-    // Regrouper avec les nouvelles données
+
     this.groupSouscriptionsByUser();
   }
 
@@ -221,18 +220,17 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
    */
   debugAPICall(): void {
     console.log('🔧 DÉBOGAGE AVANCÉ DE L\'API');
-    
-    // Test avec différents paramètres
+
     const testParams = [
-      {},                                    // Sans paramètres
-      { per_page: 100 },                    // Avec plus de résultats
-      { all_users: true },                  // Si votre API supporte ce paramètre
-      { admin_view: true, per_page: 100 },  // Vue admin avec plus de résultats
+      {},
+      { per_page: 100 },
+      { all_users: true },
+      { admin_view: true, per_page: 100 }
     ];
-    
+
     testParams.forEach((params, index) => {
       console.log(`🧪 Test ${index + 1} avec paramètres:`, params);
-      
+
       this.souscriptionService.getAllSouscriptions(params).subscribe({
         next: (response) => {
           const userIds = response.data.map((s: any) => s.id_utilisateur);
@@ -253,29 +251,31 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   private groupSouscriptionsByUser(): void {
     console.log('🔥 DÉBUT DU GROUPEMENT - Diagnostic complet');
     console.log('📊 Nombre de souscriptions reçues:', this.souscriptions.length);
-    
-    // Étape 1: Analyser toutes les souscriptions
+
     console.log('📋 ANALYSE DES SOUSCRIPTIONS:');
     this.souscriptions.forEach((souscription, index) => {
       console.log(`Souscription ${index + 1}:`, {
         id_souscription: souscription.id_souscription,
         id_utilisateur: souscription.id_utilisateur,
         id_admin: souscription.id_admin,
-        utilisateur: souscription.utilisateur ? {
-          nom: souscription.utilisateur.nom,
-          prenom: souscription.utilisateur.prenom,
-          email: souscription.utilisateur.email
-        } : 'AUCUN UTILISATEUR',
-        admin: souscription.admin ? {
-          nom: souscription.admin.nom,
-          prenom: souscription.admin.prenom,
-          email: souscription.admin.email
-        } : 'AUCUN ADMIN',
+        utilisateur: souscription.utilisateur
+          ? {
+              nom: souscription.utilisateur.nom,
+              prenom: souscription.utilisateur.prenom,
+              email: souscription.utilisateur.email
+            }
+          : 'AUCUN UTILISATEUR',
+        admin: souscription.admin
+          ? {
+              nom: souscription.admin.nom,
+              prenom: souscription.admin.prenom,
+              email: souscription.admin.email
+            }
+          : 'AUCUN ADMIN',
         montant: souscription.montant_total_souscrit
       });
     });
 
-    // Étape 2: Identifier les utilisateurs uniques
     const idsUtilisateurs = this.souscriptions.map(s => s.id_utilisateur);
     const idsUniques = [...new Set(idsUtilisateurs)];
     console.log('🔍 IDs utilisateurs dans les souscriptions:', idsUtilisateurs);
@@ -287,49 +287,44 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
       console.warn('Vérifiez que vos données contiennent bien des id_utilisateur différents');
     }
 
-    // Étape 3: Créer le groupement avec diagnostic
     const userMap = new Map<number, GroupedUser>();
 
     this.souscriptions.forEach((souscription, index) => {
       const userId = souscription.id_utilisateur;
-      
+
       console.log(`\n🔄 Traitement souscription ${index + 1} pour utilisateur ID: ${userId}`);
-      
+
       if (!userMap.has(userId)) {
         console.log(`➕ Création d'un NOUVEAU groupe pour l'utilisateur ${userId}`);
-        
-        // Créer les informations utilisateur en priorisant les données de l'utilisateur
+
         let fullName = 'Utilisateur Inconnu';
         let email = 'email@inconnu.com';
         let initials = 'UI';
-        
-        // Priorité 1: Utiliser les données de l'utilisateur si disponibles
+
         if (souscription.utilisateur) {
           fullName = `${souscription.utilisateur.prenom || ''} ${souscription.utilisateur.nom || ''}`.trim();
           email = souscription.utilisateur.email || 'email@inconnu.com';
           const prenomInit = souscription.utilisateur.prenom?.charAt(0) || '';
           const nomInit = souscription.utilisateur.nom?.charAt(0) || '';
           initials = (prenomInit + nomInit).toUpperCase() || 'UI';
-        }
-        // Priorité 2: Utiliser les données de l'admin si l'utilisateur n'est pas disponible
-        else if (souscription.admin) {
+        } else if (souscription.admin) {
           fullName = `${souscription.admin.prenom || ''} ${souscription.admin.nom || ''}`.trim();
           email = souscription.admin.email || 'email@inconnu.com';
           const prenomInit = souscription.admin.prenom?.charAt(0) || '';
           const nomInit = souscription.admin.nom?.charAt(0) || '';
           initials = (prenomInit + nomInit).toUpperCase() || 'UI';
         }
-        
+
         const newUser: GroupedUser = {
           id_utilisateur: userId,
-          fullName: fullName,
-          email: email,
-          initials: initials,
+          fullName,
+          email,
+          initials,
           souscriptions: [],
           totalAmount: 0,
           totalInDelay: 0
         };
-        
+
         userMap.set(userId, newUser);
         console.log(`✅ Utilisateur créé:`, {
           id: newUser.id_utilisateur,
@@ -341,25 +336,22 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
         console.log(`📝 Ajout à un groupe EXISTANT pour l'utilisateur ${userId}`);
       }
 
-      // Ajouter la souscription au groupe
       const user = userMap.get(userId)!;
       user.souscriptions.push(souscription);
       user.totalAmount += this.souscriptionService.parseAmount(souscription.montant_total_souscrit);
-      
-      // Compter les retards
+
       if (this.isDatePassed(souscription.date_prochain)) {
         user.totalInDelay++;
       }
-      
+
       console.log(`📊 Utilisateur ${userId} a maintenant ${user.souscriptions.length} souscription(s), total: ${user.totalAmount}`);
     });
 
-    // Étape 4: Convertir en tableau et vérifier le résultat
     this.groupedUsers = Array.from(userMap.values());
-    
+
     console.log('\n🎯 RÉSULTAT FINAL DU GROUPEMENT:');
     console.log('👥 Nombre d\'utilisateurs groupés:', this.groupedUsers.length);
-    
+
     this.groupedUsers.forEach((user, index) => {
       console.log(`Utilisateur ${index + 1}:`, {
         id_utilisateur: user.id_utilisateur,
@@ -372,7 +364,6 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
       });
     });
 
-    // Étape 5: Vérification finale
     if (this.groupedUsers.length === 0) {
       console.error('🚨 ERREUR CRITIQUE: Aucun utilisateur groupé !');
       console.error('Vérifiez que this.souscriptions contient des données valides');
@@ -387,37 +378,32 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Voir les détails d'une souscription - MODIFIÉE pour ouvrir le modal
+   * Voir les détails d'une souscription
    */
   viewDetails(souscriptionId: number): void {
     console.log('🔍 Ouverture modal pour ID:', souscriptionId);
-    
-    // Trouver la souscription dans les données
+
     const souscription = this.souscriptions.find(s => s.id_souscription === souscriptionId);
-    
+
     if (!souscription) {
       console.error('❌ Souscription non trouvée:', souscriptionId);
       return;
     }
 
-    // Convertir ApiSouscription vers le format Subscription attendu par le modal
     const subscriptionForModal: Subscription = this.convertToSubscriptionFormat(souscription);
-    
-    // Ouvrir le modal avec les données converties
     this.showModal(subscriptionForModal);
   }
 
   /**
-   * NOUVELLE MÉTHODE: Convertir ApiSouscription vers le format Subscription
+   * Convertir ApiSouscription vers le format Subscription
    */
   private convertToSubscriptionFormat(apiSouscription: ApiSouscription): Subscription {
     console.log('🔄 Conversion de ApiSouscription vers Subscription:', apiSouscription);
-    
-    // Mapper le statut
+
     let statut: 'en-cours' | 'en-retard' | 'termine' = 'en-cours';
     const statusDisplay = this.getStatusDisplay(apiSouscription);
-    
-    switch(statusDisplay.status.toLowerCase()) {
+
+    switch (statusDisplay.status.toLowerCase()) {
       case 'termine':
       case 'terminé':
         statut = 'termine';
@@ -430,7 +416,6 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
         break;
     }
 
-    // Créer des paiements fictifs ou récupérer les vrais si disponibles
     const payments: Payment[] = this.generateMockPayments(apiSouscription);
 
     const subscription: Subscription = {
@@ -442,9 +427,9 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
       resteAPayer: apiSouscription.reste_a_payer || 0,
       dateDebut: apiSouscription.date_souscription || new Date().toISOString(),
       prochainPaiement: apiSouscription.date_prochain || '',
-      statut: statut,
+      statut,
       progression: this.getCompletionPercentage(apiSouscription),
-      payments: payments
+      payments
     };
 
     console.log('✅ Subscription convertie:', subscription);
@@ -452,32 +437,28 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * NOUVELLE MÉTHODE: Générer des paiements fictifs (à remplacer par de vraies données)
+   * Générer des paiements fictifs
    */
   private generateMockPayments(souscription: ApiSouscription): Payment[] {
     console.log('🎭 Génération de paiements fictifs pour:', souscription.id_souscription);
-    
-    // Si vous avez de vrais paiements dans votre API, remplacez cette méthode
-    // par un appel à votre service pour récupérer les paiements réels
-    
+
     const montantPaye = this.souscriptionService.parseAmount(souscription.montant_paye);
     const montantTotal = this.souscriptionService.parseAmount(souscription.montant_total_souscrit);
-    
+
     if (montantPaye === 0) {
       return [];
     }
 
-    // Générer quelques paiements fictifs basés sur le montant payé
     const payments: Payment[] = [];
-    const moyenneMensuelle = 500000; // 500k CFA par mois par exemple
+    const moyenneMensuelle = 500000;
     const nombrePaiements = Math.min(5, Math.ceil(montantPaye / moyenneMensuelle));
-    
+
     for (let i = 0; i < nombrePaiements; i++) {
       const date = new Date();
       date.setMonth(date.getMonth() - (nombrePaiements - i - 1));
-      
-      const montant = i === nombrePaiements - 1 
-        ? montantPaye - (moyenneMensuelle * (nombrePaiements - 1)) // Dernier paiement = reste
+
+      const montant = i === nombrePaiements - 1
+        ? montantPaye - moyenneMensuelle * (nombrePaiements - 1)
         : moyenneMensuelle;
 
       payments.push({
@@ -491,18 +472,17 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
     }
 
     console.log('💳 Paiements générés:', payments);
-    return payments.reverse(); // Plus récents en premier
+    return payments.reverse();
   }
 
   /**
-   * NOUVELLE MÉTHODE: Afficher le modal (copiée de votre exemple)
+   * Afficher le modal
    */
   showModal(subscription: Subscription): void {
     console.log('🔍 Ouverture modal pour:', subscription.id);
     console.log('💳 Paiements disponibles:', subscription.payments);
-    
+
     if (subscription.payments && Array.isArray(subscription.payments)) {
-      // Prendre les 5 derniers paiements (déjà triés par numéro de mensualité décroissant)
       this.lastFivePayments = subscription.payments.slice(0, 5).map(payment => ({
         date: payment.date,
         amount: payment.amount,
@@ -511,14 +491,13 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
         reference_paiement: payment.reference_paiement,
         statut_versement: payment.statut_versement
       }));
-      
+
       console.log('📋 5 derniers paiements sélectionnés:', this.lastFivePayments);
     } else {
       this.lastFivePayments = [];
       console.log('⚠️ Aucun paiement trouvé pour cette souscription');
     }
 
-    // Stocker les informations de la souscription pour l'affichage
     this.selectedSubscriptionId = subscription.id;
     this.selectedSubscriptionInfo = {
       terrain: subscription.terrain,
@@ -533,33 +512,30 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * NOUVELLE MÉTHODE: Fermer le modal
+   * Fermer le modal
    */
   handleCancel(): void {
     console.log('❌ Fermeture du modal');
     this.isVisible = false;
-    this.selectedSubscriptionId = '';
+    this.selectedSubscriptionId = null;
     this.selectedSubscriptionInfo = null;
     this.lastFivePayments = [];
   }
 
   /**
-   * NOUVELLE MÉTHODE: Action OK du modal (voir détails complets)
+   * Action OK du modal
    */
-   // ✅ Amélioration handleOk avec navigation correcte
-   handleOk(): void {
+  handleOk(): void {
     this.isVisible = false;
     this.lastFivePayments = [];
-    
+
     if (this.selectedSubscriptionId) {
-      // Extraire l'ID numérique de la souscription
       const numericId = this.selectedSubscriptionId.replace('SUB', '').replace(/^0+/, '');
       console.log('🔗 Navigation vers détails paiement admin:', numericId);
-      
-      // CORRECTION: Navigation vers la route admin
+
       this.router.navigate(['/dashboard/admin/details/paiement-details-admin', numericId]);
     }
-    
+
     this.selectedSubscriptionId = null;
     this.selectedSubscriptionInfo = null;
   }
@@ -663,13 +639,19 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   /**
    * Obtenir le statut avec couleur
    */
-  getStatusDisplay(souscription: ApiSouscription): {status: string, color: string, label: string} {
+  getStatusDisplay(souscription: ApiSouscription): { status: string; color: string; label: string } {
     const calculatedStatus = this.souscriptionService.calculateSouscriptionStatus(souscription);
     const apiStatus = souscription.statut_souscription;
-    
-    const finalStatus = calculatedStatus || apiStatus;
-    
-    switch(finalStatus.toLowerCase()) {
+
+    let finalStatus = calculatedStatus || apiStatus || 'en_attente';
+
+    if (!finalStatus || typeof finalStatus !== 'string') {
+      finalStatus = 'en_attente';
+    }
+
+    const statusLowerCase = finalStatus.toLowerCase();
+
+    switch (statusLowerCase) {
       case 'termine':
       case 'terminé':
         return { status: finalStatus, color: 'green', label: 'Terminé' };
@@ -685,7 +667,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
       case 'en_attente':
         return { status: finalStatus, color: 'cyan', label: 'En attente' };
       default:
-        return { status: finalStatus, color: 'default', label: finalStatus };
+        return { status: finalStatus, color: 'default', label: finalStatus || 'Non défini' };
     }
   }
 
@@ -738,14 +720,12 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * CORRIGÉ: Obtenir le nom complet de l'utilisateur - AVEC PRIORITÉ UTILISATEUR
+   * Obtenir le nom complet de l'utilisateur
    */
   getUserFullName(souscription: ApiSouscription): string {
-    // Priorité 1: Utiliser les données de l'utilisateur
     if (souscription.utilisateur) {
       return `${souscription.utilisateur.prenom} ${souscription.utilisateur.nom}`;
     }
-    // Priorité 2: Utiliser les données de l'admin
     if (souscription.admin) {
       return `${souscription.admin.prenom} ${souscription.admin.nom}`;
     }
@@ -753,16 +733,14 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * CORRIGÉ: Obtenir les initiales de l'utilisateur - AVEC PRIORITÉ UTILISATEUR
+   * Obtenir les initiales de l'utilisateur
    */
   getUserInitials(souscription: ApiSouscription): string {
-    // Priorité 1: Utiliser les données de l'utilisateur
     if (souscription.utilisateur) {
       const prenom = souscription.utilisateur.prenom?.charAt(0) || '';
       const nom = souscription.utilisateur.nom?.charAt(0) || '';
       return (prenom + nom).toUpperCase();
     }
-    // Priorité 2: Utiliser les données de l'admin
     if (souscription.admin) {
       const prenom = souscription.admin.prenom?.charAt(0) || '';
       const nom = souscription.admin.nom?.charAt(0) || '';
@@ -776,7 +754,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
    */
   formatDate(dateString: string | null): string {
     if (!dateString) return 'Non définie';
-    
+
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR', {
       day: '2-digit',
@@ -833,7 +811,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
    * Ajouter une nouvelle souscription
    */
   AddNewSouscription(): void {
-    console.log('Nouvelle souscription');
+    this.router.navigate(['/dashboard/admin/details/create-souscription-admin']);
   }
 
   /**
@@ -843,7 +821,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
     if (this.searchTimeout) {
       clearTimeout(this.searchTimeout);
     }
-    
+
     this.searchTimeout = setTimeout(() => {
       this.onSearch(this.searchTerm);
     }, 500);
@@ -865,11 +843,18 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * NOUVELLES MÉTHODES pour les fonctions utilisées dans le template du modal
+   * Effectuer un paiement
    */
-  
+  makePayment(souscriptionId: number): void {
+    console.log('Effectuer un paiement pour la souscription:', souscriptionId);
+    // Implémenter la logique de paiement ici
+  }
+
+  /**
+   * Méthodes pour le modal
+   */
   getStatusColor(statut: string): string {
-    switch(statut.toLowerCase()) {
+    switch (statut.toLowerCase()) {
       case 'termine':
       case 'terminé':
         return 'green';
@@ -885,7 +870,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   }
 
   getStatusLabel(statut: string): string {
-    switch(statut.toLowerCase()) {
+    switch (statut.toLowerCase()) {
       case 'termine':
       case 'terminé':
         return 'Terminé';
@@ -915,7 +900,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
 
   formatPaymentStatus(statut: string | undefined): string {
     if (!statut) return 'Non défini';
-    switch(statut.toLowerCase()) {
+    switch (statut.toLowerCase()) {
       case 'valide':
         return 'Validé';
       case 'en_attente':
@@ -929,7 +914,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
 
   getPaymentStatusColor(statut: string | undefined): string {
     if (!statut) return 'default';
-    switch(statut.toLowerCase()) {
+    switch (statut.toLowerCase()) {
       case 'valide':
         return 'green';
       case 'en_attente':
