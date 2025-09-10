@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, NO_ERRORS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -11,9 +11,37 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
+import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzSelectModule } from 'ng-zorro-antd/select';
+import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
+import { NzMessageService } from 'ng-zorro-antd/message';
 
 import { Router } from '@angular/router';
 import { ApiSouscription, SouscriptionFilters, SouscriptionService, SouscriptionResponse } from 'src/app/core/services/souscription.service';
+
+// Interfaces pour les paiements
+interface PaymentData {
+  id_souscription: number;
+  mode_paiement: string;
+  montant_paye: number;
+  date_paiement_effectif: string;
+}
+
+interface PaymentCreationResponse {
+  success: boolean;
+  status_code: number;
+  message: string;
+  data: {
+    id_plan_paiement: number;
+    id_souscription: number;
+    montant_paye: string;
+    mode_paiement: string;
+    date_paiement_effectif: string;
+    statut_versement: string;
+    created_at: string;
+    updated_at: string;
+  };
+}
 
 // Interface pour les utilisateurs groupés
 interface GroupedUser {
@@ -72,8 +100,12 @@ interface SelectedSubscriptionInfo {
     NzButtonModule,
     NzModalModule,
     NzSpaceModule,
-    NzDropDownModule
+    NzDropDownModule,
+    NzInputModule,
+    NzSelectModule,
+    NzDatePickerModule
   ],
+  schemas: [NO_ERRORS_SCHEMA],
   templateUrl: './admin-souscription.component.html',
   styleUrls: ['./admin-souscription.component.scss']
 })
@@ -103,11 +135,22 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   dateDebut: string = '';
   dateFin: string = '';
 
-  // Propriétés pour le modal
+  // Propriétés pour le modal de détails
   isVisible = false;
   selectedSubscriptionId: string | null = null;
   selectedSubscriptionInfo: SelectedSubscriptionInfo | null = null;
   lastFivePayments: Payment[] = [];
+
+  // Propriétés pour le modal de paiement
+  isPaymentModalVisible = false;
+  selectedSouscriptionForPayment: ApiSouscription | null = null;
+  paymentForm = {
+    id_souscription: 0,
+    mode_paiement: '',
+    montant_paye: 0,
+    date_paiement_effectif: ''
+  };
+  isProcessingPayment = false;
 
   // Propriété pour utiliser Math dans le template
   Math = Math;
@@ -117,7 +160,8 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
 
   constructor(
     private souscriptionService: SouscriptionService,
-    private router: Router
+    private router: Router,
+    private message: NzMessageService
   ) {}
 
   ngOnInit(): void {
@@ -133,6 +177,69 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
     if (this.searchTimeout) {
       clearTimeout(this.searchTimeout);
     }
+  }
+
+  /**
+   * Service de paiements simple intégré
+   */
+  private effectuerPaiement(paymentData: PaymentData): Promise<PaymentCreationResponse> {
+    const apiUrl = 'http://192.168.252.75:8000/api/paiements';
+    
+    const payload = {
+      id_souscription: paymentData.id_souscription,
+      mode_paiement: paymentData.mode_paiement,
+      montant_paye: paymentData.montant_paye,
+      date_paiement_effectif: paymentData.date_paiement_effectif
+    };
+
+    console.log('📤 Envoi paiement à l\'API:', payload);
+    console.log('🔗 URL:', apiUrl);
+
+    return fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .catch(error => {
+      console.error('Erreur lors de l\'appel API:', error);
+      throw error;
+    });
+  }
+
+  private validatePaymentData(paymentData: PaymentData): { valid: boolean; errors: string[] } {
+    const errors: string[] = [];
+
+    if (!paymentData.id_souscription || paymentData.id_souscription <= 0) {
+      errors.push('ID de souscription invalide');
+    }
+
+    if (!paymentData.mode_paiement || paymentData.mode_paiement.trim() === '') {
+      errors.push('Mode de paiement requis');
+    }
+
+    if (!paymentData.montant_paye || paymentData.montant_paye <= 0) {
+      errors.push('Montant de paiement invalide');
+    }
+
+    if (!paymentData.date_paiement_effectif) {
+      errors.push('Date de paiement requise');
+    } else {
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+      const paymentDate = new Date(paymentData.date_paiement_effectif);
+      
+      if (paymentDate > today) {
+        errors.push('La date de paiement ne peut pas être dans le futur');
+      }
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors
+    };
   }
 
   /**
@@ -476,7 +583,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Afficher le modal
+   * Afficher le modal de détails
    */
   showModal(subscription: Subscription): void {
     console.log('🔍 Ouverture modal pour:', subscription.id);
@@ -512,7 +619,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Fermer le modal
+   * Fermer le modal de détails
    */
   handleCancel(): void {
     console.log('❌ Fermeture du modal');
@@ -523,7 +630,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Action OK du modal
+   * Action OK du modal de détails
    */
   handleOk(): void {
     this.isVisible = false;
@@ -538,6 +645,137 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
 
     this.selectedSubscriptionId = null;
     this.selectedSubscriptionInfo = null;
+  }
+
+  /**
+   * Effectuer un paiement - Ouvre le modal
+   */
+  makePayment(souscriptionId: number): void {
+    console.log('Ouverture modal de paiement pour la souscription:', souscriptionId);
+    
+    // Trouver la souscription dans les données
+    const souscription = this.souscriptions.find(s => s.id_souscription === souscriptionId);
+    
+    if (!souscription) {
+      console.error('Souscription non trouvée:', souscriptionId);
+      this.message.error('Souscription non trouvée');
+      return;
+    }
+
+    // Préparer le formulaire avec l'ID de la souscription
+    this.selectedSouscriptionForPayment = souscription;
+    this.paymentForm = {
+      id_souscription: souscriptionId,
+      mode_paiement: '',
+      montant_paye: 0,
+      date_paiement_effectif: new Date().toISOString().split('T')[0] // Date d'aujourd'hui par défaut
+    };
+
+    this.isPaymentModalVisible = true;
+  }
+
+  /**
+   * Fermer le modal de paiement
+   */
+  handlePaymentModalCancel(): void {
+    this.isPaymentModalVisible = false;
+    this.selectedSouscriptionForPayment = null;
+    this.resetPaymentForm();
+  }
+
+  /**
+   * Soumettre le paiement
+   */
+  async submitPayment(): Promise<void> {
+    // Validation des champs requis
+    if (!this.paymentForm.mode_paiement) {
+      this.message.error('Mode de paiement requis');
+      return;
+    }
+
+    if (!this.paymentForm.montant_paye || this.paymentForm.montant_paye <= 0) {
+      this.message.error('Montant de paiement requis et doit être supérieur à 0');
+      return;
+    }
+
+    if (!this.paymentForm.date_paiement_effectif) {
+      this.message.error('Date de paiement requise');
+      return;
+    }
+
+    // Validation supplémentaire
+    const validation = this.validatePaymentData(this.paymentForm);
+    if (!validation.valid) {
+      validation.errors.forEach(error => this.message.error(error));
+      return;
+    }
+
+    // Vérifier que le montant ne dépasse pas le reste à payer
+    const montantRestant = this.getMontantRestant(this.selectedSouscriptionForPayment!);
+    if (this.paymentForm.montant_paye > montantRestant) {
+      this.message.error(`Le montant ne peut pas dépasser le reste à payer (${this.formatCurrency(montantRestant)})`);
+      return;
+    }
+
+    console.log('Soumission du paiement:', this.paymentForm);
+    this.isProcessingPayment = true;
+
+    try {
+      // Appel à l'API pour effectuer le paiement
+      const response: PaymentCreationResponse = await this.effectuerPaiement(this.paymentForm);
+      
+      console.log('Paiement effectué avec succès:', response);
+      
+      if (response.success) {
+        this.message.success('Paiement enregistré avec succès!');
+        
+        // Fermer le modal
+        this.isPaymentModalVisible = false;
+        this.resetPaymentForm();
+        
+        // Actualiser les données
+        this.loadSouscriptions();
+      } else {
+        this.message.error(response.message || 'Erreur lors de l\'enregistrement du paiement');
+      }
+    } catch (error: any) {
+      console.error('Erreur lors du paiement:', error);
+      
+      let errorMessage = 'Erreur lors de l\'enregistrement du paiement';
+      if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      this.message.error(errorMessage);
+    } finally {
+      this.isProcessingPayment = false;
+    }
+  }
+
+  /**
+   * Réinitialiser le formulaire de paiement
+   */
+  private resetPaymentForm(): void {
+    this.paymentForm = {
+      id_souscription: 0,
+      mode_paiement: '',
+      montant_paye: 0,
+      date_paiement_effectif: ''
+    };
+  }
+
+  /**
+   * Obtenir le montant restant à payer pour une souscription
+   */
+  getMontantRestant(souscription: ApiSouscription): number {
+    return souscription.reste_a_payer || 0;
+  }
+
+  /**
+   * Obtenir le nom du terrain pour une souscription
+   */
+  getTerrainName(souscription: ApiSouscription): string {
+    return souscription.terrain?.libelle || 'Terrain non défini';
   }
 
   /**
@@ -840,14 +1078,6 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   onSurfaceFilterChange(): void {
     const surface = this.surfaceFilter === '' ? undefined : Number(this.surfaceFilter);
     this.filterBySuperficie(surface);
-  }
-
-  /**
-   * Effectuer un paiement
-   */
-  makePayment(souscriptionId: number): void {
-    console.log('Effectuer un paiement pour la souscription:', souscriptionId);
-    // Implémenter la logique de paiement ici
   }
 
   /**
