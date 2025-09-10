@@ -1,0 +1,378 @@
+/* Styles pour les demandes de souscription admin */
+
+/* ===== HEADER SECTION ===== */
+.header-section {
+  margin-bottom: 24px;
+}
+
+.header-title {
+  margin-bottom: 20px;
+}
+
+.header-title h2 {
+  margin: 0 0 8px 0;
+  color: #1f2937;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.header-title p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 16px;
+}
+
+/* ===== STATISTIQUES ===== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transform: translateY(-2px);
+}
+
+/* ===== SECTION FILTRES ===== */
+.filters-section {
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+
+.filters-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  gap: 16px;
+  align-items: end;
+}
+
+@media (max-width: 1024px) {
+  .filters-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .filters-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-item label {
+  font-weight: 500;
+  color: #374151;
+  font-size: 14px;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-actions button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ===== SECTION TABLEAU ===== */
+.table-section {
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+
+/* ===== STYLES DES CELLULES DU TABLEAU ===== */
+
+/* Informations utilisateur */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-details {
+  flex: 1;
+}
+
+.user-name {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.user-email {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 2px;
+}
+
+.user-phone {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Informations terrain */
+.terrain-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.terrain-title {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 14px;
+}
+
+.terrain-location {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.terrain-price {
+  font-size: 12px;
+  color: #059669;
+  font-weight: 500;
+}
+
+/* Badge superficie */
+.superficie-badge {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-block;
+}
+
+/* Informations montant */
+.amount-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.total-amount {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 14px;
+}
+
+.paid-amount {
+  font-size: 12px;
+  color: #059669;
+}
+
+.remaining-amount {
+  font-size: 12px;
+  color: #dc2626;
+}
+
+/* Informations date */
+.date-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.date-main {
+  font-weight: 500;
+  color: #1f2937;
+  font-size: 13px;
+}
+
+.date-relative {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+/* ===== ACTIONS ===== */
+.actions-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.status-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.status-actions button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+.status-actions button span[nz-icon] {
+  font-size: 12px;
+}
+
+/* ===== MESSAGES D'ÉTAT ===== */
+.error-message {
+  margin: 16px;
+}
+
+.empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  padding: 40px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  
+  .header-title h2 {
+    font-size: 24px;
+  }
+  
+  .filters-section {
+    padding: 16px;
+  }
+  
+  .status-actions {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .status-actions button {
+    width: 100%;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .header-title h2 {
+    font-size: 20px;
+  }
+  
+  .user-name {
+    font-size: 13px;
+  }
+  
+  .terrain-title {
+    font-size: 13px;
+  }
+  
+  .total-amount {
+    font-size: 13px;
+  }
+}
+
+/* ===== AMÉLIORATIONS DE L'INTERFACE ===== */
+
+/* Hover effects pour les lignes du tableau */
+::ng-deep .ant-table-tbody > tr:hover > td {
+  background-color: #f8fafc !important;
+}
+
+/* Styles pour les tags de statut */
+::ng-deep .ant-tag {
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 11px;
+  padding: 2px 8px;
+}
+
+/* Styles pour les boutons dans les actions */
+::ng-deep .status-actions .ant-btn {
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+::ng-deep .status-actions .ant-btn-sm {
+  height: 24px;
+  padding: 0 6px;
+  font-size: 11px;
+}
+
+/* Améliorations pour la pagination */
+::ng-deep .ant-pagination {
+  margin-top: 16px;
+  text-align: center;
+}
+
+/* Loading overlay */
+::ng-deep .ant-spin-container {
+  min-height: 200px;
+}
+
+/* Amélioration des filtres */
+::ng-deep .filter-item .ant-input,
+::ng-deep .filter-item .ant-select-selector,
+::ng-deep .filter-item .ant-input-number {
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  transition: border-color 0.2s ease;
+}
+
+::ng-deep .filter-item .ant-input:focus,
+::ng-deep .filter-item .ant-select-focused .ant-select-selector,
+::ng-deep .filter-item .ant-input-number-focused {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* Styles pour les cartes de statistiques */
+::ng-deep .stat-card .ant-card-body {
+  padding: 16px;
+}
+
+::ng-deep .ant-statistic-title {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+::ng-deep .ant-statistic-content {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* Amélioration des tooltips */
+::ng-deep .ant-tooltip {
+  font-size: 12px;
+}

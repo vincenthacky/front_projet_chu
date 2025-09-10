@@ -1,1 +1,303 @@
-<p>all-subscription-requests-admin works!</p>
+<!-- Entête avec statistiques -->
+<div class="header-section">
+  <div class="header-title">
+    <h2>Demandes de Souscription</h2>
+    <p>Gestion des demandes de souscription en attente</p>
+  </div>
+  
+  <!-- Statistiques -->
+  <div class="stats-grid">
+    <nz-card class="stat-card">
+      <nz-statistic 
+        [nzValue]="totalDemandes" 
+        [nzTitle]="'Total des demandes'" 
+        [nzValueStyle]="{ color: '#1890ff' }">
+      </nz-statistic>
+    </nz-card>
+    
+    <nz-card class="stat-card">
+      <nz-statistic 
+        [nzValue]="getDemandesEnAttente()" 
+        [nzTitle]="'En attente'" 
+        [nzValueStyle]="{ color: '#faad14' }">
+      </nz-statistic>
+    </nz-card>
+    
+    <nz-card class="stat-card">
+      <nz-statistic 
+        [nzValue]="getDemandesactives()" 
+        [nzTitle]="'Validées'" 
+        [nzValueStyle]="{ color: '#52c41a' }">
+      </nz-statistic>
+    </nz-card>
+    
+    <nz-card class="stat-card">
+      <nz-statistic 
+        [nzValue]="getDemandesRejetees()" 
+        [nzTitle]="'Rejetées'" 
+        [nzValueStyle]="{ color: '#ff4d4f' }">
+      </nz-statistic>
+    </nz-card>
+    
+    <nz-card class="stat-card">
+      <nz-statistic 
+        [nzValue]="formatCurrency(calculateTotalAmount())" 
+        [nzTitle]="'Montant total'" 
+        [nzValueStyle]="{ color: '#1890ff' }">
+      </nz-statistic>
+    </nz-card>
+  </div>
+</div>
+
+<!-- Section de filtres -->
+<div class="filters-section">
+  <div class="filters-row">
+    <!-- Recherche -->
+    <div class="filter-item">
+      <label>Recherche</label>
+      <nz-input-group [nzSuffix]="suffixIconSearch">
+        <input 
+          type="text" 
+          nz-input 
+          placeholder="Rechercher..." 
+          [(ngModel)]="searchTerm"
+          (input)="onSearchChange()"
+        />
+      </nz-input-group>
+      <ng-template #suffixIconSearch>
+        <span nz-icon nzType="search"></span>
+      </ng-template>
+    </div>
+
+    <!-- Filtre par statut -->
+    <div class="filter-item">
+      <label>Statut</label>
+      <nz-select 
+        [(ngModel)]="statusFilter" 
+        (ngModelChange)="onStatusFilterChange()"
+        nzPlaceHolder="Tous les statuts"
+        nzAllowClear>
+        <nz-option nzValue="en_attente" nzLabel="En attente"></nz-option>
+        <nz-option nzValue="active" nzLabel="Validée"></nz-option>
+        <nz-option nzValue="rejete" nzLabel="Rejetée"></nz-option>
+      </nz-select>
+    </div>
+
+    <!-- Filtre par superficie -->
+    <div class="filter-item">
+      <label>Superficie (m²)</label>
+      <nz-input-number 
+        [(ngModel)]="surfaceFilter" 
+        (ngModelChange)="onSurfaceFilterChange()"
+        [nzPlaceHolder]="'Superficie'"
+        [nzMin]="0"
+        [nzStep]="100">
+      </nz-input-number>
+    </div>
+
+    <!-- Actions -->
+    <div class="filter-actions">
+      <button nz-button nzType="default" (click)="resetFilters()">
+        <span nz-icon nzType="clear"></span>
+        Réinitialiser
+      </button>
+      <button nz-button nzType="primary" (click)="refresh()">
+        <span nz-icon nzType="reload"></span>
+        Actualiser
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Tableau des demandes -->
+<div class="table-section">
+  <nz-spin [nzSpinning]="isLoading">
+    <nz-table 
+      #basicTable 
+      [nzData]="demandeSouscriptions"
+      [nzFrontPagination]="false"
+      [nzScroll]="{ x: '1200px' }">
+      
+      <thead>
+        <tr>
+          <th nzWidth="120px">ID</th>
+          <th nzWidth="200px">Utilisateur</th>
+          <th nzWidth="250px">Terrain</th>
+          <th nzWidth="100px">Superficie</th>
+          <th nzWidth="150px">Montant Total</th>
+          <th nzWidth="120px">Date Demande</th>
+          <th nzWidth="120px">Statut</th>
+          <th nzWidth="200px" nzAlign="center">Actions</th>
+        </tr>
+      </thead>
+      
+      <tbody>
+        <tr *ngFor="let demande of basicTable.data">
+          <!-- ID -->
+          <td>
+            <strong>#{{ demande.id_souscription }}</strong>
+          </td>
+          
+          <!-- Utilisateur -->
+          <td>
+            <div class="user-info">
+              <div class="user-details">
+                <div class="user-name">{{ getUserFullName(demande) }}</div>
+                <div class="user-email">{{ demande.utilisateur.email || 'Email non disponible' }}</div>
+                <div class="user-phone">{{ demande.utilisateur.telephone || 'Tél. non disponible' }}</div>
+              </div>
+            </div>
+          </td>
+          
+          <!-- Terrain -->
+          <td>
+            <div class="terrain-info">
+              <div class="terrain-title">{{ demande.terrain.libelle || 'Non défini' }}</div>
+              <div class="terrain-location">{{ demande.terrain.localisation || 'Localisation non définie' }}</div>
+              <div class="terrain-price">{{ formatCurrency(demande.terrain.prix_unitaire || 0) }}</div>
+            </div>
+          </td>
+          
+          <!-- Superficie -->
+          <td>
+            <span class="superficie-badge">{{ demande.terrain.superficie || '0' }}m²</span>
+          </td>
+          
+          <!-- Montant Total -->
+          <td>
+            <div class="amount-info">
+              <div class="total-amount">{{ formatCurrency(demande.montant_total_souscrit) }}</div>
+              <div class="paid-amount">Payé: {{ formatCurrency(demande.montant_paye) }}</div>
+              <div class="remaining-amount">Reste: {{ formatCurrency(demande.reste_a_payer) }}</div>
+            </div>
+          </td>
+          
+          <!-- Date de demande -->
+          <td>
+            <div class="date-info">
+              <div class="date-main">{{ formatDate(demande.date_souscription) }}</div>
+              <div class="date-relative">{{ formatDate(demande.created_at) }}</div>
+            </div>
+          </td>
+          
+          <!-- Statut -->
+          <td>
+            <nz-tag [nzColor]="getStatusDisplay(demande).color">
+              {{ getStatusDisplay(demande).label }}
+            </nz-tag>
+          </td>
+          
+          <!-- Actions -->
+          <td nzAlign="center">
+            <div class="actions-container">
+              <!-- Actions pour demandes en attente -->
+              <div *ngIf="demande.statut_souscription === 'en_attente'" class="status-actions">
+                <button 
+                  nz-button 
+                  nzType="primary" 
+                  nzSize="small"
+                  (click)="changerStatutDemande(demande.id_souscription, 'active')"
+                  nzTooltip="Valider la demande">
+                  <span nz-icon nzType="check"></span>
+                  Valider
+                </button>
+                <button 
+                  nz-button 
+                  nzType="default" 
+                  nzDanger
+                  nzSize="small"
+                  (click)="changerStatutDemande(demande.id_souscription, 'rejete')"
+                  nzTooltip="Rejeter la demande">
+                  <span nz-icon nzType="close"></span>
+                  Rejeter
+                </button>
+              </div>
+              
+              <!-- Actions pour demandes validées -->
+              <div *ngIf="demande.statut_souscription === 'active'" class="status-actions">
+                <button 
+                  nz-button 
+                  nzType="default" 
+                  nzSize="small"
+                  (click)="changerStatutDemande(demande.id_souscription, 'en_attente')"
+                  nzTooltip="Remettre en attente">
+                  <span nz-icon nzType="undo"></span>
+                  En attente
+                </button>
+                <button 
+                  nz-button 
+                  nzType="default" 
+                  nzDanger
+                  nzSize="small"
+                  (click)="changerStatutDemande(demande.id_souscription, 'rejete')"
+                  nzTooltip="Rejeter la demande">
+                  <span nz-icon nzType="close"></span>
+                  Rejeter
+                </button>
+              </div>
+              
+              <!-- Actions pour demandes rejetées -->
+              <div *ngIf="demande.statut_souscription === 'rejete'" class="status-actions">
+                <button 
+                  nz-button 
+                  nzType="primary" 
+                  nzSize="small"
+                  (click)="changerStatutDemande(demande.id_souscription, 'active')"
+                  nzTooltip="Valider la demande">
+                  <span nz-icon nzType="check"></span>
+                  Valider
+                </button>
+                <button 
+                  nz-button 
+                  nzType="default" 
+                  nzSize="small"
+                  (click)="changerStatutDemande(demande.id_souscription, 'en_attente')"
+                  nzTooltip="Remettre en attente">
+                  <span nz-icon nzType="undo"></span>
+                  En attente
+                </button>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+  </nz-spin>
+  
+  <!-- Pagination ng-zorro CORRIGÉE -->
+  <div class="pagination-container">
+    <nz-pagination
+      [nzTotal]="totalDemandes"
+      [nzPageSize]="perPage"
+      [nzPageIndex]="currentPage"
+      [nzShowSizeChanger]="true"
+      [nzShowQuickJumper]="true"
+      [nzShowTotal]="totalTemplate"
+      [nzPageSizeOptions]="[10, 20, 50, 100]"
+      (nzPageIndexChange)="onPageChange($event)"
+      (nzPageSizeChange)="onPageSizeChange($event)">
+    </nz-pagination>
+
+    <ng-template #totalTemplate let-total let-range="range">
+    </ng-template>
+  </div>
+  
+  <!-- Message d'erreur -->
+  <div *ngIf="error && !isLoading" class="error-message">
+    <nz-alert
+      nzType="error"
+      [nzMessage]="error"
+      nzShowIcon
+      nzCloseable>
+    </nz-alert>
+  </div>
+  
+  <!-- Message vide -->
+  <div *ngIf="!isLoading && demandeSouscriptions.length === 0 && !error" class="empty-state">
+    <nz-empty 
+      nzNotFoundImage="simple"
+      nzNotFoundContent="Aucune demande de souscription trouvée">
+      <span nz-typography><em>Aucune demande ne correspond à vos critères de recherche.</em></span>
+    </nz-empty>
+  </div>
+</div>

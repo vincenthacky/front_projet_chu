@@ -1,0 +1,429 @@
+/* Styles pour la gestion des r�clamations admin */
+
+/* ===== HEADER SECTION ===== */
+.header-section {
+  margin-bottom: 24px;
+}
+
+.header-title {
+  margin-bottom: 20px;
+}
+
+.header-title h2 {
+  margin: 0 0 8px 0;
+  color: #1f2937;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.header-title p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 16px;
+}
+
+/* ===== STATISTIQUES ===== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transform: translateY(-2px);
+}
+
+/* ===== SECTION FILTRES ===== */
+.filters-section {
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+
+.filters-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  gap: 16px;
+  align-items: end;
+}
+
+@media (max-width: 1200px) {
+  .filters-row {
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .filters-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-item label {
+  font-weight: 500;
+  color: #374151;
+  font-size: 14px;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-actions button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ===== SECTION TABLEAU ===== */
+.table-section {
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+  overflow: hidden;
+}
+
+/* Styles du tableau */
+:host ::ng-deep .ant-table {
+  .ant-table-thead > tr > th {
+    background: #fafafa;
+    color: #374151;
+    font-weight: 600;
+    font-size: 13px;
+    border-bottom: 1px solid #f0f0f0;
+    padding: 12px 8px;
+  }
+  
+  .ant-table-tbody > tr > td {
+    padding: 12px 8px;
+    border-bottom: 1px solid #f9f9f9;
+    vertical-align: top;
+  }
+  
+  .ant-table-tbody > tr:hover > td {
+    background: #fafafa;
+  }
+}
+
+/* ===== CONTENU DES CELLULES ===== */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.user-name {
+  font-weight: 500;
+  color: #374151;
+  font-size: 14px;
+}
+
+.user-email {
+  font-size: 12px;
+  color: #1890ff;
+}
+
+.user-subscription {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.user-matricule {
+  font-size: 11px;
+  color: #9ca3af;
+  font-family: monospace;
+  background: #f3f4f6;
+  padding: 2px 4px;
+  border-radius: 2px;
+  display: inline-block;
+  margin-top: 2px;
+}
+
+.reclamation-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.reclamation-title {
+  font-weight: 500;
+  color: #374151;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.reclamation-description {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.date-info {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.admin-response {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.response-text {
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.4;
+}
+
+.response-date {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.no-response {
+  font-size: 12px;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* ===== ACTIONS ===== */
+.actions-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  min-width: 200px;
+}
+
+.status-actions {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+:host ::ng-deep .status-actions .ant-btn {
+  font-size: 12px !important;
+  height: 28px !important;
+  padding: 0 8px !important;
+  border-radius: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  min-width: 70px !important;
+  justify-content: center !important;
+  
+  .anticon {
+    font-size: 11px !important;
+  }
+}
+
+/* Boutons sp�cifiques par action */
+:host ::ng-deep .status-actions .ant-btn-primary {
+  background: linear-gradient(135deg, #1890ff, #096dd9) !important;
+  border: none !important;
+  box-shadow: 0 2px 4px rgba(24, 144, 255, 0.3) !important;
+  
+  &:hover {
+    background: linear-gradient(135deg, #40a9ff, #1890ff) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 8px rgba(24, 144, 255, 0.4) !important;
+  }
+}
+
+:host ::ng-deep .status-actions .ant-btn-default {
+  background: white !important;
+  border: 1px solid #d9d9d9 !important;
+  color: #595959 !important;
+  
+  &:hover {
+    border-color: #40a9ff !important;
+    color: #1890ff !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  &.ant-btn-dangerous {
+    border-color: #ff7875 !important;
+    color: #ff4d4f !important;
+    
+    &:hover {
+      background: #fff2f0 !important;
+      border-color: #ff4d4f !important;
+      color: #cf1322 !important;
+    }
+  }
+}
+
+/* ===== PAGINATION ===== */
+.pagination-container {
+  padding: 16px 20px;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fafafa;
+}
+
+/* ===== MESSAGES D'�TAT ===== */
+.error-message {
+  padding: 16px 20px;
+}
+
+.empty-state {
+  padding: 40px;
+  text-align: center;
+}
+
+/* ===== MODAL DE R�PONSE ===== */
+.reclamation-details {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.reclamation-details h4 {
+  margin: 0 0 12px 0;
+  color: #374151;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.detail-row {
+  margin-bottom: 8px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.detail-row strong {
+  min-width: 80px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.description-text {
+  background: white;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #374151;
+}
+
+.user-section,
+.reclamation-section {
+  margin-bottom: 16px;
+}
+
+.user-section h5,
+.reclamation-section h5 {
+  margin: 0 0 8px 0;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 600;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 4px;
+}
+
+.modal-actions {
+  margin-top: 20px;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 16px;
+}
+
+.error-text {
+  color: #ff4d4f;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .actions-container {
+    min-width: 150px;
+    gap: 4px;
+  }
+  
+  .status-actions {
+    gap: 2px;
+  }
+  
+  :host ::ng-deep .status-actions .ant-btn {
+    font-size: 11px !important;
+    height: 24px !important;
+    padding: 0 6px !important;
+    min-width: 60px !important;
+    
+    .anticon {
+      font-size: 10px !important;
+    }
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .actions-container {
+    min-width: 120px;
+  }
+  
+  :host ::ng-deep .status-actions .ant-btn {
+    font-size: 10px !important;
+    height: 22px !important;
+    padding: 0 4px !important;
+    min-width: 50px !important;
+    
+    span:not(.anticon) {
+      display: none; /* Cache le texte sur tr�s petits �crans */
+    }
+    
+    .anticon {
+      font-size: 9px !important;
+      margin: 0 !important;
+    }
+  }
+  
+  .header-title h2 {
+    font-size: 24px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
