@@ -18,6 +18,8 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 
 import { Router } from '@angular/router';
 import { ApiSouscription, SouscriptionFilters, SouscriptionService, SouscriptionResponse } from 'src/app/core/services/souscription.service';
+import { PayementsService } from 'src/app/core/services/payements.service';
+
 
 // Interfaces pour les paiements
 interface PaymentData {
@@ -144,7 +146,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   // Propriétés pour le modal de paiement
   isPaymentModalVisible = false;
   selectedSouscriptionForPayment: ApiSouscription | null = null;
-  paymentForm = {
+  paymentForm: PaymentData = {
     id_souscription: 0,
     mode_paiement: '',
     montant_paye: 0,
@@ -160,6 +162,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
 
   constructor(
     private souscriptionService: SouscriptionService,
+    private payementsService: PayementsService,
     private router: Router,
     private message: NzMessageService
   ) {}
@@ -182,31 +185,17 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   /**
    * Service de paiements simple intégré
    */
-  private effectuerPaiement(paymentData: PaymentData): Promise<PaymentCreationResponse> {
-    const apiUrl = 'http://192.168.252.75:8000/api/paiements';
-    
-    const payload = {
-      id_souscription: paymentData.id_souscription,
-      mode_paiement: paymentData.mode_paiement,
-      montant_paye: paymentData.montant_paye,
-      date_paiement_effectif: paymentData.date_paiement_effectif
-    };
-
-    console.log('📤 Envoi paiement à l\'API:', payload);
-    console.log('🔗 URL:', apiUrl);
-
-    return fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload)
-    })
-    .then(response => response.json())
-    .catch(error => {
+  private async effectuerPaiement(paymentData: PaymentData): Promise<PaymentCreationResponse> {
+    try {
+      const response = await this.payementsService.createPaiement(paymentData).toPromise();
+      if (!response) {
+        throw new Error('Réponse de l\'API non définie');
+      }
+      return response;
+    } catch (error) {
       console.error('Erreur lors de l\'appel API:', error);
       throw error;
-    });
+    }
   }
 
   private validatePaymentData(paymentData: PaymentData): { valid: boolean; errors: string[] } {

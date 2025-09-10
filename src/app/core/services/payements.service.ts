@@ -226,9 +226,7 @@ export class PayementsService {
     switch(status?.toLowerCase()) {
       case 'paye_a_temps': return '#10b981'; // Vert
       case 'paye_en_retard': return '#f59e0b'; // Orange
-      case 'en_attente': return '#3b82f6'; // Bleu
-      case 'annule': return '#ef4444'; // Rouge
-      case 'refuse': return '#ef4444'; // Rouge
+      case 'paiement_partiel': return '#3b82f6'; // Bleu 
       default: return '#6b7280'; // Gris
     }
   }
@@ -238,9 +236,7 @@ export class PayementsService {
     switch(status?.toLowerCase()) {
       case 'paye_a_temps': return 'Payé à temps';
       case 'paye_en_retard': return 'Payé en retard';
-      case 'en_attente': return 'En attente';
-      case 'annule': return 'Annulé';
-      case 'refuse': return 'Refusé';
+      case 'paiement_partiel': return 'paiement_partiel';
       default: return status || 'Inconnu';
     }
   }
