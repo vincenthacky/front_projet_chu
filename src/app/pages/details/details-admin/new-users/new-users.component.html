@@ -1,1 +1,62 @@
-<p>new-users works!</p>
+<!-- Ajouts à intégrer dans create-user.component.html -->
+
+<!-- Indicateur de force du mot de passe (à ajouter après le champ mot_de_passe) -->
+<div class="password-strength-indicator" *ngIf="createUserForm.get('mot_de_passe')?.value">
+    <div class="strength-bar">
+      <div 
+        class="strength-fill" 
+        [style.width.%]="getPasswordStrength().level * 20"
+        [style.background-color]="getPasswordStrength().color"
+      ></div>
+    </div>
+    <span class="strength-text" [style.color]="getPasswordStrength().color">
+      {{ getPasswordStrength().text }}
+    </span>
+  </div>
+  
+  <!-- Bouton pour générer un mot de passe (à ajouter après l'indicateur de force) -->
+  <div class="password-generator">
+    <button 
+      type="button"
+      nz-button 
+      nzType="dashed" 
+      nzSize="small"
+      (click)="generateSecurePassword()"
+    >
+      <span nz-icon nzType="key"></span>
+      Générer un mot de passe sécurisé
+    </button>
+  </div>
+  
+  <!-- Aperçu des données utilisateur (à ajouter avant les boutons d'action) -->
+  <div class="user-preview" *ngIf="createUserForm.valid">
+    <nz-alert
+      nzType="info"
+      nzMessage="Aperçu de l'utilisateur"
+      nzShowIcon
+      [nzDescription]="userPreviewTemplate"
+    ></nz-alert>
+    
+    <ng-template #userPreviewTemplate>
+      <div class="preview-content">
+        <p><strong>Nom complet:</strong> {{ createUserForm.get('prenom')?.value }} {{ createUserForm.get('nom')?.value }}</p>
+        <p><strong>Email:</strong> {{ createUserForm.get('email')?.value }}</p>
+        <p><strong>Type:</strong> {{ getUserTypeLabel(createUserForm.get('type')?.value) }}</p>
+        <p><strong>Statut:</strong> {{ getStatusLabel(createUserForm.get('statut_utilisateur')?.value) }}</p>
+        <p *ngIf="createUserForm.get('poste')?.value"><strong>Poste:</strong> {{ createUserForm.get('poste')?.value }}</p>
+        <p *ngIf="createUserForm.get('service')?.value"><strong>Service:</strong> {{ createUserForm.get('service')?.value }}</p>
+        <p><strong>Administrateur:</strong> {{ createUserForm.get('est_administrateur')?.value ? 'Oui' : 'Non' }}</p>
+      </div>
+    </ng-template>
+  </div>
+  
+  <!-- Indicateur de progression du formulaire -->
+  <div class="form-progress">
+    <nz-progress 
+      [nzPercent]="getFormCompletionPercentage()" 
+      nzStatus="active"
+      [nzShowInfo]="false"
+      nzSize="small"
+    ></nz-progress>
+    <span class="progress-text">Progression: {{ getFormCompletionPercentage() }}%</span>
+  </div>
