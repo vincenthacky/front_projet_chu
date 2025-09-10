@@ -88,10 +88,10 @@ export class UsersComponent implements OnInit, OnDestroy {
     { label: 'Inactif', value: 'inactif' }
   ];
 
-  // Options de type d'utilisateur (CORRIGÉ selon l'API)
+  // Options de type d'utilisateur (CORRIGÉ : valeur en minuscule pour matcher le backend)
   userTypeOptions = [
     { label: 'Utilisateur', value: 'user' },
-    { label: 'Super Admin', value: 'superAdmin' }
+    { label: 'Super Admin', value: 'superadmin' }  
   ];
 
   constructor(
@@ -258,7 +258,7 @@ export class UsersComponent implements OnInit, OnDestroy {
 
   editUser(user: User): void {
     console.log('✏️ Modifier utilisateur:', user);
-    this.isEditLoading = false; // Reset du loading avant d'ouvrir la modal
+    this.isEditLoading = true;  // Démarrer le loading pour la récupération du profil
 
     this.authService.getUserProfile(user.id_utilisateur).pipe(
       takeUntil(this.destroy$)
@@ -268,10 +268,12 @@ export class UsersComponent implements OnInit, OnDestroy {
         this.editingUser = response.data;
         this.populateEditForm(response.data);
         this.isEditModalVisible = true;
+        this.isEditLoading = false;  // Arrêter le loading après succès
       },
       error: (error) => {
         console.error('❌ Erreur récupération profil:', error);
         this.message.error('Erreur lors de la récupération du profil utilisateur');
+        this.isEditLoading = false;  // Arrêter le loading en cas d'erreur
       }
     });
   }
@@ -287,7 +289,7 @@ export class UsersComponent implements OnInit, OnDestroy {
       telephone: user.telephone || '',
       poste: user.poste || '',
       service: user.service || '',
-      type: user.type, // Les valeurs 'user' et 'superAdmin' correspondent maintenant
+      type: user.type.toLowerCase(),  // Forcer en minuscule pour cohérence avec options
       est_administrateur: user.est_administrateur,
       statut_utilisateur: user.statut_utilisateur
     });
@@ -322,8 +324,7 @@ export class UsersComponent implements OnInit, OnDestroy {
             `Le profil de ${response.data.prenom} ${response.data.nom} a été mis à jour.`
           );
           
-          // CORRECTION : Arrêter le loading et fermer la modal
-          this.isEditLoading = false;
+          this.isEditLoading = false;  // Arrêter le loading
           this.closeEditModal();
           this.loadUsers();
         },
@@ -337,7 +338,7 @@ export class UsersComponent implements OnInit, OnDestroy {
             this.message.error('Erreur lors de la modification de l\'utilisateur');
           }
           
-          this.isEditLoading = false;
+          this.isEditLoading = false;  // Arrêter le loading en cas d'erreur
         }
       });
     } else {
@@ -363,7 +364,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   closeEditModal(): void {
     this.isEditModalVisible = false;
     this.editingUser = null;
-    this.isEditLoading = false; // S'assurer que le loading est arrêté
+    this.isEditLoading = false;
     this.editForm.reset();
     console.log('🚪 Modal fermée, loading arrêté');
   }
@@ -478,7 +479,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   isAdmin(user: User): boolean {
-    return user.est_administrateur || user.type === 'superAdmin';
+    return user.est_administrateur || user.type.toLowerCase() === 'superadmin';
   }
 
   getAdminLabel(user: User): string {

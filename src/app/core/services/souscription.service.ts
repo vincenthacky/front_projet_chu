@@ -489,39 +489,44 @@ export class SouscriptionService {
   }
 
   /**
-   * Détermine le statut d'une souscription selon la logique métier
-   * Logique des statuts :
-   * - 'termine' : reste_a_payer = 0
-   * - 'en_retard' : date_prochain dépassée
-   * - 'en_cours' : un paiement a été effectué (montant_paye > 0)
-   */
-  calculateSouscriptionStatus(souscription: ApiSouscription): string {
-    const resteAPayer = souscription.reste_a_payer;
-    const dateProchain = souscription.date_prochain;
-    const today = new Date();
-    
-    // Si plus rien à payer → Terminé
-    if (resteAPayer === 0) {
-      return 'termine';
-    }
-    
-    // Si date de prochain paiement dépassée → En retard
-    if (dateProchain) {
+ * Détermine le statut d'une souscription selon la logique métier - CORRIGÉ
+ */
+calculateSouscriptionStatus(souscription: ApiSouscription): string {
+  // Protection contre les valeurs manquantes
+  if (!souscription) {
+    return 'en_attente';
+  }
+
+  const resteAPayer = souscription.reste_a_payer || 0;
+  const dateProchain = souscription.date_prochain;
+  const today = new Date();
+  
+  // Si plus rien à payer → Terminé
+  if (resteAPayer === 0) {
+    return 'termine';
+  }
+  
+  // Si date de prochain paiement dépassée → En retard
+  if (dateProchain) {
+    try {
       const prochainePaiement = new Date(dateProchain);
       if (prochainePaiement < today) {
         return 'en_retard';
       }
+    } catch (error) {
+      console.warn('Date invalide pour date_prochain:', dateProchain);
     }
-    
-    // Si un paiement a été effectué → En cours
-    const montantPaye = this.parseAmount(souscription.montant_paye);
-    if (montantPaye > 0) {
-      return 'en_cours';
-    }
-    
-    // Par défaut, retourne le statut actuel
-    return souscription.statut_souscription;
   }
+  
+  // Si un paiement a été effectué → En cours
+  const montantPaye = this.parseAmount(souscription.montant_paye || '0');
+  if (montantPaye > 0) {
+    return 'en_cours';
+  }
+  
+  // Par défaut, retourne le statut actuel ou 'en_attente'
+  return souscription.statut_souscription || 'en_attente';
+}
 
   /**
    * Obtient le statut avec couleur pour l'affichage
