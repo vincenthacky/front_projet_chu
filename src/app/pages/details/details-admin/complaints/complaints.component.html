@@ -1,1 +1,421 @@
-<p>complaints works!</p>
+<!-- Entête avec statistiques -->
+<div class="header-section">
+  <div class="header-title">
+    <h2>Gestion des Réclamations</h2>
+    <p>Interface d'administration pour traiter les réclamations clients</p>
+  </div>
+  
+  <!-- Statistiques -->
+  <div class="stats-grid">
+    <nz-card class="stat-card">
+      <nz-statistic 
+        [nzValue]="totalReclamations" 
+        [nzTitle]="'Total des réclamations'" 
+        [nzValueStyle]="{ color: '#1890ff' }">
+      </nz-statistic>
+    </nz-card>
+    
+    <nz-card class="stat-card">
+      <nz-statistic 
+        [nzValue]="getReclamationsEnAttente()" 
+        [nzTitle]="'En attente'" 
+        [nzValueStyle]="{ color: '#faad14' }">
+      </nz-statistic>
+    </nz-card>
+    
+    <nz-card class="stat-card">
+      <nz-statistic 
+        [nzValue]="getReclamationsResolues()" 
+        [nzTitle]="'Résolues'" 
+        [nzValueStyle]="{ color: '#52c41a' }">
+      </nz-statistic>
+    </nz-card>
+    
+    <nz-card class="stat-card">
+      <nz-statistic 
+        [nzValue]="getReclamationsRejetees()" 
+        [nzTitle]="'Rejetées'" 
+        [nzValueStyle]="{ color: '#ff4d4f' }">
+      </nz-statistic>
+    </nz-card>
+    
+    <nz-card class="stat-card">
+      <nz-statistic 
+        [nzValue]="getReclamationsUrgentes()" 
+        [nzTitle]="'Urgentes'" 
+        [nzValueStyle]="{ color: '#ff4d4f' }">
+      </nz-statistic>
+    </nz-card>
+  </div>
+</div>
+
+<!-- Section de filtres -->
+<div class="filters-section">
+  <div class="filters-row">
+    <!-- Recherche -->
+    <div class="filter-item">
+      <label>Recherche</label>
+      <nz-input-group [nzSuffix]="suffixIconSearch">
+        <input 
+          type="text" 
+          nz-input 
+          placeholder="Rechercher titre, description..." 
+          [(ngModel)]="searchTerm"
+          (input)="onSearchChange()"
+        />
+      </nz-input-group>
+      <ng-template #suffixIconSearch>
+        <span nz-icon nzType="search"></span>
+      </ng-template>
+    </div>
+
+    <!-- Filtre par statut -->
+    <div class="filter-item">
+      <label>Statut</label>
+      <nz-select 
+        [(ngModel)]="statusFilter" 
+        (ngModelChange)="onStatusFilterChange()"
+        nzPlaceHolder="Tous les statuts"
+        nzAllowClear>
+        <nz-option [nzValue]="3" nzLabel="En attente"></nz-option>
+        <nz-option [nzValue]="4" nzLabel="Résolue"></nz-option>
+        <nz-option [nzValue]="6" nzLabel="Rejetée"></nz-option>
+      </nz-select>
+    </div>
+
+    <!-- Filtre par type -->
+    <div class="filter-item">
+      <label>Type</label>
+      <nz-select 
+        [(ngModel)]="typeFilter" 
+        (ngModelChange)="onTypeFilterChange()"
+        nzPlaceHolder="Tous les types"
+        nzAllowClear>
+        <nz-option nzValue="anomalie_paiement" nzLabel="Anomalie paiement"></nz-option>
+        <nz-option nzValue="information_erronee" nzLabel="Information erronée"></nz-option>
+        <nz-option nzValue="document_manquant" nzLabel="Document manquant"></nz-option>
+        <nz-option nzValue="avancement_projet" nzLabel="Avancement projet"></nz-option>
+        <nz-option nzValue="autre" nzLabel="Autre"></nz-option>
+      </nz-select>
+    </div>
+
+    <!-- Filtre par priorité -->
+    <div class="filter-item">
+      <label>Priorité</label>
+      <nz-select 
+        [(ngModel)]="priorityFilter" 
+        (ngModelChange)="onPriorityFilterChange()"
+        nzPlaceHolder="Toutes les priorités"
+        nzAllowClear>
+        <nz-option nzValue="basse" nzLabel="Basse"></nz-option>
+        <nz-option nzValue="normale" nzLabel="Normale"></nz-option>
+        <nz-option nzValue="haute" nzLabel="Haute"></nz-option>
+        <nz-option nzValue="urgente" nzLabel="Urgente"></nz-option>
+      </nz-select>
+    </div>
+
+    <!-- Actions -->
+    <div class="filter-actions">
+      <button nz-button nzType="default" (click)="resetFilters()">
+        <span nz-icon nzType="clear"></span>
+        Réinitialiser
+      </button>
+      <button nz-button nzType="primary" (click)="refresh()">
+        <span nz-icon nzType="reload"></span>
+        Actualiser
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Tableau des réclamations -->
+<div class="table-section">
+  <nz-spin [nzSpinning]="isLoading">
+    <nz-table 
+      #basicTable 
+      [nzData]="reclamations"
+      [nzFrontPagination]="false"
+      [nzScroll]="{ x: '1400px' }">
+      
+      <thead>
+        <tr>
+          <th nzWidth="100px">ID</th>
+          <th nzWidth="200px">Utilisateur</th>
+          <th nzWidth="250px">Titre & Description</th>
+          <th nzWidth="150px">Type</th>
+          <th nzWidth="100px">Priorité</th>
+          <th nzWidth="120px">Date création</th>
+          <th nzWidth="120px">Statut</th>
+          <th nzWidth="200px">Réponse admin</th>
+          <th nzWidth="250px" nzAlign="center">Actions</th>
+        </tr>
+      </thead>
+      
+      <tbody>
+        <tr *ngFor="let reclamation of basicTable.data">
+          <!-- ID -->
+          <td>
+            <strong>#{{ reclamation.id_reclamation }}</strong>
+          </td>
+          
+          <!-- Utilisateur -->
+          <td>
+            <div class="user-info">
+              <div class="user-details">
+                <div class="user-name">{{ getUserFullName(reclamation) }}</div>
+                <div class="user-email">{{ getUserEmail(reclamation) }}</div>
+                <div class="user-subscription">Souscription #{{ reclamation.id_souscription }}</div>
+                <div class="user-matricule" *ngIf="reclamation.souscription.utilisateur?.matricule">{{ getUserMatricule(reclamation) }}</div>
+              </div>
+            </div>
+          </td>
+          
+          <!-- Titre & Description -->
+          <td>
+            <div class="reclamation-content">
+              <div class="reclamation-title">{{ reclamation.titre }}</div>
+              <div class="reclamation-description">{{ reclamation.description | slice:0:100 }}{{ reclamation.description.length > 100 ? '...' : '' }}</div>
+            </div>
+          </td>
+          
+          <!-- Type -->
+          <td>
+            <nz-tag [nzColor]="getTypeColor(reclamation.type_reclamation)">
+              {{ getTypeLabel(reclamation.type_reclamation) }}
+            </nz-tag>
+          </td>
+          
+          <!-- Priorité -->
+          <td>
+            <nz-tag [nzColor]="getPriorityColor(reclamation.priorite)">
+              {{ getPriorityLabel(reclamation.priorite) }}
+            </nz-tag>
+          </td>
+          
+          <!-- Date création -->
+          <td>
+            <div class="date-info">
+              {{ formatDate(reclamation.date_reclamation) }}
+            </div>
+          </td>
+          
+          <!-- Statut -->
+          <td>
+            <nz-tag [nzColor]="getStatusDisplay(reclamation).color">
+              {{ getStatusDisplay(reclamation).label }}
+            </nz-tag>
+          </td>
+          
+          <!-- Réponse admin -->
+          <td>
+            <div class="admin-response" *ngIf="reclamation.reponse_admin; else noResponse">
+              <div class="response-text">{{ reclamation.reponse_admin | slice:0:50 }}{{ reclamation.reponse_admin.length > 50 ? '...' : '' }}</div>
+              <div class="response-date" *ngIf="reclamation.date_reponse">{{ formatDate(reclamation.date_reponse) }}</div>
+            </div>
+            <ng-template #noResponse>
+              <span class="no-response">Aucune réponse</span>
+            </ng-template>
+          </td>
+          
+          <!-- Actions -->
+          <td nzAlign="center">
+            <div class="actions-container">
+              <!-- Actions pour réclamations en attente -->
+              <div *ngIf="reclamation.id_statut_reclamation === 3" class="status-actions">
+                <button 
+                  nz-button 
+                  nzType="primary" 
+                  nzSize="small"
+                  (click)="openResponseModal(reclamation)"
+                  nzTooltip="Répondre à la réclamation">
+                  <span nz-icon nzType="message"></span>
+                  Répondre
+                </button>
+                <button 
+                  nz-button 
+                  nzType="default" 
+                  nzSize="small"
+                  (click)="markAsResolved(reclamation)"
+                  nzTooltip="Marquer comme résolue">
+                  <span nz-icon nzType="check"></span>
+                  Résoudre
+                </button>
+                <button 
+                  nz-button 
+                  nzType="default" 
+                  nzDanger
+                  nzSize="small"
+                  (click)="markAsRejected(reclamation)"
+                  nzTooltip="Rejeter la réclamation">
+                  <span nz-icon nzType="close"></span>
+                  Rejeter
+                </button>
+              </div>
+              
+              <!-- Actions pour réclamations traitées -->
+              <div *ngIf="reclamation.id_statut_reclamation !== 3" class="status-actions">
+                <button 
+                  nz-button 
+                  nzType="default" 
+                  nzSize="small"
+                  (click)="openResponseModal(reclamation)"
+                  nzTooltip="Modifier la réponse">
+                  <span nz-icon nzType="edit"></span>
+                  Modifier
+                </button>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+  </nz-spin>
+  
+  <!-- Pagination ng-zorro -->
+  <div class="pagination-container">
+    <nz-pagination
+      [nzTotal]="totalReclamations"
+      [nzPageSize]="perPage"
+      [nzPageIndex]="currentPage"
+      [nzShowSizeChanger]="true"
+      [nzShowQuickJumper]="true"
+      [nzShowTotal]="totalTemplate"
+      [nzPageSizeOptions]="[10, 15, 20, 50]"
+      (nzPageIndexChange)="onPageChange($event)"
+      (nzPageSizeChange)="onPageSizeChange($event)">
+    </nz-pagination>
+
+    <ng-template #totalTemplate let-total let-range="range">
+      Affichage {{ range[0] }}-{{ range[1] }} de {{ total }} réclamations
+    </ng-template>
+  </div>
+  
+  <!-- Message d'erreur -->
+  <div *ngIf="error && !isLoading" class="error-message">
+    <nz-alert
+      nzType="error"
+      [nzMessage]="error"
+      nzShowIcon
+      nzCloseable>
+    </nz-alert>
+  </div>
+  
+  <!-- Message vide -->
+  <div *ngIf="!isLoading && reclamations.length === 0 && !error" class="empty-state">
+    <nz-empty 
+      nzNotFoundImage="simple"
+      nzNotFoundContent="Aucune réclamation trouvée">
+      <span nz-typography><em>Aucune réclamation ne correspond à vos critères de recherche.</em></span>
+    </nz-empty>
+  </div>
+</div>
+
+<!-- Modal de réponse -->
+<nz-modal
+  [(nzVisible)]="isResponseModalVisible"
+  nzTitle="Répondre à la réclamation"
+  [nzWidth]="600"
+  [nzFooter]="null"
+  (nzOnCancel)="closeResponseModal()">
+  
+  <div *nzModalContent>
+    <!-- Informations de la réclamation -->
+    <div class="reclamation-details" *ngIf="selectedReclamation">
+      <h4>Détails de la réclamation #{{ selectedReclamation.id_reclamation }}</h4>
+      
+      <!-- Informations utilisateur -->
+      <div class="user-section">
+        <h5>Utilisateur</h5>
+        <div class="detail-row">
+          <strong>Nom:</strong> {{ getUserFullName(selectedReclamation) }}
+        </div>
+        <div class="detail-row">
+          <strong>Email:</strong> {{ getUserEmail(selectedReclamation) }}
+        </div>
+        <div class="detail-row">
+          <strong>Téléphone:</strong> {{ getUserPhone(selectedReclamation) }}
+        </div>
+        <div class="detail-row" *ngIf="selectedReclamation.souscription.utilisateur?.matricule">
+          <strong>Matricule:</strong> {{ getUserMatricule(selectedReclamation) }}
+        </div>
+      </div>
+      
+      <nz-divider [nzDashed]="true"></nz-divider>
+      
+      <!-- Informations réclamation -->
+      <div class="reclamation-section">
+        <h5>Réclamation</h5>
+        <div class="detail-row">
+          <strong>Titre:</strong> {{ selectedReclamation.titre }}
+        </div>
+        <div class="detail-row">
+          <strong>Type:</strong> 
+          <nz-tag [nzColor]="getTypeColor(selectedReclamation.type_reclamation)">
+            {{ getTypeLabel(selectedReclamation.type_reclamation) }}
+          </nz-tag>
+        </div>
+        <div class="detail-row">
+          <strong>Priorité:</strong> 
+          <nz-tag [nzColor]="getPriorityColor(selectedReclamation.priorite)">
+            {{ getPriorityLabel(selectedReclamation.priorite) }}
+          </nz-tag>
+        </div>
+        <div class="detail-row">
+          <strong>Date création:</strong> {{ formatDate(selectedReclamation.date_reclamation) }}
+        </div>
+        <div class="detail-row">
+          <strong>Description:</strong>
+          <div class="description-text">{{ selectedReclamation.description }}</div>
+        </div>
+      </div>
+    </div>
+
+    <nz-divider></nz-divider>
+
+    <!-- Formulaire de réponse -->
+    <form nz-form [formGroup]="responseForm" (ngSubmit)="submitResponse()">
+      <div nz-row [nzGutter]="16">
+        <div nz-col nzSpan="24">
+          <nz-form-item>
+            <nz-form-label [nzSpan]="6" nzRequired>Statut</nz-form-label>
+            <nz-form-control [nzSpan]="18">
+              <nz-select formControlName="id_statut_reclamation" nzPlaceHolder="Sélectionner un statut">
+                <nz-option [nzValue]="3" nzLabel="En attente"></nz-option>
+                <nz-option [nzValue]="4" nzLabel="Résolue"></nz-option>
+                <nz-option [nzValue]="6" nzLabel="Rejetée"></nz-option>
+              </nz-select>
+            </nz-form-control>
+          </nz-form-item>
+        </div>
+        
+        <div nz-col nzSpan="24">
+          <nz-form-item>
+            <nz-form-label [nzSpan]="6" nzRequired>Réponse</nz-form-label>
+            <nz-form-control [nzSpan]="18">
+              <textarea 
+                nz-input 
+                formControlName="reponse_admin"
+                rows="4"
+                placeholder="Saisissez votre réponse détaillée...">
+              </textarea>
+              <div *ngIf="responseForm.get('reponse_admin')?.invalid && responseForm.get('reponse_admin')?.touched" class="error-text">
+                La réponse doit contenir au moins 10 caractères
+              </div>
+            </nz-form-control>
+          </nz-form-item>
+        </div>
+      </div>
+
+      <div nz-row [nzGutter]="16" class="modal-actions">
+        <div nz-col nzSpan="24" style="text-align: right;">
+          <button nz-button nzType="default" (click)="closeResponseModal()" style="margin-right: 8px;">
+            Annuler
+          </button>
+          <button nz-button nzType="primary" [nzLoading]="false" (click)="submitResponse()">
+            Envoyer la réponse
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</nz-modal>

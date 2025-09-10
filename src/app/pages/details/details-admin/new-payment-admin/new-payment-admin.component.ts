@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 
 // Imports Ng-Zorro
 import { NzCollapseModule } from 'ng-zorro-antd/collapse';
+import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -19,6 +20,8 @@ import { PayementsService, ApiPaiement, PaiementsResponse, PaiementsFilters } fr
 interface GroupedPaymentsByUser {
   utilisateur: string;
   idUtilisateur: number;
+  email: string;
+  telephone: string;
   paiements: ApiPaiement[];
   souscriptions: Set<number>; // Liste des souscriptions de cet utilisateur
   totalPaye: number;
@@ -35,6 +38,7 @@ interface GroupedPaymentsByUser {
     CommonModule,
     FormsModule,
     NzCollapseModule,
+    NzAvatarModule,
     NzTableModule,
     NzTagModule,
     NzButtonModule,
@@ -54,7 +58,7 @@ export class NewPaymentAdminComponent implements OnInit {
   loading = false;
   error: string | null = null;
 
-  // Statistiques globales
+  // Statistiques globales (depuis l'API)
   totalMensualites = 0;
   payeATemps = 0;
   enRetard = 0;
@@ -86,9 +90,10 @@ export class NewPaymentAdminComponent implements OnInit {
         
         if (response.success) {
           this.paiements = response.data;
-          this.calculateGlobalStats();
+          this.updateStatsFromAPI(response.statistiques);
           this.groupPaymentsByUser();
           console.log('✅ Paiements chargés:', this.paiements.length);
+          console.log('📊 Statistiques API:', response.statistiques);
         } else {
           this.error = response.message || 'Erreur lors du chargement des paiements';
           console.error('❌ Erreur API:', response.message);
@@ -108,24 +113,22 @@ export class NewPaymentAdminComponent implements OnInit {
   }
 
   /**
-   * Calculer les statistiques globales
+   * Mettre à jour les statistiques depuis les données de l'API
    */
-  private calculateGlobalStats(): void {
-    this.totalMensualites = this.paiements.length;
-    
-    // Compter par statut
-    this.payeATemps = this.paiements.filter(p => p.statut_versement === 'paye_a_temps').length;
-    this.enRetard = this.paiements.filter(p => p.statut_versement === 'paye_en_retard').length;
-    this.enAttente = this.paiements.filter(p => p.statut_versement === 'en_attente').length;
+  private updateStatsFromAPI(statistiques: any): void {
+    this.totalMensualites = statistiques.total_mensualites;
+    this.payeATemps = statistiques.total_paye_a_temps;
+    this.enRetard = statistiques.total_en_retard;
+    this.enAttente = statistiques.total_en_attente;
 
-    // Calculer montants
+    // Calculer montants depuis les données
     this.montantTotalPaye = this.paiements.reduce((sum, p) => 
       sum + this.payementsService.parseAmount(p.montant_paye), 0);
     
     this.totalPenalites = this.paiements.reduce((sum, p) => 
       sum + this.payementsService.parseAmount(p.penalite_appliquee), 0);
 
-    console.log('📊 Statistiques calculées:', {
+    console.log('📊 Statistiques mises à jour depuis l\'API:', {
       totalMensualites: this.totalMensualites,
       payeATemps: this.payeATemps,
       enRetard: this.enRetard,
@@ -147,10 +150,13 @@ export class NewPaymentAdminComponent implements OnInit {
       const idUtilisateur = paiement.souscription.id_utilisateur;
       
       if (!groups.has(idUtilisateur)) {
-        // Créer un nouveau groupe pour cet utilisateur
+        // Créer un nouveau groupe pour cet utilisateur avec les vraies données
+        const utilisateur = paiement.souscription.utilisateur;
         const newGroup: GroupedPaymentsByUser = {
-          utilisateur: `Utilisateur ${idUtilisateur}`, // Vous pouvez récupérer le nom réel depuis l'API
+          utilisateur: utilisateur ? `${utilisateur.prenom} ${utilisateur.nom}` : `Utilisateur ${idUtilisateur}`,
           idUtilisateur: idUtilisateur,
+          email: utilisateur?.email || 'Email non disponible',
+          telephone: utilisateur?.telephone || 'Téléphone non disponible',
           paiements: [],
           souscriptions: new Set<number>(),
           totalPaye: 0,
@@ -232,45 +238,32 @@ export class NewPaymentAdminComponent implements OnInit {
     return this.payementsService.getPaymentModeLabel(mode);
   }
 
-  // Obtenir le nom du terrain à partir de l'id_terrain
+  // Obtenir le nom du terrain à partir de l'id_terrain  
   getTerrainName(paiement: ApiPaiement): string {
     return `Terrain ${paiement.souscription.id_terrain}`;
   }
 
-  // Obtenir les initiales pour l'avatar
-  getUserInitials(userName: string): string {
-    const names = userName.split(' ');
-    if (names.length >= 2) {
-      return (names[0][0] + names[1][0]).toUpperCase();
+  // Obtenir le nom complet de l'utilisateur
+  getUserFullName(paiement: ApiPaiement): string {
+    const utilisateur = paiement.souscription.utilisateur;
+    if (utilisateur) {
+      return `${utilisateur.prenom} ${utilisateur.nom}`;
     }
-    return userName.substring(0, 2).toUpperCase();
-  }
-
-  // Obtenir le nom d'affichage complet
-  getUserDisplayName(userName: string): string {
-    // Remplacer "Utilisateur X" par des noms réels basés sur l'ID
-    // Vous devriez remplacer ceci par les vrais noms depuis votre API
-    const userNames: {[key: string]: string} = {
-      'Utilisateur 1': 'Toh Sylvain Hien',
-      'Utilisateur 3': 'bebe asso', 
-      'Utilisateur 6': 'asso asso',
-      'Utilisateur 4': 'John Doe'
-    };
-    
-    return userNames[userName] || userName;
+    return `Utilisateur ${paiement.souscription.id_utilisateur}`;
   }
 
   // Obtenir l'email de l'utilisateur
-  getUserEmail(userId: number): string {
-    // Remplacer par les vrais emails depuis votre API
-    const userEmails: {[key: number]: string} = {
-      1: 'hiensylvain@ycgmail.com',
-      3: 'assonchovincentde12@gmail.com',
-      6: 'teamnyefa@gmail.com',
-      4: 'asso@gmail.com'
-    };
-    
-    return userEmails[userId] || `user${userId}@example.com`;
+  getUserEmail(paiement: ApiPaiement): string {
+    return paiement.souscription.utilisateur?.email || 'Email non disponible';
+  }
+
+  // Obtenir les initiales pour l'avatar depuis les vraies données
+  getUserInitials(group: GroupedPaymentsByUser): string {
+    const names = group.utilisateur.split(' ');
+    if (names.length >= 2) {
+      return (names[0][0] + names[1][0]).toUpperCase();
+    }
+    return group.utilisateur.substring(0, 2).toUpperCase();
   }
 
   // Formater les montants en version courte (avec unités)

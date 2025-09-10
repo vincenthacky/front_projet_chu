@@ -216,6 +216,36 @@ export class SouscriptionService {
   }
 
   /**
+   * Récupère toutes les souscriptions avec pagination et filtres
+   * Le token est automatiquement ajouté par l'AuthInterceptor
+   */
+  getAllDemandeSouscriptions(filters?: SouscriptionFilters): Observable<SouscriptionResponse> {
+    let params = new HttpParams();
+    
+    if (filters) {
+      if (filters.page) params = params.set('page', filters.page.toString());
+      if (filters.per_page) params = params.set('per_page', filters.per_page.toString());
+      if (filters.statut) params = params.set('statut', filters.statut);
+      if (filters.date_debut) params = params.set('date_debut', filters.date_debut);
+      if (filters.date_fin) params = params.set('date_fin', filters.date_fin);
+      if (filters.superficie) params = params.set('superficie', filters.superficie.toString());
+      if (filters.terrain_id) params = params.set('terrain_id', filters.terrain_id.toString());
+      if (filters.search) params = params.set('search', filters.search);
+      // Nouveaux paramètres pour la vue admin
+      if (filters.all_users) params = params.set('all_users', 'true');
+      if (filters.admin_view) params = params.set('admin_view', 'true');
+    }
+
+    return this.http.get<SouscriptionResponse>(`${this.API_URL}/souscriptions/demandes`, { params })
+      .pipe(
+        tap(response => {
+          console.log('📋 demandes de Souscriptions récupérées:', response);
+        })
+      );
+  }
+
+
+  /**
    * Récupère les souscriptions de l'utilisateur connecté
    * Utilise le nouvel endpoint /souscriptions/utilisateur
    */

@@ -27,6 +27,7 @@ export interface ApiSouscriptionInPaiement {
   id_utilisateur: number;
   id_terrain: number;
   id_admin: number;
+  origine: string;
   date_souscription: string;
   nombre_terrains: number;
   montant_mensuel: string;
@@ -39,6 +40,23 @@ export interface ApiSouscriptionInPaiement {
   notes_admin: string;
   created_at: string;
   updated_at: string;
+  utilisateur: {
+    id_utilisateur: number;
+    matricule: string | null;
+    nom: string;
+    prenom: string;
+    email: string;
+    telephone: string;
+    poste: string;
+    type: string;
+    service: string;
+    date_inscription: string;
+    derniere_connexion: string | null;
+    est_administrateur: boolean;
+    statut_utilisateur: string;
+    created_at: string;
+    updated_at: string;
+  };
 }
 
 // Interface pour la réponse complète de l'API paiements

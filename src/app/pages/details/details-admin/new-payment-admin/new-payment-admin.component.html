@@ -136,12 +136,14 @@
           <ng-template #userHeaderTemplate>
             <div class="user-header-content">
               <div class="user-info-section">
-                <div class="user-icon">
-                  <i class="fas fa-user-circle"></i>
-                </div>
+                <nz-avatar 
+                  class="user-avatar" 
+                  [nzText]="getUserInitials(group)" 
+                  nzSize="large">
+                </nz-avatar>
                 <div class="user-details">
                   <div class="user-name">{{ group.utilisateur }}</div>
-                  <div class="user-info">{{ group.nombreSouscriptions }} souscription(s)</div>
+                  <div class="user-email">{{ group.email }}</div>
                 </div>
               </div>
               <div class="user-stats">
@@ -158,7 +160,7 @@
                   <span class="stat-text">PÉNALITÉS</span>
                 </div>
               </div>
-              <i class="fas fa-chevron-down panel-arrow"></i>
+              <i class="fas fa-chevron-up panel-arrow"></i>
             </div>
           </ng-template>
   
@@ -169,6 +171,7 @@
               [nzPageSize]="10"
               [nzShowPagination]="false"
               [nzBordered]="false"
+              [nzScroll]="{ x: '1200px' }"
               class="payments-table"
               [nzSize]="'small'">
               
@@ -185,7 +188,6 @@
                   <th>PÉNALITÉ</th>
                   <th>COMMENTAIRE</th>
                   <th>STATUT</th>
-                  <th>Acation</th>
                 </tr>
               </thead>
               
@@ -257,13 +259,6 @@
                       [nzColor]="getStatusColor(paiement.statut_versement)"
                       class="status-tag">
                       {{ getStatusLabel(paiement.statut_versement) }}
-                    </nz-tag>
-                  </td>
-                  <td>
-                  <nz-tag
-                      [nzColor]="getStatusColor(paiement.statut_versement)"
-                      class="status-tag">
-                        Payer
                     </nz-tag>
                   </td>
                 </tr>

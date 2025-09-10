@@ -26,6 +26,7 @@ export interface ApiReclamation {
     id_utilisateur: number;
     id_terrain: number;
     id_admin: number;
+    origine: string;
     date_souscription: string;
     nombre_terrains: number;
     montant_mensuel: string;
@@ -38,6 +39,23 @@ export interface ApiReclamation {
     notes_admin: string;
     created_at: string;
     updated_at: string;
+    utilisateur: {
+      id_utilisateur: number;
+      matricule: string | null;
+      nom: string;
+      prenom: string;
+      email: string;
+      telephone: string;
+      poste: string;
+      type: string;
+      service: string;
+      date_inscription: string;
+      derniere_connexion: string | null;
+      est_administrateur: boolean;
+      statut_utilisateur: string;
+      created_at: string;
+      updated_at: string;
+    };
   };
   statut: {
     id_statut_reclamation: number;
@@ -91,6 +109,16 @@ export interface CreateReclamationData {
   id_statut_reclamation: number; // OBLIGATOIRE
   priorite?: string; // Facultatif
   document?: File; // Facultatif - pour upload
+}
+
+// Interface pour la réponse admin
+export interface AdminResponseData {
+  id_statut_reclamation: number; // 3=en attente, 4=résolue, 6=rejetée
+  reponse_admin: string;
+  date_reponse?: string;
+  date_traitement?: string;
+  date_resolution?: string;
+  satisfaction_client?: number;
 }
 
 @Injectable({
@@ -209,5 +237,92 @@ export class ReclamationService {
       default:
         return priorite;
     }
+  }
+
+  /**
+   * Méthodes pour l'administration
+   */
+  
+  // Récupérer toutes les réclamations (vue admin)
+  getAllReclamations(filters?: ReclamationFilters): Observable<ReclamationResponse> {
+    let params = new HttpParams();
+    
+    if (filters) {
+      if (filters.page) params = params.set('page', filters.page.toString());
+      if (filters.per_page) params = params.set('per_page', filters.per_page.toString());
+      if (filters.type) params = params.set('type', filters.type);
+      if (filters.statut) params = params.set('statut', filters.statut.toString());
+      if (filters.priorite) params = params.set('priorite', filters.priorite);
+      if (filters.date_debut) params = params.set('date_debut', filters.date_debut);
+      if (filters.date_fin) params = params.set('date_fin', filters.date_fin);
+      if (filters.search) params = params.set('search', filters.search);
+    }
+
+    return this.http.get<ReclamationResponse>(`${this.API_URL}/reclamations`, { params })
+      .pipe(
+        tap(response => {
+          console.log('Toutes les réclamations récupérées (admin):', response);
+        })
+      );
+  }
+
+  // Répondre à une réclamation (admin)
+  respondToReclamation(idReclamation: number, responseData: AdminResponseData): Observable<ReclamationSingleResponse> {
+    console.log('Réponse admin pour réclamation', idReclamation, ':', responseData);
+    
+    return this.http.put<ReclamationSingleResponse>(`${this.API_URL}/reclamations/${idReclamation}`, responseData)
+      .pipe(
+        tap(response => {
+          console.log('Réponse admin envoyée:', response);
+        })
+      );
+  }
+
+  // Obtenir les couleurs de priorité
+  getPriorityColor(priorite: string): string {
+    switch(priorite.toLowerCase()) {
+      case 'basse':
+        return 'green';
+      case 'normale':
+        return 'blue';
+      case 'haute':
+        return 'orange';
+      case 'urgente':
+        return 'red';
+      default:
+        return 'default';
+    }
+  }
+
+  // Obtenir les couleurs de type
+  getTypeColor(type: string): string {
+    switch(type) {
+      case 'anomalie_paiement':
+        return 'red';
+      case 'information_erronee':
+        return 'orange';
+      case 'document_manquant':
+        return 'yellow';
+      case 'avancement_projet':
+        return 'blue';
+      case 'autre':
+        return 'default';
+      default:
+        return 'default';
+    }
+  }
+
+  // Formater une date
+  formatDate(dateString: string | null): string {
+    if (!dateString) return 'Non définie';
+    
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   }
 }
