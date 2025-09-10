@@ -1,0 +1,556 @@
+/* Container principal */
+.container {
+    padding: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+    background: #f5f5f5;
+    min-height: 100vh;
+  }
+  
+  /* Section des statistiques */
+  .stats-section {
+    margin-bottom: 24px;
+  }
+  
+  .stat-card {
+    height: 120px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border: none;
+  }
+  
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  }
+  
+  .total-users {
+    background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
+    border-left: 4px solid #1890ff;
+  }
+  
+  .total-admins {
+    background: linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%);
+    border-left: 4px solid #52c41a;
+  }
+  
+  .total-regular-users {
+    background: linear-gradient(135deg, #fff7e6 0%, #ffd591 100%);
+    border-left: 4px solid #fa8c16;
+  }
+  
+  /* Section des contrôles */
+  .controls-section {
+    margin-bottom: 24px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: none;
+  }
+  
+  .controls-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  
+  .controls-header h3 {
+    margin: 0;
+    color: #262626;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  
+  .filter-container {
+    max-width: 400px;
+  }
+  
+  .search-input {
+    border-radius: 8px;
+    font-size: 14px;
+  }
+  
+  .clear-icon {
+    cursor: pointer;
+    color: #bfbfbf;
+    transition: color 0.2s;
+  }
+  
+  .clear-icon:hover {
+    color: #ff4d4f;
+  }
+  
+  /* Section du tableau */
+  .table-section {
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: none;
+    overflow: hidden;
+  }
+  
+  /* Styles du tableau */
+  nz-table {
+    background: #fff;
+  }
+  
+  .ant-table {
+    border-radius: 8px;
+  }
+  
+  .ant-table-thead > tr > th {
+    background: #fafafa;
+    font-weight: 600;
+    color: #262626;
+    border-bottom: 2px solid #f0f0f0;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .ant-table-tbody > tr > td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f5f5f5;
+    vertical-align: middle;
+  }
+  
+  .ant-table-tbody > tr:hover > td {
+    background: #f9f9f9;
+  }
+  
+  .ant-table-tbody > tr:last-child > td {
+    border-bottom: none;
+  }
+  
+  /* Styles spéciaux pour les cellules */
+  .text-center {
+    text-align: center;
+  }
+  
+  .text-muted {
+    color: #8c8c8c;
+    font-style: italic;
+  }
+  
+  .date-column {
+    font-size: 12px;
+  }
+  
+  .date-text {
+    color: #595959;
+  }
+  
+  /* Tags personnalisés */
+  .ant-tag {
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border: none;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  
+  /* Actions dropdown */
+  .danger-action {
+    color: #ff4d4f !important;
+  }
+  
+  .danger-action:hover {
+    background: #fff2f0 !important;
+  }
+  
+  /* Messages d'état */
+  .no-results, .no-data {
+    padding: 60px 20px;
+    text-align: center;
+    background: #fafafa;
+    border-radius: 8px;
+    margin: 20px 0;
+  }
+  
+  .no-results-icon, .no-data-icon {
+    font-size: 48px;
+    color: #d9d9d9;
+    margin-bottom: 16px;
+  }
+  
+  .no-results-text, .no-data-text {
+    font-size: 16px;
+    color: #8c8c8c;
+    margin-bottom: 16px;
+  }
+  
+  /* Boutons */
+  .ant-btn {
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+  
+  .ant-btn:hover {
+    transform: translateY(-1px);
+  }
+  
+  .ant-btn-primary {
+    background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+    border: none;
+    box-shadow: 0 2px 4px rgba(24, 144, 255, 0.3);
+  }
+  
+  .ant-btn-primary:hover {
+    background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
+    box-shadow: 0 4px 8px rgba(24, 144, 255, 0.4);
+  }
+  
+  /* Liens */
+  a {
+    color: #1890ff;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  
+  a:hover {
+    color: #40a9ff;
+    text-decoration: underline;
+  }
+  
+  /* Pagination */
+  .ant-pagination {
+    margin: 24px 0 0 0;
+    text-align: right;
+  }
+  
+  .ant-pagination-item {
+    border-radius: 6px;
+  }
+  
+  .ant-pagination-item-active {
+    background: #1890ff;
+    border-color: #1890ff;
+  }
+  
+  /* ============ STYLES DES MODALS ============ */
+  
+  /* Modal de modification */
+  .ant-modal-header {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-bottom: 2px solid #e6f7ff;
+    border-radius: 8px 8px 0 0;
+  }
+  
+  .ant-modal-title {
+    color: #1890ff;
+    font-weight: 600;
+    font-size: 16px;
+  }
+  
+  .ant-modal-body {
+    padding: 24px;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+  
+  .ant-modal-footer {
+    border-top: 1px solid #f0f0f0;
+    padding: 12px 24px;
+    text-align: right;
+  }
+  
+  /* Styles du formulaire dans le modal */
+  .ant-form-item {
+    margin-bottom: 20px;
+  }
+  
+  .ant-form-item-label > label {
+    font-weight: 600;
+    color: #262626;
+  }
+  
+  .ant-form-item-label > label.ant-form-item-required::before {
+    color: #ff4d4f;
+    font-size: 14px;
+  }
+  
+  .error-input {
+    border-color: #ff4d4f !important;
+    box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.2) !important;
+  }
+  
+  .ant-input:focus,
+  .ant-select-selector:focus,
+  .ant-select-focused .ant-select-selector {
+    border-color: #1890ff !important;
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
+  }
+  
+  /* Modal de changement de statut */
+  .status-change-content {
+    padding: 16px 0;
+  }
+  
+  .user-info h4 {
+    margin: 0 0 8px 0;
+    color: #262626;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .current-status {
+    margin: 0 0 16px 0;
+    color: #595959;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .status-selection {
+    margin-bottom: 20px;
+  }
+  
+  .status-selection h5 {
+    margin: 0 0 12px 0;
+    color: #262626;
+    font-weight: 600;
+  }
+  
+  .status-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .status-radio-option {
+    display: flex !important;
+    align-items: center;
+    padding: 8px 12px;
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  
+  .status-radio-option:hover {
+    border-color: #1890ff;
+    background: #f6f6f6;
+  }
+  
+  .ant-radio-wrapper-checked .status-radio-option {
+    border-color: #1890ff;
+    background: #e6f7ff;
+  }
+  
+  .status-tag {
+    margin-left: 8px;
+    pointer-events: none;
+  }
+  
+  .status-warning {
+    margin-top: 16px;
+  }
+  
+  /* Responsive pour les modals */
+  @media (max-width: 768px) {
+    .ant-modal {
+      width: 95% !important;
+      max-width: 95% !important;
+    }
+    
+    .ant-modal-body {
+      padding: 16px;
+    }
+    
+    .status-radio-group {
+      gap: 8px;
+    }
+    
+    .status-radio-option {
+      padding: 6px 10px;
+    }
+  }
+  
+  /* Responsive */
+  @media (max-width: 1200px) {
+    .container {
+      padding: 16px;
+    }
+    
+    .controls-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    
+    .filter-container {
+      max-width: 100%;
+      width: 100%;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .stats-section .ant-col {
+      margin-bottom: 16px;
+    }
+    
+    .stat-card {
+      height: auto;
+      min-height: 100px;
+    }
+    
+    .controls-header h3 {
+      font-size: 16px;
+    }
+    
+    .ant-table-tbody > tr > td {
+      padding: 8px 12px;
+      font-size: 13px;
+    }
+    
+    .ant-table-thead > tr > th {
+      font-size: 12px;
+    }
+    
+    .date-column {
+      font-size: 11px;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .container {
+      padding: 12px;
+    }
+    
+    .stats-section {
+      margin-bottom: 16px;
+    }
+    
+    .controls-section,
+    .table-section {
+      margin-bottom: 16px;
+    }
+    
+    .controls-header {
+      text-align: center;
+    }
+    
+    .no-results, .no-data {
+      padding: 40px 15px;
+    }
+    
+    .no-results-icon, .no-data-icon {
+      font-size: 36px;
+    }
+    
+    .no-results-text, .no-data-text {
+      font-size: 14px;
+    }
+  }
+  
+  /* Animation pour le chargement */
+  .ant-spin-container {
+    transition: opacity 0.3s;
+  }
+  
+  /* Améliorations pour l'accessibilité */
+  .ant-table-tbody > tr:focus {
+    outline: 2px solid #1890ff;
+    outline-offset: -2px;
+  }
+  
+  .ant-btn:focus {
+    outline: 2px solid #1890ff;
+    outline-offset: 2px;
+  }
+  
+  /* Styles pour les statistiques avec icônes */
+  .ant-statistic-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #8c8c8c;
+    margin-bottom: 8px;
+  }
+  
+  .ant-statistic-content {
+    font-size: 24px;
+    font-weight: 600;
+  }
+  
+  /* Hover effects pour les cartes de stats */
+  .total-users:hover {
+    background: linear-gradient(135deg, #d4edfc 0%, #a8d8f0 100%);
+  }
+  
+  .total-admins:hover {
+    background: linear-gradient(135deg, #e8f5e8 0%, #c5e8c5 100%);
+  }
+  
+  .total-regular-users:hover {
+    background: linear-gradient(135deg, #ffefd6 0%, #ffcc7a 100%);
+  }
+  
+  /* Loading state amélioré */
+  .ant-table-placeholder {
+    background: #fafafa;
+    border-radius: 8px;
+  }
+  
+  /* Scrollbar personnalisée pour le tableau */
+  .ant-table-body::-webkit-scrollbar {
+    height: 8px;
+  }
+  
+  .ant-table-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+  
+  .ant-table-body::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+  }
+  
+  .ant-table-body::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
+  
+  /* Styles pour les tags de statut personnalisés */
+  .ant-tag.ant-tag-green {
+    background: #f6ffed;
+    color: #52c41a;
+    border: 1px solid #b7eb8f;
+  }
+  
+  .ant-tag.ant-tag-orange {
+    background: #fff7e6;
+    color: #fa8c16;
+    border: 1px solid #ffd591;
+  }
+  
+  .ant-tag.ant-tag-red {
+    background: #fff2f0;
+    color: #ff4d4f;
+    border: 1px solid #ffccc7;
+  }
+  
+  .ant-tag.ant-tag-blue {
+    background: #e6f7ff;
+    color: #1890ff;
+    border: 1px solid #91d5ff;
+  }
+  
+  .ant-tag.ant-tag-purple {
+    background: #f9f0ff;
+    color: #722ed1;
+    border: 1px solid #d3adf7;
+  }
+  
+  .ant-tag.ant-tag-cyan {
+    background: #e6fffb;
+    color: #13c2c2;
+    border: 1px solid #87e8de;
+  }

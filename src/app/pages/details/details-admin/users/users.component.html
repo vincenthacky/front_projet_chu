@@ -1,1 +1,428 @@
-<p>users works!</p>
+<div class="container">
+    <!-- Section des statistiques -->
+    <div nz-row [nzGutter]="16" class="stats-section">
+      <div nz-col nzXs="24" nzSm="8" nzMd="8">
+        <nz-card class="stat-card total-users">
+          <nz-statistic
+            nzTitle="Total Utilisateurs"
+            [nzValue]="totalUsers"
+            nzPrefix="👥"
+            [nzValueStyle]="{ color: '#1890ff' }"
+          ></nz-statistic>
+        </nz-card>
+      </div>
+      <div nz-col nzXs="24" nzSm="8" nzMd="8">
+        <nz-card class="stat-card total-admins">
+          <nz-statistic
+            nzTitle="Administrateurs"
+            [nzValue]="totalAdmins"
+            nzPrefix="🛡️"
+            [nzValueStyle]="{ color: '#52c41a' }"
+          ></nz-statistic>
+        </nz-card>
+      </div>
+      <div nz-col nzXs="24" nzSm="8" nzMd="8">
+        <nz-card class="stat-card total-regular-users">
+          <nz-statistic
+            nzTitle="Utilisateurs Standards"
+            [nzValue]="totalRegularUsers"
+            nzPrefix="👤"
+            [nzValueStyle]="{ color: '#fa8c16' }"
+          ></nz-statistic>
+        </nz-card>
+      </div>
+    </div>
+  
+    <!-- Section des contrôles -->
+    <nz-card class="controls-section">
+      <div class="controls-header">
+        <h3>Gestion des Utilisateurs</h3>
+        <nz-space>
+          <button *nzSpaceItem nz-button nzType="primary" (click)="refresh()" [nzLoading]="loading">
+            <span nz-icon nzType="reload"></span>
+            Actualiser
+          </button>
+        </nz-space>
+      </div>
+      
+      <div class="filter-container">
+        <nz-input-group [nzPrefix]="prefixIconSearch" [nzSuffix]="suffixIconClear">
+          <input
+            nz-input
+            placeholder="Rechercher par nom, prénom, email, matricule ou téléphone..."
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="onSearchChange($event)"
+            class="search-input"
+          />
+        </nz-input-group>
+        <ng-template #prefixIconSearch>
+          <span nz-icon nzType="search"></span>
+        </ng-template>
+        <ng-template #suffixIconClear>
+          <span 
+            nz-icon 
+            nzType="close-circle" 
+            *ngIf="searchTerm" 
+            (click)="clearSearch()"
+            class="clear-icon"
+          ></span>
+        </ng-template>
+      </div>
+    </nz-card>
+  
+    <!-- Tableau des utilisateurs -->
+    <nz-card class="table-section">
+      <nz-table
+        #userTable
+        [nzData]="getPaginatedUsers()"
+        [nzLoading]="loading"
+        [nzFrontPagination]="false"
+        [nzTotal]="totalItems"
+        [nzPageSize]="pageSize"
+        [nzPageIndex]="currentPage"
+        (nzPageIndexChange)="onPageChange($event)"
+        [nzPageSizeOptions]="[5, 10, 20, 50]"
+        [nzShowSizeChanger]="true"
+        (nzPageSizeChange)="onPageSizeChange($event)"
+        nzSize="middle"
+        nzBordered
+        [nzScroll]="{ x: '1200px' }"
+      >
+        <thead>
+          <tr>
+            <th nzWidth="120px">Nom</th>
+            <th nzWidth="120px">Prénom</th>
+            <th nzWidth="200px">Email</th>
+            <th nzWidth="160px">Téléphone</th>
+            <th nzWidth="120px">Poste</th>
+            <th nzWidth="130px">Service</th>
+            <th nzWidth="120px">Type</th>
+            <th nzWidth="100px">Statut</th>
+            <th nzWidth="140px">Inscription</th>
+            <th nzWidth="140px">Dernière Connexion</th>
+            <th nzWidth="80px">Admin</th>
+            <th nzWidth="70px" nzRight>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of userTable.data; trackBy: trackByUserId">
+            <td>
+              <strong>{{ user.nom }}</strong>
+            </td>
+            <td>{{ user.prenom }}</td>
+            <td>
+              <a [href]="'mailto:' + user.email">{{ user.email }}</a>
+            </td>
+            <td>
+              <span *ngIf="user.telephone; else noPhone">
+                <a [href]="'tel:' + user.telephone">{{ user.telephone }}</a>
+              </span>
+              <ng-template #noPhone>
+                <span class="text-muted">-</span>
+              </ng-template>
+            </td>
+            <td>
+              <span *ngIf="user.poste; else noPoste">{{ user.poste }}</span>
+              <ng-template #noPoste>
+                <span class="text-muted">-</span>
+              </ng-template>
+            </td>
+            <td>
+              <span *ngIf="user.service; else noService">{{ user.service }}</span>
+              <ng-template #noService>
+                <span class="text-muted">-</span>
+              </ng-template>
+            </td>
+            <td>
+              <nz-tag [nzColor]="getUserTypeColor(user.type)">
+                {{ getUserTypeLabel(user.type) }}
+              </nz-tag>
+            </td>
+            <td>
+              <nz-tag [nzColor]="getStatusColor(user.statut_utilisateur)">
+                {{ getStatusLabel(user.statut_utilisateur) }}
+              </nz-tag>
+            </td>
+            <td class="date-column">
+              <span class="date-text">{{ formatDate(user.date_inscription) }}</span>
+            </td>
+            <td class="date-column">
+              <span *ngIf="user.derniere_connexion; else noLastConnection" class="date-text">
+                {{ formatDate(user.derniere_connexion) }}
+              </span>
+              <ng-template #noLastConnection>
+                <span class="text-muted">Jamais connecté</span>
+              </ng-template>
+            </td>
+            <td class="text-center">
+              <nz-tag [nzColor]="getAdminColor(user)">
+                {{ getAdminLabel(user) }}
+              </nz-tag>
+            </td>
+            <td nzRight>
+              <nz-space nzSize="small">
+                <button 
+                  *nzSpaceItem
+                  nz-button 
+                  nzType="primary" 
+                  nzSize="small"
+                  nz-dropdown 
+                  [nzDropdownMenu]="actionMenu"
+                  nzPlacement="bottomRight"
+                >
+                  <span nz-icon nzType="more"></span>
+                </button>
+              </nz-space>
+              <nz-dropdown-menu #actionMenu="nzDropdownMenu">
+                <ul nz-menu>
+                  <li nz-menu-item (click)="editUser(user)">
+                    <span nz-icon nzType="edit"></span>
+                    Modifier
+                  </li>
+                  <li nz-menu-item (click)="toggleUserStatus(user)">
+                    <span nz-icon nzType="user-switch"></span>
+                    Changer statut
+                  </li>
+                  <li nz-menu-divider></li>
+                </ul>
+              </nz-dropdown-menu>
+            </td>
+          </tr>
+        </tbody>
+      </nz-table>
+  
+      <!-- Message si aucun résultat -->
+      <div *ngIf="!loading && filteredUsers.length === 0 && searchTerm" class="no-results">
+        <nz-space nzDirection="vertical" nzAlign="center">
+          <span *nzSpaceItem nz-icon nzType="search" nzTheme="outline" class="no-results-icon"></span>
+          <span *nzSpaceItem class="no-results-text">
+            Aucun utilisateur trouvé pour "{{ searchTerm }}"
+          </span>
+          <button *nzSpaceItem nz-button nzType="link" (click)="clearSearch()">
+            Effacer la recherche
+          </button>
+        </nz-space>
+      </div>
+  
+      <!-- Message si aucun utilisateur -->
+      <div *ngIf="!loading && users.length === 0" class="no-data">
+        <nz-space nzDirection="vertical" nzAlign="center">
+          <span *nzSpaceItem nz-icon nzType="user" nzTheme="outline" class="no-data-icon"></span>
+          <span *nzSpaceItem class="no-data-text">
+            Aucun utilisateur trouvé
+          </span>
+          <button *nzSpaceItem nz-button nzType="primary" (click)="refresh()">
+            Actualiser
+          </button>
+        </nz-space>
+      </div>
+    </nz-card>
+  </div>
+  
+  <!-- Modal de modification d'utilisateur -->
+  <nz-modal
+    [(nzVisible)]="isEditModalVisible"
+    nzTitle="Modifier l'utilisateur"
+    [nzOkText]="'Modifier'"
+    [nzCancelText]="'Annuler'"
+    [nzOkLoading]="isEditLoading"
+    [nzWidth]="600"
+    (nzOnCancel)="closeEditModal()"
+    (nzOnOk)="submitEdit()"
+  >
+    <ng-container *nzModalContent>
+      <form nz-form [formGroup]="editForm" nzLayout="vertical">
+        <div nz-row [nzGutter]="16">
+          <div nz-col nzSpan="12">
+            <nz-form-item>
+              <nz-form-label nzRequired>Nom</nz-form-label>
+              <nz-form-control [nzErrorTip]="getFieldError('nom')">
+                <input 
+                  nz-input 
+                  formControlName="nom" 
+                  placeholder="Nom de famille"
+                  [class.error-input]="isFieldInvalid('nom')"
+                />
+              </nz-form-control>
+            </nz-form-item>
+          </div>
+          <div nz-col nzSpan="12">
+            <nz-form-item>
+              <nz-form-label nzRequired>Prénom</nz-form-label>
+              <nz-form-control [nzErrorTip]="getFieldError('prenom')">
+                <input 
+                  nz-input 
+                  formControlName="prenom" 
+                  placeholder="Prénom"
+                  [class.error-input]="isFieldInvalid('prenom')"
+                />
+              </nz-form-control>
+            </nz-form-item>
+          </div>
+        </div>
+  
+        <nz-form-item>
+          <nz-form-label nzRequired>Email</nz-form-label>
+          <nz-form-control [nzErrorTip]="getFieldError('email')">
+            <input 
+              nz-input 
+              formControlName="email" 
+              placeholder="adresse@email.com"
+              type="email"
+              [class.error-input]="isFieldInvalid('email')"
+            />
+          </nz-form-control>
+        </nz-form-item>
+  
+        <div nz-row [nzGutter]="16">
+          <div nz-col nzSpan="12">
+            <nz-form-item>
+              <nz-form-label>Téléphone</nz-form-label>
+              <nz-form-control>
+                <input 
+                  nz-input 
+                  formControlName="telephone" 
+                  placeholder="+225 XX XX XX XX"
+                />
+              </nz-form-control>
+            </nz-form-item>
+          </div>
+          <div nz-col nzSpan="12">
+            <nz-form-item>
+              <nz-form-label>Poste</nz-form-label>
+              <nz-form-control>
+                <input 
+                  nz-input 
+                  formControlName="poste" 
+                  placeholder="Poste occupé"
+                />
+              </nz-form-control>
+            </nz-form-item>
+          </div>
+        </div>
+  
+        <nz-form-item>
+          <nz-form-label>Service</nz-form-label>
+          <nz-form-control>
+            <input 
+              nz-input 
+              formControlName="service" 
+              placeholder="Service/Département"
+            />
+          </nz-form-control>
+        </nz-form-item>
+  
+        <div nz-row [nzGutter]="16">
+          <div nz-col nzSpan="12">
+            <nz-form-item>
+              <nz-form-label nzRequired>Type d'utilisateur</nz-form-label>
+              <nz-form-control [nzErrorTip]="getFieldError('type')">
+                <nz-select 
+                  formControlName="type" 
+                  nzPlaceHolder="Sélectionner un type"
+                  [class.error-input]="isFieldInvalid('type')"
+                >
+                  <nz-option 
+                    *ngFor="let option of userTypeOptions" 
+                    [nzValue]="option.value" 
+                    [nzLabel]="option.label"
+                  ></nz-option>
+                </nz-select>
+              </nz-form-control>
+            </nz-form-item>
+          </div>
+          <div nz-col nzSpan="12">
+            <nz-form-item>
+              <nz-form-label nzRequired>Statut</nz-form-label>
+              <nz-form-control [nzErrorTip]="getFieldError('statut_utilisateur')">
+                <nz-select 
+                  formControlName="statut_utilisateur" 
+                  nzPlaceHolder="Sélectionner un statut"
+                  [class.error-input]="isFieldInvalid('statut_utilisateur')"
+                >
+                  <nz-option 
+                    *ngFor="let option of statusOptions" 
+                    [nzValue]="option.value" 
+                    [nzLabel]="option.label"
+                  ></nz-option>
+                </nz-select>
+              </nz-form-control>
+            </nz-form-item>
+          </div>
+        </div>
+  
+        <nz-form-item>
+          <nz-form-control>
+            <label nz-checkbox formControlName="est_administrateur">
+              Droits d'administrateur
+            </label>
+          </nz-form-control>
+        </nz-form-item>
+      </form>
+    </ng-container>
+  </nz-modal>
+  
+  <!-- Modal de changement de statut -->
+  <nz-modal
+    [(nzVisible)]="isStatusModalVisible"
+    nzTitle="Changer le statut de l'utilisateur"
+    [nzOkText]="'Confirmer'"
+    [nzCancelText]="'Annuler'"
+    [nzOkLoading]="isStatusLoading"
+    [nzWidth]="450"
+    (nzOnCancel)="closeStatusModal()"
+    (nzOnOk)="confirmStatusChange()"
+  >
+    <ng-container *nzModalContent>
+      <div class="status-change-content">
+        <div class="user-info" *ngIf="selectedUserForStatus">
+          <h4>
+            <span nz-icon nzType="user"></span>
+            {{ selectedUserForStatus.prenom }} {{ selectedUserForStatus.nom }}
+          </h4>
+          <p class="current-status">
+            Statut actuel : 
+            <nz-tag [nzColor]="getStatusColor(selectedUserForStatus.statut_utilisateur)">
+              {{ getStatusLabel(selectedUserForStatus.statut_utilisateur) }}
+            </nz-tag>
+          </p>
+        </div>
+  
+        <nz-divider></nz-divider>
+  
+        <div class="status-selection">
+          <h5>Nouveau statut :</h5>
+          <nz-radio-group [(ngModel)]="newStatus" class="status-radio-group">
+            <label 
+              *ngFor="let option of statusOptions" 
+              nz-radio 
+              [nzValue]="option.value"
+              class="status-radio-option"
+            >
+              <nz-tag [nzColor]="getStatusColor(option.value)" class="status-tag">
+                {{ option.label }}
+              </nz-tag>
+            </label>
+          </nz-radio-group>
+        </div>
+  
+        <nz-alert
+          *ngIf="newStatus === 'suspendu'"
+          nzType="warning"
+          nzMessage="Attention"
+          nzDescription="L'utilisateur ne pourra plus se connecter jusqu'à ce que son statut soit modifié."
+          nzShowIcon
+          class="status-warning"
+        ></nz-alert>
+  
+        <nz-alert
+          *ngIf="newStatus === 'inactif'"
+          nzType="error"
+          nzMessage="Compte inactif"
+          nzDescription="L'utilisateur sera complètement désactivé et ne pourra plus accéder au système."
+          nzShowIcon
+          class="status-warning"
+        ></nz-alert>
+      </div>
+    </ng-container>
+  </nz-modal>
