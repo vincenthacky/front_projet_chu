@@ -1,1 +1,776 @@
-<p>rewards-admin works!</p>
+<!-- Entête avec statistiques -->
+<div class="header-section">
+  <div class="header-title">
+    <h2>Gestion des Récompenses</h2>
+    <p>Interface d'administration pour gérer les récompenses des utilisateurs</p>
+  </div>
+  
+  <!-- Statistiques -->
+  <div class="stats-grid">
+    <nz-card class="stat-card">
+      <nz-statistic 
+        [nzValue]="totalRecompenses" 
+        [nzTitle]="'Total des récompenses'" 
+        [nzValueStyle]="{ color: '#1890ff' }">
+      </nz-statistic>
+    </nz-card>
+    
+    <nz-card class="stat-card">
+      <nz-statistic 
+        [nzValue]="getRecompensesDues()" 
+        [nzTitle]="'Dues'" 
+        [nzValueStyle]="{ color: '#faad14' }">
+      </nz-statistic>
+    </nz-card>
+    
+    <nz-card class="stat-card">
+      <nz-statistic 
+        [nzValue]="getRecompensesAttribuees()" 
+        [nzTitle]="'Attribuées'" 
+        [nzValueStyle]="{ color: '#52c41a' }">
+      </nz-statistic>
+    </nz-card>
+    
+    <nz-card class="stat-card">
+      <nz-statistic 
+        [nzValue]="getRecompensesAnnulees()" 
+        [nzTitle]="'Annulées'" 
+        [nzValueStyle]="{ color: '#ff4d4f' }">
+      </nz-statistic>
+    </nz-card>
+  </div>
+</div>
+
+<!-- Section de filtres -->
+<div class="filters-section">
+  <div class="filters-row">
+    <!-- Recherche -->
+    <div class="filter-item">
+      <label>Recherche</label>
+      <nz-input-group [nzSuffix]="suffixIconSearch">
+        <input 
+          type="text" 
+          nz-input 
+          placeholder="Rechercher description, motif..." 
+          [(ngModel)]="searchTerm"
+          (input)="onSearchChange()"
+        />
+      </nz-input-group>
+      <ng-template #suffixIconSearch>
+        <span nz-icon nzType="search"></span>
+      </ng-template>
+    </div>
+
+    <!-- Filtre par statut -->
+    <div class="filter-item">
+      <label>Statut</label>
+      <nz-select 
+        [(ngModel)]="statusFilter" 
+        (ngModelChange)="onStatusFilterChange()"
+        nzPlaceHolder="Tous les statuts"
+        nzAllowClear>
+        <nz-option nzValue="due" nzLabel="Due"></nz-option>
+        <nz-option nzValue="attribuee" nzLabel="Attribuée"></nz-option>
+        <nz-option nzValue="annulee" nzLabel="Annulée"></nz-option>
+      </nz-select>
+    </div>
+
+    <!-- Filtre par type -->
+    <div class="filter-item">
+      <label>Type de récompense</label>
+      <nz-select 
+        [(ngModel)]="typeFilter" 
+        (ngModelChange)="onTypeFilterChange()"
+        nzPlaceHolder="Tous les types"
+        nzAllowClear>
+        <nz-option [nzValue]="1" nzLabel="Bonus Performance"></nz-option>
+        <nz-option [nzValue]="2" nzLabel="Bonus Régularité"></nz-option>
+        <nz-option [nzValue]="3" nzLabel="Prime Fidélité"></nz-option>
+      </nz-select>
+    </div>
+
+    <!-- Actions -->
+    <div class="filter-actions">
+      <button nz-button nzType="default" (click)="resetFilters()">
+        <span nz-icon nzType="clear"></span>
+        Réinitialiser
+      </button>
+      <button nz-button nzType="primary" (click)="refresh()">
+        <span nz-icon nzType="reload"></span>
+        Actualiser
+      </button>
+      <button nz-button nzType="primary" (click)="openAddRewardModal()">
+        <span nz-icon nzType="plus"></span>
+        Ajouter une récompense
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Tableau des récompenses -->
+<div class="table-section">
+  <nz-spin [nzSpinning]="isLoading">
+    <nz-table 
+      #basicTable 
+      [nzData]="recompenses"
+      [nzFrontPagination]="false"
+      [nzScroll]="{ x: '1600px' }">
+      
+      <thead>
+        <tr>
+          <th nzWidth="80px">ID</th>
+          <th nzWidth="200px">Utilisateur</th>
+          <th nzWidth="150px">Type</th>
+          <th nzWidth="250px">Description & Motif</th>
+          <th nzWidth="120px">Période</th>
+          <th nzWidth="120px">Valeur</th>
+          <th nzWidth="120px">Date attribution</th>
+          <th nzWidth="100px">Statut</th>
+          <th nzWidth="200px">Commentaire admin</th>
+          <th nzWidth="250px" nzAlign="center">Actions</th>
+        </tr>
+      </thead>
+      
+      <tbody>
+        <tr *ngFor="let recompense of basicTable.data">
+          <!-- ID -->
+          <td>
+            <strong>#{{ recompense.id_recompense }}</strong>
+          </td>
+          
+          <!-- Utilisateur -->
+          <td>
+            <div class="user-info">
+              <div class="user-details">
+                <div class="user-name">{{ getUserFullName(recompense) }}</div>
+                <div class="user-email">{{ getUserEmail(recompense) }}</div>
+                <div class="user-subscription">Souscription #{{ recompense.id_souscription }}</div>
+                <div class="user-matricule" *ngIf="getUserMatricule(recompense) !== 'N/A'">{{ getUserMatricule(recompense) }}</div>
+              </div>
+            </div>
+          </td>
+          
+          <!-- Type -->
+          <td>
+            <div class="type-info">
+              <div class="type-name">{{ recompense.type_recompense?.libelle_type_recompense || 'N/A' }}</div>
+              <div class="type-description">{{ recompense.type_recompense?.description_type || '' }}</div>
+            </div>
+          </td>
+          
+          <!-- Description & Motif -->
+          <td>
+            <div class="recompense-content">
+              <div class="recompense-description">{{ recompense.description | slice:0:80 }}{{ recompense.description.length > 80 ? '...' : '' }}</div>
+              <div class="recompense-motif">{{ recompense.motif_recompense | slice:0:60 }}{{ recompense.motif_recompense.length > 60 ? '...' : '' }}</div>
+            </div>
+          </td>
+          
+          <!-- Période -->
+          <td>
+            <div class="periode-info">
+              {{ recompense.periode_merite }}
+            </div>
+          </td>
+          
+          <!-- Valeur -->
+          <td>
+            <div class="valeur-info">
+              <strong>{{ formatCurrency(recompense.valeur_recompense) }}</strong>
+            </div>
+          </td>
+          
+          <!-- Date attribution -->
+          <td>
+            <div class="date-info">
+              <div>{{ formatDate(recompense.date_attribution) }}</div>
+              <div *ngIf="recompense.date_attribution_effective" class="effective-date">
+                Effective: {{ formatDate(recompense.date_attribution_effective) }}
+              </div>
+            </div>
+          </td>
+          
+          <!-- Statut -->
+          <td>
+            <nz-tag [nzColor]="getStatusDisplay(recompense).color">
+              {{ getStatusDisplay(recompense).label }}
+            </nz-tag>
+          </td>
+          
+          <!-- Commentaire admin -->
+          <td>
+            <div class="admin-comment" *ngIf="recompense.commentaire_admin; else noComment">
+              <div class="comment-text">{{ recompense.commentaire_admin | slice:0:50 }}{{ recompense.commentaire_admin.length > 50 ? '...' : '' }}</div>
+            </div>
+            <ng-template #noComment>
+              <span class="no-comment">Aucun commentaire</span>
+            </ng-template>
+          </td>
+          
+          <!-- Actions -->
+          <td nzAlign="center">
+            <div class="actions-container">
+              <!-- Actions pour récompenses dues -->
+              <div *ngIf="recompense.statut_recompense === 'due'" class="status-actions">
+                <button 
+                  nz-button 
+                  nzType="primary" 
+                  nzSize="small"
+                  (click)="markAsAttributed(recompense)"
+                  nzTooltip="Marquer comme attribuée">
+                  <span nz-icon nzType="check"></span>
+                  Attribuer
+                </button>
+                <button 
+                  nz-button 
+                  nzType="default" 
+                  nzDanger
+                  nzSize="small"
+                  (click)="markAsCancelled(recompense)"
+                  nzTooltip="Annuler la récompense">
+                  <span nz-icon nzType="close"></span>
+                  Annuler
+                </button>
+                <button 
+                  nz-button 
+                  nzType="default" 
+                  nzSize="small"
+                  (click)="openStatusModal(recompense)"
+                  nzTooltip="Modifier le statut">
+                  <span nz-icon nzType="edit"></span>
+                  Modifier
+                </button>
+              </div>
+              
+              <!-- Actions pour récompenses attribuées -->
+              <div *ngIf="recompense.statut_recompense === 'attribuee'" class="status-actions">
+                <button 
+                  nz-button 
+                  nzType="default" 
+                  nzSize="small"
+                  (click)="markAsDue(recompense)"
+                  nzTooltip="Marquer comme due">
+                  <span nz-icon nzType="undo"></span>
+                  Remettre due
+                </button>
+                <button 
+                  nz-button 
+                  nzType="default" 
+                  nzDanger
+                  nzSize="small"
+                  (click)="markAsCancelled(recompense)"
+                  nzTooltip="Annuler la récompense">
+                  <span nz-icon nzType="close"></span>
+                  Annuler
+                </button>
+                <button 
+                  nz-button 
+                  nzType="default" 
+                  nzSize="small"
+                  (click)="openStatusModal(recompense)"
+                  nzTooltip="Modifier le statut">
+                  <span nz-icon nzType="edit"></span>
+                  Modifier
+                </button>
+              </div>
+              
+              <!-- Actions pour récompenses annulées -->
+              <div *ngIf="recompense.statut_recompense === 'annulee'" class="status-actions">
+                <button 
+                  nz-button 
+                  nzType="default" 
+                  nzSize="small"
+                  (click)="markAsDue(recompense)"
+                  nzTooltip="Marquer comme due">
+                  <span nz-icon nzType="undo"></span>
+                  Remettre due
+                </button>
+                <button 
+                  nz-button 
+                  nzType="primary" 
+                  nzSize="small"
+                  (click)="markAsAttributed(recompense)"
+                  nzTooltip="Marquer comme attribuée">
+                  <span nz-icon nzType="check"></span>
+                  Attribuer
+                </button>
+                <button 
+                  nz-button 
+                  nzType="default" 
+                  nzSize="small"
+                  (click)="openStatusModal(recompense)"
+                  nzTooltip="Modifier le statut">
+                  <span nz-icon nzType="edit"></span>
+                  Modifier
+                </button>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+  </nz-spin>
+  
+  <!-- Pagination ng-zorro -->
+  <div class="pagination-container">
+    <nz-pagination
+      [nzTotal]="totalRecompenses"
+      [nzPageSize]="perPage"
+      [nzPageIndex]="currentPage"
+      [nzShowSizeChanger]="true"
+      [nzShowQuickJumper]="true"
+      [nzShowTotal]="totalTemplate"
+      [nzPageSizeOptions]="[10, 15, 20, 50]"
+      (nzPageIndexChange)="onPageChange($event)"
+      (nzPageSizeChange)="onPageSizeChange($event)">
+    </nz-pagination>
+
+    <ng-template #totalTemplate let-total let-range="range">
+      Affichage {{ range[0] }}-{{ range[1] }} de {{ total }} récompenses
+    </ng-template>
+  </div>
+  
+  <!-- Message d'erreur -->
+  <div *ngIf="error && !isLoading" class="error-message">
+    <nz-alert
+      nzType="error"
+      [nzMessage]="error"
+      nzShowIcon
+      nzCloseable>
+    </nz-alert>
+  </div>
+  
+  <!-- Message vide -->
+  <div *ngIf="!isLoading && recompenses.length === 0 && !error" class="empty-state">
+    <nz-empty 
+      nzNotFoundImage="simple"
+      nzNotFoundContent="Aucune récompense trouvée">
+      <span nz-typography><em>Aucune récompense ne correspond à vos critères de recherche.</em></span>
+    </nz-empty>
+  </div>
+</div>
+
+<!-- Modal de modification de statut -->
+<nz-modal
+  [(nzVisible)]="isStatusModalVisible"
+  nzTitle="Modifier le statut de la récompense"
+  [nzWidth]="600"
+  [nzFooter]="null"
+  (nzOnCancel)="closeStatusModal()">
+  
+  <div *nzModalContent>
+    <!-- Informations de la récompense -->
+    <div class="recompense-details" *ngIf="selectedRecompense">
+      <h4>Détails de la récompense #{{ selectedRecompense.id_recompense }}</h4>
+      
+      <!-- Informations utilisateur -->
+      <div class="user-section">
+        <h5>Utilisateur</h5>
+        <div class="detail-row">
+          <strong>Nom:</strong> {{ getUserFullName(selectedRecompense) }}
+        </div>
+        <div class="detail-row">
+          <strong>Email:</strong> {{ getUserEmail(selectedRecompense) }}
+        </div>
+        <div class="detail-row" *ngIf="getUserMatricule(selectedRecompense) !== 'N/A'">
+          <strong>Matricule:</strong> {{ getUserMatricule(selectedRecompense) }}
+        </div>
+        <div class="detail-row">
+          <strong>Souscription:</strong> #{{ selectedRecompense.id_souscription }}
+        </div>
+      </div>
+      
+      <nz-divider [nzDashed]="true"></nz-divider>
+      
+      <!-- Informations récompense -->
+      <div class="recompense-section">
+        <h5>Récompense</h5>
+        <div class="detail-row">
+          <strong>Type:</strong> {{ selectedRecompense.type_recompense?.libelle_type_recompense || 'N/A' }}
+        </div>
+        <div class="detail-row">
+          <strong>Valeur:</strong> {{ formatCurrency(selectedRecompense.valeur_recompense) }}
+        </div>
+        <div class="detail-row">
+          <strong>Période de mérite:</strong> {{ selectedRecompense.periode_merite }}
+        </div>
+        <div class="detail-row">
+          <strong>Date attribution:</strong> {{ formatDate(selectedRecompense.date_attribution) }}
+        </div>
+        <div class="detail-row">
+          <strong>Description:</strong>
+          <div class="description-text">{{ selectedRecompense.description }}</div>
+        </div>
+        <div class="detail-row">
+          <strong>Motif:</strong>
+          <div class="motif-text">{{ selectedRecompense.motif_recompense }}</div>
+        </div>
+      </div>
+    </div>
+
+    <nz-divider></nz-divider>
+
+    <!-- Formulaire de modification de statut -->
+    <form nz-form [formGroup]="statusForm" (ngSubmit)="updateStatus()">
+      <div nz-row [nzGutter]="16">
+        <div nz-col nzSpan="24">
+          <nz-form-item>
+            <nz-form-label [nzSpan]="6" nzRequired>Nouveau statut</nz-form-label>
+            <nz-form-control [nzSpan]="18">
+              <nz-select formControlName="statut_recompense" nzPlaceHolder="Sélectionner un statut">
+                <nz-option nzValue="due" nzLabel="Due"></nz-option>
+                <nz-option nzValue="attribuee" nzLabel="Attribuée"></nz-option>
+                <nz-option nzValue="annulee" nzLabel="Annulée"></nz-option>
+              </nz-select>
+            </nz-form-control>
+          </nz-form-item>
+        </div>
+      </div>
+
+      <div nz-row [nzGutter]="16" class="modal-actions">
+        <div nz-col nzSpan="24" style="text-align: right;">
+          <button nz-button nzType="default" (click)="closeStatusModal()" style="margin-right: 8px;">
+            Annuler
+          </button>
+          <button nz-button nzType="primary" [nzLoading]="isLoading" (click)="updateStatus()">
+            Mettre à jour le statut
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</nz-modal>
+
+<!-- Modal d'ajout de récompense -->
+<nz-modal
+  [(nzVisible)]="isAddRewardModalVisible"
+  nzTitle="Ajouter une nouvelle récompense"
+  [nzWidth]="700"
+  [nzFooter]="null"
+  (nzOnCancel)="closeAddRewardModal()">
+  
+  <div *nzModalContent>
+    <!-- Étapes du formulaire -->
+    <nz-steps [nzCurrent]="currentStep" nzSize="small" style="margin-bottom: 24px;">
+      <nz-step nzTitle="Utilisateur"></nz-step>
+      <nz-step nzTitle="Souscription"></nz-step>
+      <nz-step nzTitle="Type de récompense"></nz-step>
+      <nz-step nzTitle="Informations"></nz-step>
+    </nz-steps>
+
+    <form nz-form [formGroup]="addRewardForm">
+      <!-- Étape 1: Sélection de l'utilisateur -->
+      <div *ngIf="currentStep === 0">
+        <h4>Sélectionner un utilisateur</h4>
+        <nz-form-item>
+          <nz-form-label nzRequired>Utilisateur</nz-form-label>
+          <nz-form-control>
+            <nz-select 
+              formControlName="selectedUtilisateur"
+              nzPlaceHolder="Sélectionner un utilisateur"
+              nzShowSearch
+              (ngModelChange)="onUtilisateurChange($event)">
+              <nz-option 
+                *ngFor="let utilisateur of utilisateursSouscriptions" 
+                [nzValue]="utilisateur.id_utilisateur"
+                [nzLabel]="getUtilisateurDisplay(utilisateur)">
+              </nz-option>
+            </nz-select>
+            <div *ngIf="addRewardForm.get('selectedUtilisateur')?.invalid && addRewardForm.get('selectedUtilisateur')?.touched" class="error-text">
+              Veuillez sélectionner un utilisateur
+            </div>
+          </nz-form-control>
+        </nz-form-item>
+
+        <!-- Informations de l'utilisateur sélectionné -->
+        <div *ngIf="selectedUtilisateur" class="user-info-card">
+          <h5>Informations utilisateur</h5>
+          <div class="info-grid">
+            <div class="info-item">
+              <strong>Nom:</strong> {{ getUtilisateurDisplay(selectedUtilisateur) }}
+            </div>
+            <div class="info-item">
+              <strong>Email:</strong> {{ selectedUtilisateur.email }}
+            </div>
+            <div class="info-item">
+              <strong>Téléphone:</strong> {{ selectedUtilisateur.telephone }}
+            </div>
+            <div class="info-item">
+              <strong>Service:</strong> {{ selectedUtilisateur.service }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Étape 2: Sélection de la souscription -->
+      <div *ngIf="currentStep === 1">
+        <h4>Sélectionner une souscription</h4>
+        <nz-form-item>
+          <nz-form-label nzRequired>Souscription</nz-form-label>
+          <nz-form-control>
+            <nz-select 
+              formControlName="id_souscription"
+              nzPlaceHolder="Sélectionner une souscription"
+              (ngModelChange)="onSouscriptionChange($event)">
+              <nz-option 
+                *ngFor="let souscription of availableSouscriptions" 
+                [nzValue]="souscription.id_souscription"
+                [nzLabel]="getSouscriptionDisplay(souscription)">
+              </nz-option>
+            </nz-select>
+            <div *ngIf="addRewardForm.get('id_souscription')?.invalid && addRewardForm.get('id_souscription')?.touched" class="error-text">
+              Veuillez sélectionner une souscription
+            </div>
+          </nz-form-control>
+        </nz-form-item>
+
+        <!-- Informations de la souscription sélectionnée -->
+        <div *ngIf="selectedSouscription" class="subscription-info-card">
+          <h5>Détails de la souscription</h5>
+          <div class="info-grid">
+            <div class="info-item">
+              <strong>ID:</strong> #{{ selectedSouscription.id_souscription }}
+            </div>
+            <div class="info-item">
+              <strong>Terrains:</strong> {{ selectedSouscription.nombre_terrains }}
+            </div>
+            <div class="info-item">
+              <strong>Montant mensuel:</strong> {{ formatCurrency(selectedSouscription.montant_mensuel) }}
+            </div>
+            <div class="info-item">
+              <strong>Statut:</strong> {{ selectedSouscription.statut_souscription }}
+            </div>
+            <div class="info-item">
+              <strong>Date début:</strong> {{ formatDate(selectedSouscription.date_debut_paiement) }}
+            </div>
+            <div class="info-item">
+              <strong>Date fin prévue:</strong> {{ formatDate(selectedSouscription.date_fin_prevue) }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Étape 3: Sélection du type de récompense -->
+      <div *ngIf="currentStep === 2">
+        <h4>Sélectionner le type de récompense</h4>
+        <nz-form-item>
+          <nz-form-label nzRequired>Type de récompense</nz-form-label>
+          <nz-form-control>
+            <nz-select 
+              formControlName="id_type_recompense"
+              nzPlaceHolder="Sélectionner un type de récompense"
+              (ngModelChange)="onTypeRecompenseChange($event)">
+              <nz-option 
+                *ngFor="let type of typesRecompenses" 
+                [nzValue]="type.id_type_recompense"
+                [nzLabel]="type.libelle_type_recompense">
+              </nz-option>
+            </nz-select>
+            <div *ngIf="addRewardForm.get('id_type_recompense')?.invalid && addRewardForm.get('id_type_recompense')?.touched" class="error-text">
+              Veuillez sélectionner un type de récompense
+            </div>
+          </nz-form-control>
+        </nz-form-item>
+
+        <!-- Informations du type de récompense sélectionné -->
+        <div *ngIf="selectedTypeRecompense" class="reward-type-info-card">
+          <h5>Détails du type de récompense</h5>
+          <div class="info-grid">
+            <div class="info-item">
+              <strong>Libellé:</strong> {{ selectedTypeRecompense.libelle_type_recompense }}
+            </div>
+            <div class="info-item">
+              <strong>Description:</strong> {{ selectedTypeRecompense.description_type }}
+            </div>
+            <div class="info-item">
+              <strong>Type:</strong> {{ selectedTypeRecompense.est_monetaire ? 'Monétaire' : 'Non monétaire' }}
+            </div>
+            <div class="info-item" *ngIf="selectedTypeRecompense.valeur_monetaire">
+              <strong>Valeur:</strong> {{ formatCurrency(selectedTypeRecompense.valeur_monetaire) }}
+            </div>
+            <div class="info-item">
+              <strong>Conditions:</strong> {{ selectedTypeRecompense.conditions_attribution }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Étape 4: Autres informations -->
+      <div *ngIf="currentStep === 3">
+        <h4>Informations complémentaires</h4>
+        
+        <div nz-row [nzGutter]="16">
+          <div nz-col nzSpan="12">
+            <nz-form-item>
+              <nz-form-label nzRequired>Description</nz-form-label>
+              <nz-form-control>
+                <textarea 
+                  nz-input 
+                  formControlName="description"
+                  rows="3"
+                  placeholder="Description de la récompense">
+                </textarea>
+                <div *ngIf="addRewardForm.get('description')?.invalid && addRewardForm.get('description')?.touched" class="error-text">
+                  La description est requise
+                </div>
+              </nz-form-control>
+            </nz-form-item>
+          </div>
+          
+          <div nz-col nzSpan="12">
+            <nz-form-item>
+              <nz-form-label nzRequired>Motif de la récompense</nz-form-label>
+              <nz-form-control>
+                <textarea 
+                  nz-input 
+                  formControlName="motif_recompense"
+                  rows="3"
+                  placeholder="Motif de l'attribution">
+                </textarea>
+                <div *ngIf="addRewardForm.get('motif_recompense')?.invalid && addRewardForm.get('motif_recompense')?.touched" class="error-text">
+                  Le motif est requis
+                </div>
+              </nz-form-control>
+            </nz-form-item>
+          </div>
+        </div>
+
+        <div nz-row [nzGutter]="16">
+          <div nz-col nzSpan="8">
+            <nz-form-item>
+              <nz-form-label nzRequired>Période de mérite</nz-form-label>
+              <nz-form-control>
+                <input 
+                  nz-input 
+                  formControlName="periode_merite"
+                  placeholder="Ex: Janvier - Juin 2025">
+                <div *ngIf="addRewardForm.get('periode_merite')?.invalid && addRewardForm.get('periode_merite')?.touched" class="error-text">
+                  La période est requise
+                </div>
+              </nz-form-control>
+            </nz-form-item>
+          </div>
+          
+          <div nz-col nzSpan="8">
+            <nz-form-item>
+              <nz-form-label nzRequired>Valeur de la récompense</nz-form-label>
+              <nz-form-control>
+                <nz-input-number 
+                  formControlName="valeur_recompense"
+                  [nzMin]="0"
+                  [nzStep]="1000"
+                  nzPlaceHolder="0"
+                  style="width: 100%">
+                </nz-input-number>
+                <div *ngIf="addRewardForm.get('valeur_recompense')?.invalid && addRewardForm.get('valeur_recompense')?.touched" class="error-text">
+                  La valeur est requise
+                </div>
+              </nz-form-control>
+            </nz-form-item>
+          </div>
+          
+          <div nz-col nzSpan="8">
+            <nz-form-item>
+              <nz-form-label nzRequired>Date d'attribution</nz-form-label>
+              <nz-form-control>
+                <nz-date-picker 
+                  formControlName="date_attribution"
+                  nzPlaceHolder="Sélectionner une date"
+                  style="width: 100%">
+                </nz-date-picker>
+                <div *ngIf="addRewardForm.get('date_attribution')?.invalid && addRewardForm.get('date_attribution')?.touched" class="error-text">
+                  La date d'attribution est requise
+                </div>
+              </nz-form-control>
+            </nz-form-item>
+          </div>
+        </div>
+
+        <div nz-row [nzGutter]="16">
+          <div nz-col nzSpan="12">
+            <nz-form-item>
+              <nz-form-label nzRequired>Statut de la récompense</nz-form-label>
+              <nz-form-control>
+                <nz-select 
+                  formControlName="statut_recompense"
+                  nzPlaceHolder="Sélectionner un statut">
+                  <nz-option nzValue="due" nzLabel="Due"></nz-option>
+                  <nz-option nzValue="attribuee" nzLabel="Attribuée"></nz-option>
+                  <nz-option nzValue="annulee" nzLabel="Annulée"></nz-option>
+                </nz-select>
+                <div *ngIf="addRewardForm.get('statut_recompense')?.invalid && addRewardForm.get('statut_recompense')?.touched" class="error-text">
+                  Le statut est requis
+                </div>
+              </nz-form-control>
+            </nz-form-item>
+          </div>
+          
+          <div nz-col nzSpan="12">
+            <nz-form-item>
+              <nz-form-label>Date d'attribution effective</nz-form-label>
+              <nz-form-control>
+                <nz-date-picker 
+                  formControlName="date_attribution_effective"
+                  nzPlaceHolder="Optionnel"
+                  style="width: 100%">
+                </nz-date-picker>
+              </nz-form-control>
+            </nz-form-item>
+          </div>
+        </div>
+
+        <nz-form-item>
+          <nz-form-label>Commentaire administrateur</nz-form-label>
+          <nz-form-control>
+            <textarea 
+              nz-input 
+              formControlName="commentaire_admin"
+              rows="2"
+              placeholder="Commentaire optionnel">
+            </textarea>
+          </nz-form-control>
+        </nz-form-item>
+      </div>
+    </form>
+
+    <!-- Actions du modal -->
+    <div class="modal-steps-actions">
+      <button 
+        nz-button 
+        nzType="default" 
+        (click)="previousStep()" 
+        [disabled]="currentStep === 0">
+        <span nz-icon nzType="left"></span>
+        Précédent
+      </button>
+      
+      <button 
+        nz-button 
+        nzType="default" 
+        (click)="closeAddRewardModal()">
+        Annuler
+      </button>
+      
+      <button 
+        nz-button 
+        nzType="primary" 
+        (click)="nextStep()" 
+        *ngIf="currentStep < 3"
+        [disabled]="!isCurrentStepValid()">
+        Suivant
+        <span nz-icon nzType="right"></span>
+      </button>
+      
+      <button 
+        nz-button 
+        nzType="primary" 
+        (click)="submitAddReward()" 
+        *ngIf="currentStep === 3"
+        [nzLoading]="isSubmittingReward"
+        [disabled]="!addRewardForm.valid">
+        <span nz-icon nzType="save"></span>
+        Enregistrer la récompense
+      </button>
+    </div>
+  </div>
+</nz-modal>

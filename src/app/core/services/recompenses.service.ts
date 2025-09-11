@@ -8,7 +8,7 @@ import { throwError } from 'rxjs';
 export interface TypeRecompense {
   id_type_recompense: number;
   libelle_type_recompense: string;
-  description_type: string;
+  description_type?: string;
   valeur_monetaire: string;
   est_monetaire: boolean;
   conditions_attribution: string;
@@ -62,14 +62,14 @@ export interface Recompense {
   motif_recompense: string;
   periode_merite: string;
   valeur_recompense: string;
-  statut_recompense: 'due' | 'payee' | 'en_attente';
+  statut_recompense: 'due' | 'attribuee' | 'annulee';
   date_attribution: string;
   date_attribution_effective: string | null;
   commentaire_admin: string;
   created_at: string;
   updated_at: string;
   souscription: Souscription;
-  type_recompense: TypeRecompense;
+  type_recompense?: TypeRecompense;
 }
 
 export interface ApiPagination {
@@ -244,8 +244,23 @@ export class RecompensesService {
    * @param id ID de la récompense
    * @param statut Nouveau statut
    */
-  updateStatutRecompense(id: number, statut: 'due' | 'payee' | 'en_attente'): Observable<Recompense> {
-    return this.updateRecompense(id, { statut_recompense: statut });
+  updateStatutRecompense(id: number, statut: 'due' | 'attribuee' | 'annulee'): Observable<Recompense> {
+    this.loadingSubject.next(true);
+
+    const payload = { statut_recompense: statut };
+
+    return this.http.patch<{data: Recompense}>(`${this.RECOMPENSES_ENDPOINT}/${id}/statut`, payload)
+      .pipe(
+        map(response => {
+          this.loadingSubject.next(false);
+          return response.data;
+        }),
+        catchError(error => {
+          this.loadingSubject.next(false);
+          console.error('Erreur lors de la mise à jour du statut:', error);
+          return throwError(() => new Error('Erreur lors de la mise à jour du statut'));
+        })
+      );
   }
 
   /**
@@ -345,8 +360,8 @@ export class RecompensesService {
   getStatusLabel(status: string): string {
     const labels: {[key: string]: string} = {
       'due': 'Due',
-      'payee': 'Payée',
-      'en_attente': 'En attente'
+      'attribuee': 'Attribuée',
+      'annulee': 'Annulée'
     };
     return labels[status] || status;
   }

@@ -51,11 +51,11 @@
         (mouseleave)="onCardLeave($event)"     
       >       
         <div class="reward-icon" [ngClass]="getStatusClass(reward.statut_recompense)">         
-          <i class="fas" [ngClass]="getRewardIcon(reward.type_recompense.libelle_type_recompense)"></i>       
+          <i class="fas" [ngClass]="getRewardIcon(reward.type_recompense?.libelle_type_recompense || '')"></i>       
         </div>              
 
         <div class="reward-header">         
-          <h3 class="reward-title">{{ reward.type_recompense.libelle_type_recompense }}</h3>         
+          <h3 class="reward-title">{{ reward.type_recompense?.libelle_type_recompense }}</h3>         
           <div class="reward-type">Souscription #{{ reward.souscription.id_souscription }}</div>         
           <p class="reward-description">{{ reward.description }}</p>       
         </div>        
