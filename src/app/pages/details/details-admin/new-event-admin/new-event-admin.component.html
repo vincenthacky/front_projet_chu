@@ -1,1 +1,524 @@
-<p>new-event-admin works!</p>
+<!-- Template HTML EventAdminComponent avec saisie libre et gestion corrigée des documents -->
+<div class="event-creation-container">
+  
+    <!-- En-tête -->
+    <div class="page-header">
+      <div class="header-content">
+        <div class="header-left">
+          <h1 class="page-title">
+            <i nz-icon nzType="plus-circle" class="title-icon"></i>
+            Créer un Événement
+          </h1>
+          <p class="page-subtitle">Organisez et planifiez vos événements en quelques étapes</p>
+        </div>
+        <div class="header-actions">
+          <button nz-button nzType="default" (click)="cancel()" class="cancel-btn">
+            <i nz-icon nzType="close"></i>
+            Annuler
+          </button>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Indicateur d'étapes -->
+    <div class="steps-container">
+      <nz-steps [nzCurrent]="currentStep" nzSize="small" class="creation-steps">
+        <nz-step 
+          nzTitle="Informations" 
+          nzDescription="Titre et description"
+          [nzIcon]="stepIcon1">
+        </nz-step>
+        <nz-step 
+          nzTitle="Planning" 
+          nzDescription="Date et lieu"
+          [nzIcon]="stepIcon2">
+        </nz-step>
+        <nz-step 
+          nzTitle="Configuration" 
+          nzDescription="Paramètres et documents"
+          [nzIcon]="stepIcon3">
+        </nz-step>
+      </nz-steps>
+  
+      <ng-template #stepIcon1>
+        <i nz-icon nzType="edit"></i>
+      </ng-template>
+      <ng-template #stepIcon2>
+        <i nz-icon nzType="calendar"></i>
+      </ng-template>
+      <ng-template #stepIcon3>
+        <i nz-icon nzType="setting"></i>
+      </ng-template>
+    </div>
+  
+    <!-- Formulaire principal -->
+    <div class="form-container">
+      <form nz-form [formGroup]="eventForm" [nzLayout]="'vertical'" class="event-form">
+        
+        <!-- Étape 1: Informations de base -->
+        <nz-card class="form-card" *ngIf="currentStep === 0" 
+                 [nzTitle]="cardTitle1" 
+                 [nzExtra]="cardExtra1">
+          
+          <ng-template #cardTitle1>
+            <div class="card-title-content">
+              <i nz-icon nzType="edit" class="card-icon"></i>
+              <span>Informations générales</span>
+            </div>
+          </ng-template>
+  
+          <ng-template #cardExtra1>
+            <nz-tag nzColor="blue">Étape 1/3</nz-tag>
+          </ng-template>
+  
+          <!-- Titre de l'événement -->
+          <nz-form-item>
+            <nz-form-label [nzRequired]="true" nzFor="titre">
+              <i nz-icon nzType="font-size" class="field-icon"></i>
+              Titre de l'événement
+            </nz-form-label>
+            <nz-form-control 
+              [nzErrorTip]="getFieldError('titre')"
+              [nzValidateStatus]="isFieldInvalid('titre') ? 'error' : ''">
+              <input nz-input 
+                     id="titre"
+                     formControlName="titre"
+                     placeholder="Ex: Concert de louange"
+                     class="modern-input" />
+              <div class="input-hint">
+                {{ eventForm.get('titre')?.value?.length || 0 }}/100 caractères
+              </div>
+            </nz-form-control>
+          </nz-form-item>
+  
+          <!-- Type d'événement - SAISIE LIBRE -->
+          <nz-form-item>
+            <nz-form-label [nzRequired]="true" nzFor="type">
+              <i nz-icon nzType="tags" class="field-icon"></i>
+              Type d'événement
+            </nz-form-label>
+            <nz-form-control 
+              [nzErrorTip]="getFieldError('type_evenement_libre')"
+              [nzValidateStatus]="isFieldInvalid('type_evenement_libre') ? 'error' : ''">
+              <input nz-input 
+                     id="type"
+                     formControlName="type_evenement_libre"
+                     placeholder="Ex: Concert, Conférence, Cérémonie..."
+                     class="modern-input"
+                     list="types-suggestions" />
+              
+              <!-- Datalist pour suggestions -->
+              <datalist id="types-suggestions">
+                <option *ngFor="let type of typesSuggeres" [value]="type">
+              </datalist>
+              
+              <div class="suggestions-hint">
+                Tapez votre type d'événement ou choisissez parmi les suggestions
+              </div>
+            </nz-form-control>
+          </nz-form-item>
+  
+          <!-- Description -->
+          <nz-form-item>
+            <nz-form-label [nzRequired]="true" nzFor="description">
+              <i nz-icon nzType="file-text" class="field-icon"></i>
+              Description
+            </nz-form-label>
+            <nz-form-control 
+              [nzErrorTip]="getFieldError('description')"
+              [nzValidateStatus]="isFieldInvalid('description') ? 'error' : ''">
+              <textarea nz-input 
+                        id="description"
+                        formControlName="description"
+                        placeholder="Décrivez votre événement..."
+                        [nzAutosize]="{ minRows: 4, maxRows: 8 }"
+                        class="modern-textarea"></textarea>
+              <div class="input-hint">
+                {{ eventForm.get('description')?.value?.length || 0 }}/500 caractères
+              </div>
+            </nz-form-control>
+          </nz-form-item>
+  
+        </nz-card>
+  
+        <!-- Étape 2: Date et lieu -->
+        <nz-card class="form-card" *ngIf="currentStep === 1"
+                 [nzTitle]="cardTitle2"
+                 [nzExtra]="cardExtra2">
+  
+          <ng-template #cardTitle2>
+            <div class="card-title-content">
+              <i nz-icon nzType="calendar" class="card-icon"></i>
+              <span>Date et lieu</span>
+            </div>
+          </ng-template>
+  
+          <ng-template #cardExtra2>
+            <nz-tag nzColor="orange">Étape 2/3</nz-tag>
+          </ng-template>
+  
+          <!-- Dates -->
+          <div class="date-time-section">
+            <div class="section-header">
+              <h4>
+                <i nz-icon nzType="clock-circle"></i>
+                Planification
+              </h4>
+            </div>
+  
+            <div class="date-time-grid">
+              <!-- Date de début -->
+              <nz-form-item>
+                <nz-form-label [nzRequired]="true">Date de début</nz-form-label>
+                <nz-form-control [nzErrorTip]="getFieldError('date_debut')">
+                  <nz-date-picker formControlName="date_debut"
+                                  nzPlaceHolder="Sélectionner la date"
+                                  class="full-width"
+                                  nzFormat="dd/MM/yyyy">
+                  </nz-date-picker>
+                </nz-form-control>
+              </nz-form-item>
+  
+              <!-- Heure de début -->
+              <nz-form-item>
+                <nz-form-label [nzRequired]="true">Heure de début</nz-form-label>
+                <nz-form-control [nzErrorTip]="getFieldError('heure_debut')">
+                  <nz-time-picker formControlName="heure_debut"
+                                  nzPlaceHolder="Heure"
+                                  class="full-width"
+                                  nzFormat="HH:mm">
+                  </nz-time-picker>
+                </nz-form-control>
+              </nz-form-item>
+  
+              <!-- Date de fin -->
+              <nz-form-item>
+                <nz-form-label [nzRequired]="true">Date de fin</nz-form-label>
+                <nz-form-control [nzErrorTip]="getFieldError('date_fin')">
+                  <nz-date-picker formControlName="date_fin"
+                                  nzPlaceHolder="Sélectionner la date"
+                                  class="full-width"
+                                  nzFormat="dd/MM/yyyy">
+                  </nz-date-picker>
+                </nz-form-control>
+              </nz-form-item>
+  
+              <!-- Heure de fin -->
+              <nz-form-item>
+                <nz-form-label [nzRequired]="true">Heure de fin</nz-form-label>
+                <nz-form-control [nzErrorTip]="getFieldError('heure_fin')">
+                  <nz-time-picker formControlName="heure_fin"
+                                  nzPlaceHolder="Heure"
+                                  class="full-width"
+                                  nzFormat="HH:mm">
+                  </nz-time-picker>
+                </nz-form-control>
+              </nz-form-item>
+            </div>
+          </div>
+  
+          <nz-divider></nz-divider>
+  
+          <!-- Lieu - SAISIE LIBRE -->
+          <div class="location-section">
+            <div class="section-header">
+              <h4>
+                <i nz-icon nzType="environment"></i>
+                Localisation
+              </h4>
+            </div>
+  
+            <nz-form-item>
+              <nz-form-label [nzRequired]="true" nzFor="lieu">Lieu de l'événement</nz-form-label>
+              <nz-form-control [nzErrorTip]="getFieldError('lieu')">
+                <input nz-input 
+                       id="lieu"
+                       formControlName="lieu"
+                       placeholder="Ex: Cathédrale Saint Paul, Abidjan"
+                       class="modern-input"
+                       list="lieux-suggestions" />
+                
+                <!-- Datalist pour suggestions de lieux -->
+                <datalist id="lieux-suggestions">
+                  <option *ngFor="let lieu of lieuxSuggeres" [value]="lieu">
+                </datalist>
+                
+                <div class="input-hint">
+                  <i nz-icon nzType="environment"></i>
+                  Saisissez l'adresse complète du lieu
+                </div>
+              </nz-form-control>
+            </nz-form-item>
+          </div>
+  
+        </nz-card>
+  
+        <!-- Étape 3: Configuration et Documents -->
+        <nz-card class="form-card" *ngIf="currentStep === 2"
+                 [nzTitle]="cardTitle3"
+                 [nzExtra]="cardExtra3">
+  
+          <ng-template #cardTitle3>
+            <div class="card-title-content">
+              <i nz-icon nzType="setting" class="card-icon"></i>
+              <span>Configuration</span>
+            </div>
+          </ng-template>
+  
+          <ng-template #cardExtra3>
+            <nz-tag nzColor="green">Étape 3/3</nz-tag>
+          </ng-template>
+  
+          <!-- Souscription liée -->
+          <nz-form-item>
+            <nz-form-label [nzRequired]="true" nzFor="souscription">
+              <i nz-icon nzType="link" class="field-icon"></i>
+              Souscription associée
+            </nz-form-label>
+            <nz-form-control [nzErrorTip]="getFieldError('id_souscription')">
+              <nz-select formControlName="id_souscription"
+                         nzPlaceHolder="Sélectionnez une souscription"
+                         nzShowSearch
+                         class="modern-select">
+                <nz-option *ngFor="let souscription of souscriptions"
+                           [nzValue]="souscription.id_souscription"
+                           [nzLabel]="getSouscriptionLabel(souscription)">
+                  <div class="subscription-option">
+                    <div class="subscription-main">
+                      <strong>#{{ souscription.id_souscription }}</strong>
+                      <span class="terrain-name">{{ souscription.terrain.libelle }}</span>
+                    </div>
+                    <div class="subscription-details">
+                      <!-- <span class="amount">{{ souscriptionService.formatCurrency(souscription.montant_total_souscrit) }}</span> -->
+                      <nz-tag [nzColor]="souscription.statut_souscription === 'termine' ? 'green' : 'blue'" nzSize="small">
+                        {{ souscription.statut_souscription }}
+                      </nz-tag>
+                    </div>
+                  </div>
+                </nz-option>
+              </nz-select>
+            </nz-form-control>
+          </nz-form-item>
+  
+          <!-- Visibilité -->
+          <nz-form-item>
+            <nz-form-label nzFor="visibility">
+              <i nz-icon nzType="eye" class="field-icon"></i>
+              Visibilité
+            </nz-form-label>
+            <nz-form-control>
+              <div class="visibility-control">
+                <nz-switch formControlName="est_public" 
+                           [nzCheckedChildren]="publicIcon" 
+                           [nzUnCheckedChildren]="privateIcon">
+                </nz-switch>
+                <div class="visibility-info">
+                  <span class="visibility-label" *ngIf="eventForm.get('est_public')?.value">
+                    Événement public
+                  </span>
+                  <span class="visibility-label" *ngIf="!eventForm.get('est_public')?.value">
+                    Événement privé
+                  </span>
+                  <small class="visibility-description">
+                    {{ eventForm.get('est_public')?.value ? 
+                       'Visible par tous les utilisateurs' : 
+                       'Visible uniquement par les administrateurs' }}
+                  </small>
+                </div>
+              </div>
+  
+              <ng-template #publicIcon>
+                <i nz-icon nzType="global"></i>
+              </ng-template>
+              <ng-template #privateIcon>
+                <i nz-icon nzType="lock"></i>
+              </ng-template>
+            </nz-form-control>
+          </nz-form-item>
+  
+          <nz-divider nzText="Documents"></nz-divider>
+  
+          <!-- Section Upload de documents CORRIGÉE -->
+          <nz-form-item>
+            <nz-form-label nzFor="documents">
+              <i nz-icon nzType="cloud-upload" class="field-icon"></i>
+              Photos et vidéos
+            </nz-form-label>
+            <nz-form-control>
+              <div class="upload-section">
+                <nz-upload
+                  [nzBeforeUpload]="beforeUpload"
+                  [nzRemove]="removeFile"
+                  [(nzFileList)]="fileList"
+                  [nzMultiple]="true"
+                  [nzAccept]="'image/*,video/*,.jpg,.jpeg,.png,.gif,.webp,.mp4,.avi,.mov'"
+                  [nzShowUploadList]="false"
+                  nzType="drag"
+                  class="upload-dragger">
+                  <div class="upload-area">
+                    <p class="ant-upload-drag-icon">
+                      <i nz-icon nzType="inbox" class="upload-icon"></i>
+                    </p>
+                    <p class="ant-upload-text">Cliquez ou glissez vos fichiers ici</p>
+                    <p class="ant-upload-hint">
+                      Formats supportés: JPG, PNG, GIF, WEBP, MP4, AVI, MOV (max 50MB par fichier)
+                    </p>
+                    <p class="upload-status" *ngIf="uploadedDocuments.length > 0">
+                      <i nz-icon nzType="check-circle" class="success-icon"></i>
+                      {{ uploadedDocuments.length }} fichier(s) ajouté(s)
+                    </p>
+                  </div>
+                </nz-upload>
+  
+                <!-- Liste des fichiers uploadés -->
+                <div class="files-preview" *ngIf="uploadedDocuments.length > 0">
+                  <h5>
+                    <i nz-icon nzType="paper-clip"></i>
+                    Fichiers joints ({{ uploadedDocuments.length }})
+                  </h5>
+                  
+                  <div class="files-grid">
+                    <div class="file-item" *ngFor="let file of uploadedDocuments; let i = index">
+                      <div class="file-preview">
+                        <!-- Aperçu image -->
+                        <div class="image-preview" *ngIf="file.type.startsWith('image/') && fileList[i]?.url">
+                          <img [src]="fileList[i].url" [alt]="file.name" />
+                        </div>
+                        <!-- Icône pour vidéo ou fichier sans aperçu -->
+                        <div class="video-preview" *ngIf="!file.type.startsWith('image/') || !fileList[i]?.url">
+                          <i nz-icon [nzType]="file.type.startsWith('video/') ? 'video-camera' : 'file'" 
+                             class="file-type-icon"></i>
+                        </div>
+                      </div>
+                      
+                      <div class="file-info">
+                        <div class="file-name" [title]="file.name">{{ file.name }}</div>
+                        <div class="file-size">{{ formatFileSize(file.size) }}</div>
+                        <div class="file-type">{{ file.type || 'Type inconnu' }}</div>
+                      </div>
+                      
+                      <button nz-button 
+                              nzType="text" 
+                              nzDanger 
+                              (click)="removeFileFromList(i)"
+                              class="remove-btn"
+                              nz-tooltip 
+                              nzTooltipTitle="Supprimer ce fichier">
+                        <i nz-icon nzType="delete"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+  
+                <!-- Message si aucun fichier -->
+                <div class="no-files-message" *ngIf="uploadedDocuments.length === 0">
+                  <i nz-icon nzType="info-circle"></i>
+                  <span>Aucun document joint (optionnel)</span>
+                </div>
+              </div>
+            </nz-form-control>
+          </nz-form-item>
+  
+          <!-- Résumé de l'événement -->
+          <nz-divider nzText="Aperçu"></nz-divider>
+          
+          <div class="event-preview" *ngIf="eventForm.valid">
+            <div class="preview-header">
+              <h4>{{ eventForm.get('titre')?.value }}</h4>
+              <div class="preview-badges">
+                <nz-tag [nzColor]="eventForm.get('est_public')?.value ? 'green' : 'orange'">
+                  {{ eventForm.get('est_public')?.value ? 'Public' : 'Privé' }}
+                </nz-tag>
+                <nz-tag color="blue">{{ eventForm.get('type_evenement_libre')?.value }}</nz-tag>
+              </div>
+            </div>
+            
+            <div class="preview-content">
+              <div class="preview-item">
+                <i nz-icon nzType="calendar"></i>
+                <span>Du {{ eventForm.get('date_debut')?.value | date:'dd/MM/yyyy' }} au {{ eventForm.get('date_fin')?.value | date:'dd/MM/yyyy' }}</span>
+              </div>
+              <div class="preview-item">
+                <i nz-icon nzType="clock-circle"></i>
+                <span>De {{ eventForm.get('heure_debut')?.value | date:'HH:mm' }} à {{ eventForm.get('heure_fin')?.value | date:'HH:mm' }}</span>
+              </div>
+              <div class="preview-item">
+                <i nz-icon nzType="environment"></i>
+                <span>{{ eventForm.get('lieu')?.value }}</span>
+              </div>
+              <div class="preview-item">
+                <i nz-icon nzType="link"></i>
+                <span>Souscription #{{ eventForm.get('id_souscription')?.value }}</span>
+              </div>
+              <div class="preview-item" *ngIf="uploadedDocuments.length > 0">
+                <i nz-icon nzType="paper-clip"></i>
+                <span>{{ uploadedDocuments.length }} document(s) joint(s)</span>
+              </div>
+            </div>
+            
+            <p class="preview-description">{{ eventForm.get('description')?.value }}</p>
+          </div>
+  
+          <!-- Message si formulaire invalide -->
+          <nz-alert *ngIf="!eventForm.valid" 
+                    nzType="warning" 
+                    nzMessage="Veuillez compléter tous les champs requis pour voir l'aperçu"
+                    nzShowIcon>
+          </nz-alert>
+  
+        </nz-card>
+  
+      </form>
+    </div>
+  
+    <!-- Actions de navigation -->
+    <div class="navigation-actions">
+      <div class="actions-left">
+        <button nz-button 
+                nzType="default" 
+                (click)="prevStep()" 
+                [disabled]="currentStep === 0"
+                class="nav-btn">
+          <i nz-icon nzType="left"></i>
+          Précédent
+        </button>
+      </div>
+  
+      <div class="actions-center">
+        <button nz-button 
+                nzType="default" 
+                (click)="resetForm()"
+                nz-tooltip 
+                nzTooltipTitle="Réinitialiser le formulaire"
+                class="reset-btn">
+          <i nz-icon nzType="reload"></i>
+          Réinitialiser
+        </button>
+      </div>
+  
+      <div class="actions-right">
+        <button nz-button 
+                nzType="primary" 
+                (click)="nextStep()" 
+                *ngIf="currentStep < 2"
+                class="nav-btn">
+          Suivant
+          <i nz-icon nzType="right"></i>
+        </button>
+  
+        <button nz-button 
+                nzType="primary" 
+                nzSize="large"
+                (click)="onSubmit()" 
+                [nzLoading]="isSubmitting"
+                [disabled]="!eventForm.valid"
+                *ngIf="currentStep === 2"
+                class="submit-btn">
+          <i nz-icon nzType="check" *ngIf="!isSubmitting"></i>
+          <i nz-icon nzType="loading" *ngIf="isSubmitting"></i>
+          {{ isSubmitting ? 'Création en cours...' : 'Créer l\'événement' }}
+        </button>
+      </div>
+    </div>
+  
+  </div>
