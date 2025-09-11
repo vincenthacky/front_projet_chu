@@ -47,32 +47,101 @@
 /* Header Section */
 .header-section {
   margin-bottom: 20px;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.header-info {
+  text-align: left;
+}
+
+.main-title {
+  font-size: 2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 10px;
+  line-height: 1.2;
+  
+  i {
+    margin-right: 10px;
+  }
+}
+
+.subtitle {
+  color: #ffb300;
+  font-weight: 800;
+  font-size: 1.1rem;
+  letter-spacing: 0.7px;
+  text-shadow: 0 2px 8px rgba(102,126,234,0.08);
+  margin-top: 6px;
+  margin-bottom: 0;
+}
+
+/* Toggle Buttons */
+.view-toggle {
+  display: flex;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: transparent;
+  color: #666;
+  position: relative;
+}
+
+.toggle-btn:hover {
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+  transform: translateY(-1px);
+}
+
+.toggle-btn.active {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.toggle-btn i {
+  font-size: 1rem;
+}
+
+.count-badge {
+  background: rgba(255, 255, 255, 0.9);
+  color: #667eea;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 20px;
+  min-width: 20px;
   text-align: center;
-  
-  .main-title {
-    font-size: 2rem;
-    font-weight: 800;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 10px;
-    line-height: 1.2;
-    
-    i {
-      margin-right: 10px;
-    }
-  }
-  
-  .subtitle {
-    color: #ffb300;
-    font-weight: 800;
-    font-size: 1.1rem;
-    letter-spacing: 0.7px;
-    text-shadow: 0 2px 8px rgba(102,126,234,0.08);
-    margin-top: 6px;
-    margin-bottom: 0;
-  }
+  margin-left: 5px;
+}
+
+.toggle-btn.active .count-badge {
+  background: rgba(255, 255, 255, 0.95);
+  color: #667eea;
 }
 
 /* Controls Section */
@@ -475,9 +544,46 @@
     color: #16a34a !important;
     border: 1px solid #22c55e !important;
   }
+
+  &.status-en-attente {
+    background: #fef3c7 !important;
+    color: #d97706 !important;
+    border: 1px solid #f59e0b !important;
+  }
+
+  &.status-approuve {
+    background: #dbeafe !important;
+    color: #1d4ed8 !important;
+    border: 1px solid #3b82f6 !important;
+  }
+
+  &.status-rejete {
+    background: #fee2e2 !important;
+    color: #dc2626 !important;
+    border: 1px solid #ef4444 !important;
+  }
   
   i {
     font-size: 0.8em !important;
+  }
+}
+
+/* Badge origine pour les demandes */
+.origine-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  color: #374151;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+
+  i {
+    font-size: 0.9rem;
+    color: #6b7280;
   }
 }
 
@@ -1329,6 +1435,31 @@
   }
   
   .header-section {
+    .header-top {
+      flex-direction: column;
+      gap: 15px;
+      align-items: stretch;
+    }
+
+    .header-info {
+      text-align: center;
+    }
+
+    .view-toggle {
+      justify-content: center;
+      padding: 4px;
+    }
+
+    .toggle-btn {
+      padding: 10px 15px;
+      font-size: 0.85rem;
+    }
+
+    .count-badge {
+      font-size: 0.7rem;
+      padding: 3px 6px;
+    }
+
     .main-title {
       font-size: 1.3rem;
     }

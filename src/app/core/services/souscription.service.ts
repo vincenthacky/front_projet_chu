@@ -558,4 +558,45 @@ getTerrains(): Observable<Terrain[]> {
     tap(terrains => console.log('🌍 Terrains récupérés:', terrains))
   );
 }
+
+/**
+ * Créer une demande de souscription
+ */
+createDemandeSouscription(demandeData: {
+  id_terrain: number;
+  nombre_terrains: number;
+}): Observable<{success: boolean; message: string; data?: any}> {
+  return this.http.post<{success: boolean; message: string; data?: any}>(
+    `${this.API_URL}/souscriptions/demandes`, 
+    demandeData
+  ).pipe(
+    tap(response => {
+      console.log('📝 Demande de souscription créée:', response);
+    })
+  );
+}
+
+/**
+ * Récupère les demandes de souscription de l'utilisateur connecté
+ */
+getMesDemandesSouscriptions(filters?: SouscriptionFilters): Observable<SouscriptionResponse> {
+  let params = new HttpParams();
+  
+  if (filters) {
+    if (filters.page) params = params.set('page', filters.page.toString());
+    if (filters.per_page) params = params.set('per_page', filters.per_page.toString());
+    if (filters.statut) params = params.set('statut', filters.statut);
+    if (filters.date_debut) params = params.set('date_debut', filters.date_debut);
+    if (filters.date_fin) params = params.set('date_fin', filters.date_fin);
+    if (filters.superficie) params = params.set('superficie', filters.superficie.toString());
+    if (filters.search) params = params.set('search', filters.search);
+  }
+
+  return this.http.get<SouscriptionResponse>(`${this.API_URL}/souscriptions/demandes/utilisateur`, { params })
+    .pipe(
+      tap(response => {
+        console.log('👤 Mes demandes de souscription récupérées:', response);
+      })
+    );
+}
 }
