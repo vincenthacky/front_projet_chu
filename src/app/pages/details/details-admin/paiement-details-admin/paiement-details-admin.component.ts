@@ -123,7 +123,7 @@ export class PaiementDetailsAdminComponent implements OnInit {
     
     // ✅ Mapper TOUS les paiements effectués (filtrés et triés)
     const allPayments: Payment[] = apiData.planpaiements
-      .filter(plan => plan.est_paye) // Seulement les paiements effectués
+     // .filter(plan => plan.est_paye) // Seulement les paiements effectués
       .map(plan => ({
         date: this.formatDateForPayment(plan.date_paiement_effectif),
         amount: this.souscriptionService.parseAmount(plan.montant_paye),
@@ -132,7 +132,7 @@ export class PaiementDetailsAdminComponent implements OnInit {
         reference_paiement: plan.reference_paiement || undefined,
         statut_versement: plan.statut_versement
       }))
-      .sort((a, b) => a.numero_mensualite - b.numero_mensualite); // Ordre chronologique
+      .sort((a, b) => b.numero_mensualite - a.numero_mensualite); // Ordre décroissant
 
     console.log(`💳 Total des paiements: ${allPayments.length}`);
 

@@ -93,6 +93,30 @@ export interface PaiementsFilters {
   search?: string;
 }
 
+
+export interface PaymentCreationResponse {
+  success: boolean;
+  status_code: number;
+  message: string;
+  data: {
+    id_plan_paiement: number;
+    id_souscription: number;
+    montant_paye: string;
+    mode_paiement: string;
+    date_paiement_effectif: string;
+    statut_versement: string;
+    created_at: string;
+    updated_at: string;
+  };
+}
+
+export interface PaymentData {
+  id_souscription: number;
+  mode_paiement: string;
+  montant_paye: number;
+  date_paiement_effectif: string;
+}
+
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Injectable } from '@angular/core';
@@ -105,6 +129,23 @@ export class PayementsService {
   private apiUrl = 'http://192.168.252.75:8000/api/paiements'; // ✅ Updated to new endpoint
 
   constructor(private http: HttpClient) {}
+
+  /**
+   * Créer un nouveau paiement
+   */
+  createPaiement(paymentData: PaymentData): Observable<PaymentCreationResponse> {
+    const payload = {
+      id_souscription: paymentData.id_souscription,
+      mode_paiement: paymentData.mode_paiement,
+      montant_paye: paymentData.montant_paye.toString(), // Convertir en string si l'API attend une string
+      date_paiement_effectif: paymentData.date_paiement_effectif
+    };
+
+    console.log('📤 Envoi paiement à l\'API:', payload);
+    console.log('🔗 URL:', this.apiUrl);
+
+    return this.http.post<PaymentCreationResponse>(this.apiUrl, payload);
+  }
 
   /**
    * Récupérer tous les paiements
@@ -185,9 +226,7 @@ export class PayementsService {
     switch(status?.toLowerCase()) {
       case 'paye_a_temps': return '#10b981'; // Vert
       case 'paye_en_retard': return '#f59e0b'; // Orange
-      case 'en_attente': return '#3b82f6'; // Bleu
-      case 'annule': return '#ef4444'; // Rouge
-      case 'refuse': return '#ef4444'; // Rouge
+      case 'paiement_partiel': return '#3b82f6'; // Bleu 
       default: return '#6b7280'; // Gris
     }
   }
@@ -197,9 +236,7 @@ export class PayementsService {
     switch(status?.toLowerCase()) {
       case 'paye_a_temps': return 'Payé à temps';
       case 'paye_en_retard': return 'Payé en retard';
-      case 'en_attente': return 'En attente';
-      case 'annule': return 'Annulé';
-      case 'refuse': return 'Refusé';
+      case 'paiement_partiel': return 'paiement_partiel';
       default: return status || 'Inconnu';
     }
   }
@@ -237,4 +274,5 @@ export class PayementsService {
       penalitesTotales
     };
   }
+  
 }

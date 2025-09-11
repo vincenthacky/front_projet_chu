@@ -94,6 +94,37 @@ export class DocumentService {
 
   constructor(private http: HttpClient) { }
 
+  /**
+   * CORRECTION: Récupère TOUS les documents (pas seulement de l'utilisateur)
+   */
+  getAllDocuments(filters?: DocumentFilters): Observable<DocumentResponse> {
+    let params = new HttpParams();
+    
+    if (filters) {
+      if (filters.page) params = params.set('page', filters.page.toString());
+      if (filters.per_page) params = params.set('per_page', filters.per_page.toString());
+      if (filters.source_table) params = params.set('source_table', filters.source_table);
+      if (filters.type_document) params = params.set('type_document', filters.type_document.toString());
+      if (filters.souscription_id) params = params.set('souscription_id', filters.souscription_id.toString());
+      if (filters.statut) params = params.set('statut', filters.statut);
+      if (filters.date_debut) params = params.set('date_debut', filters.date_debut);
+      if (filters.date_fin) params = params.set('date_fin', filters.date_fin);
+      if (filters.search) params = params.set('search', filters.search);
+    }
+
+    // CORRECTION: Utiliser l'endpoint /documents pour récupérer TOUS les documents
+    return this.http.get<DocumentResponse>(`${this.API_URL}/documents`, { params })
+      .pipe(
+        tap(response => {
+          console.log('🔍 Tous les documents récupérés:', response);
+          console.log('📊 Nombre total de documents:', response.data?.length || 0);
+        })
+      );
+  }
+
+  /**
+   * MÉTHODE EXISTANTE: Récupère les documents de l'utilisateur connecté
+   */
   getMesDocuments(filters?: DocumentFilters): Observable<DocumentResponse> {
     let params = new HttpParams();
     
@@ -112,7 +143,7 @@ export class DocumentService {
     return this.http.get<DocumentResponse>(`${this.API_URL}/documents/utilisateur`, { params })
       .pipe(
         tap(response => {
-          console.log('Documents récupérés:', response);
+          console.log('📁 Mes documents récupérés:', response);
         })
       );
   }
@@ -126,9 +157,6 @@ export class DocumentService {
       );
   }
 
-  /**
-   * Télécharge un document via l'endpoint sécurisé
-   */
   telechargerDocument(documentId: number): Observable<Blob> {
     return this.http.get(`${this.API_URL}/documents/${documentId}/download`, {
       responseType: 'blob'
@@ -139,9 +167,6 @@ export class DocumentService {
     );
   }
 
-  /**
-   * NOUVELLE MÉTHODE : Visualise un document (crée un blob URL pour affichage)
-   */
   visualiserDocument(documentId: number): Observable<string> {
     return new Observable<string>(observer => {
       this.telechargerDocument(documentId).subscribe({
@@ -159,17 +184,17 @@ export class DocumentService {
 
   getDocumentsBySource(sourceTable: string, filters?: DocumentFilters): Observable<DocumentResponse> {
     const sourceFilters = { ...filters, source_table: sourceTable };
-    return this.getMesDocuments(sourceFilters);
+    return this.getAllDocuments(sourceFilters);
   }
 
   getDocumentsBySouscription(souscriptionId: number, filters?: DocumentFilters): Observable<DocumentResponse> {
     const souscriptionFilters = { ...filters, souscription_id: souscriptionId };
-    return this.getMesDocuments(souscriptionFilters);
+    return this.getAllDocuments(souscriptionFilters);
   }
 
   rechercherDocuments(query: string, filters?: DocumentFilters): Observable<DocumentResponse> {
     const searchFilters = { ...filters, search: query };
-    return this.getMesDocuments(searchFilters);
+    return this.getAllDocuments(searchFilters);
   }
 
   // Utilitaires existants

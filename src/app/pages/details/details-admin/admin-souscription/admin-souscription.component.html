@@ -182,12 +182,15 @@
                     *nzSpaceItem
                     nz-button
                     nzType="primary"
-                    nzSize="small"
+                    nzSize="default"
                     nz-dropdown
                     [nzDropdownMenu]="actionMenu"
                     nzPlacement="bottomRight"
+                    style="width: 40px; height: 32px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 2px;"
                   >
-                    <span nz-icon nzType="more"></span>
+                    <div style="width: 3px; height: 3px; background-color: white; border-radius: 50%;"></div>
+                    <div style="width: 3px; height: 3px; background-color: white; border-radius: 50%;"></div>
+                    <div style="width: 3px; height: 3px; background-color: white; border-radius: 50%;"></div>
                   </button>
                 </nz-space>
                 <nz-dropdown-menu #actionMenu="nzDropdownMenu">
@@ -212,6 +215,7 @@
   </nz-collapse>
 </div>
 
+<!-- Modal de détails -->
 <nz-modal
   [(nzVisible)]="isVisible"
   nzTitle="Détails... des paiements"
@@ -323,6 +327,158 @@
           Détails
         </button>
       </div>
+    </div>
+  </ng-container>
+</nz-modal>
+
+<!-- Modal de paiement -->
+<nz-modal
+  [(nzVisible)]="isPaymentModalVisible"
+  nzTitle="Effectuer un paiement"
+  [nzOkText]="'Effectuer le paiement'"
+  nzCancelText="Annuler"
+  [nzOkDisabled]="!paymentForm.mode_paiement || !paymentForm.montant_paye || paymentForm.montant_paye <= 0 || !paymentForm.date_paiement_effectif"
+  (nzOnCancel)="handlePaymentModalCancel()"
+  (nzOnOk)="submitPayment()"
+  nzWidth="650px"
+>
+  <ng-container *nzModalContent>
+    <div class="payment-modal-content" *ngIf="selectedSouscriptionForPayment">
+      
+      <!-- Informations sur la souscription -->
+      <div class="subscription-info" style="background: #f8f9fa; padding: 16px; border-radius: 6px; margin-bottom: 24px; border: 1px solid #e9ecef;">
+        <h4 style="margin: 0 0 12px 0; color: #1f2937; font-size: 16px; font-weight: 600;">
+          <span nz-icon nzType="info-circle" style="margin-right: 8px; color: #1890ff;"></span>
+          Informations de la souscription
+        </h4>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; font-size: 14px;">
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #6b7280; font-weight: 500;">Terrain :</span>
+            <span style="color: #1f2937; font-weight: 600;">{{ getTerrainName(selectedSouscriptionForPayment) }}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #6b7280; font-weight: 500;">Montant total :</span>
+            <span style="color: #1f2937; font-weight: 600;">{{ formatCurrency(selectedSouscriptionForPayment.prix_total_terrain) }}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #6b7280; font-weight: 500;">Montant payé :</span>
+            <span style="color: #059669; font-weight: 600;">{{ formatCurrency(selectedSouscriptionForPayment.montant_paye) }}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #6b7280; font-weight: 500;">Reste à payer :</span>
+            <span style="color: #ef4444; font-weight: 700; font-size: 15px;">
+              {{ formatCurrency(getMontantRestant(selectedSouscriptionForPayment)) }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formulaire de paiement -->
+      <form class="payment-form">
+        
+        <!-- Mode de paiement -->
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151; font-size: 14px;">
+            <span nz-icon nzType="credit-card" style="margin-right: 6px; color: #1890ff;"></span>
+            Mode de paiement <span style="color: #ef4444;">*</span>
+          </label>
+          <select
+            [(ngModel)]="paymentForm.mode_paiement"
+            name="mode_paiement"
+            style="width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; background-color: white; transition: border-color 0.2s;"
+            [style.border-color]="paymentForm.mode_paiement ? '#10b981' : '#d1d5db'"
+          >
+            <option value="">Sélectionner un mode de paiement</option>
+            <option value="cheque">Chèque</option>
+            <option value="especes">Espèces</option>
+            <option value="virement">Virement bancaire</option>
+            <option value="carte">Carte bancaire</option>
+            <option value="mobile">Paiement mobile</option>
+            <option value="mandat">Mandat</option>
+          </select>
+        </div>
+
+        <!-- Montant du paiement -->
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151; font-size: 14px;">
+            <span nz-icon nzType="dollar" style="margin-right: 6px; color: #1890ff;"></span>
+            Montant du paiement (FCFA) <span style="color: #ef4444;">*</span>
+          </label>
+          <input
+            type="number"
+            [(ngModel)]="paymentForm.montant_paye"
+            name="montant_paye"
+            min="1"
+            [max]="getMontantRestant(selectedSouscriptionForPayment)"
+            placeholder="Entrez le montant"
+            style="width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; transition: border-color 0.2s;"
+            [style.border-color]="paymentForm.montant_paye > 0 ? '#10b981' : '#d1d5db'"
+          />
+          <small style="color: #6b7280; margin-top: 4px; display: block; font-size: 12px;">
+            <span nz-icon nzType="info-circle" style="margin-right: 4px;"></span>
+            Maximum : {{ formatCurrency(getMontantRestant(selectedSouscriptionForPayment)) }}
+          </small>
+        </div>
+
+        <!-- Date de paiement -->
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151; font-size: 14px;">
+            <span nz-icon nzType="calendar" style="margin-right: 6px; color: #1890ff;"></span>
+            Date de paiement effectif <span style="color: #ef4444;">*</span>
+          </label>
+          <input
+            type="date"
+            [(ngModel)]="paymentForm.date_paiement_effectif"
+            name="date_paiement_effectif"
+            style="width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; transition: border-color 0.2s;"
+            [style.border-color]="paymentForm.date_paiement_effectif ? '#10b981' : '#d1d5db'"
+          />
+        </div>
+
+        <!-- Récapitulatif -->
+        <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); padding: 16px; border-radius: 8px; border-left: 4px solid #3b82f6; margin-top: 20px;">
+          <h5 style="margin: 0 0 12px 0; color: #1e40af; font-size: 15px; font-weight: 600;">
+            <span nz-icon nzType="file-text" style="margin-right: 6px;"></span>
+            Récapitulatif du paiement
+          </h5>
+          <div style="font-size: 14px; color: #1f2937;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding: 4px 0;">
+              <span style="color: #6b7280;">Mode de paiement :</span>
+              <span style="font-weight: 500; color: #1f2937;">
+                <span *ngIf="paymentForm.mode_paiement === 'cheque'">Chèque</span>
+                <span *ngIf="paymentForm.mode_paiement === 'especes'">Espèces</span>
+                <span *ngIf="paymentForm.mode_paiement === 'virement'">Virement bancaire</span>
+                <span *ngIf="paymentForm.mode_paiement === 'carte'">Carte bancaire</span>
+                <span *ngIf="paymentForm.mode_paiement === 'mobile'">Paiement mobile</span>
+                <span *ngIf="paymentForm.mode_paiement === 'mandat'">Mandat</span>
+                <span *ngIf="!paymentForm.mode_paiement" style="color: #9ca3af;">Non sélectionné</span>
+              </span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding: 4px 0;">
+              <span style="color: #6b7280;">Montant à payer :</span>
+              <span style="font-weight: 600; color: #059669; font-size: 15px;">
+                {{ paymentForm.montant_paye ? formatCurrency(paymentForm.montant_paye) : '0 FCFA' }}
+              </span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-top: 1px solid #e5e7eb;">
+              <span style="color: #6b7280; font-weight: 500;">Nouveau solde restant :</span>
+              <span style="font-weight: 700; color: #059669; font-size: 15px;">
+                {{ formatCurrency(Math.max(0, getMontantRestant(selectedSouscriptionForPayment) - (paymentForm.montant_paye || 0))) }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Validation visuelle -->
+        <div *ngIf="paymentForm.mode_paiement && paymentForm.montant_paye > 0 && paymentForm.date_paiement_effectif" 
+             style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; padding: 12px; margin-top: 16px;">
+          <div style="display: flex; align-items: center; color: #0369a1;">
+            <span nz-icon nzType="check-circle" style="color: #10b981; margin-right: 8px; font-size: 16px;"></span>
+            <span style="font-size: 14px; font-weight: 500;">Formulaire complété - Prêt pour le paiement</span>
+          </div>
+        </div>
+
+      </form>
     </div>
   </ng-container>
 </nz-modal>

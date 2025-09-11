@@ -121,18 +121,17 @@ export class PayementDetailsComponent implements OnInit {
     const statusInfo = this.souscriptionService.getStatusWithColor(apiData);
     const statut = this.mapApiStatusToLocal(statusInfo.status);
     
-    // ✅ Mapper TOUS les paiements effectués (filtrés et triés)
+    // ✅ Mapper TOUS les paiements, triés par numéro de mensualité décroissant
     const allPayments: Payment[] = apiData.planpaiements
-      .filter(plan => plan.est_paye) // Seulement les paiements effectués
       .map(plan => ({
         date: this.formatDateForPayment(plan.date_paiement_effectif),
         amount: this.souscriptionService.parseAmount(plan.montant_paye),
         numero_mensualite: plan.numero_mensualite,
         mode_paiement: plan.mode_paiement || 'Non spécifié',
         reference_paiement: plan.reference_paiement || undefined,
-        statut_versement: plan.statut_versement
+        statut_versement: plan.statut_versement || 'non_effectue'
       }))
-      .sort((a, b) => a.numero_mensualite - b.numero_mensualite); // Ordre chronologique
+      .sort((a, b) => b.numero_mensualite - a.numero_mensualite); // Ordre décroissant
 
     console.log(`💳 Total des paiements: ${allPayments.length}`);
 
@@ -185,7 +184,10 @@ export class PayementDetailsComponent implements OnInit {
       case 'en-cours':
       case 'actif':
       case 'active':
+      case 'activée':
+        return 'en-cours';
       default:
+        console.warn(`Statut de souscription inconnu: ${apiStatus}`);
         return 'en-cours';
     }
   }
@@ -276,7 +278,7 @@ export class PayementDetailsComponent implements OnInit {
       
       if (this.subscription.payments.length > 0) {
         console.log('💳 Échantillon paiements:');
-        this.subscription.payments.slice(0, 3).forEach((payment, i) => {
+        this.subscription.payments.forEach((payment, i) => {
           console.log(`   ${i + 1}.`, {
             date: payment.date,
             amount: this.formatNumber(payment.amount),
