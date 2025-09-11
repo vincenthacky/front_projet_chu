@@ -39,7 +39,10 @@ interface Subscription {
   resteAPayer: number;
   dateDebut: string;
   prochainPaiement: string;
-  statut: 'en-cours' | 'en-retard' | 'termine';
+  dateDemande?: string;
+  dateCreation?: string;
+  origine?: string;
+  statut: 'en-cours' | 'en-retard' | 'termine' | 'en_attente' | 'approuve' | 'rejete';
   progression: number;
   payments: Payment[];
 }
@@ -103,7 +106,15 @@ export class SubscriptionComponent {
   @Output() subscriptionSelected = new EventEmitter<ApiSouscription | null>();
 
   subscriptions: Subscription[] = [];
+  demandesSouscriptions: Subscription[] = [];
   filteredSubscriptions: Subscription[] = [];
+
+  // Mode d'affichage
+  currentViewMode: 'souscriptions' | 'demandes' = 'souscriptions';
+  
+  // Compteurs
+  souscriptionsCount = 0;
+  demandesCount = 0;
 
   // Filtres
   searchTerm = '';
@@ -159,6 +170,7 @@ export class SubscriptionComponent {
   ngOnInit(): void {
     console.log('🚀 Initialisation du composant subscription');
     this.loadSubscriptions();
+    this.loadDemandesSouscriptions();
     this.loadGlobalStats();
 
     if (typeof window !== 'undefined') {
@@ -230,6 +242,81 @@ export class SubscriptionComponent {
     });
   }
 
+  // Nouvelle méthode pour charger les demandes de souscriptions
+  loadDemandesSouscriptions(): void {
+    console.log('🚀 === CHARGEMENT DEMANDES SOUSCRIPTIONS ===');
+    
+    const apiFilters: any = {
+      page: this.currentPage,
+      per_page: this.itemsPerPage
+    };
+
+    if (this.statusFilter) {
+      apiFilters.statut_souscription = this.statusFilter;
+    }
+
+    if (this.searchTerm) {
+      apiFilters.search = this.searchTerm;
+    }
+
+    if (this.terrainFilter) {
+      apiFilters.superficie = this.terrainFilter;
+    }
+
+    this.souscriptionService.getMesDemandesSouscriptions(apiFilters).subscribe({
+      next: (response) => {
+        console.log('📥 Réponse API demandes:', response);
+        const demandes = response.data.map(demande => this.mapDemandeToSubscription(demande));
+        this.demandesSouscriptions = demandes;
+        this.demandesCount = response.pagination.total;
+        console.log('✅ Demandes chargées:', demandes.length);
+      },
+      error: (error) => {
+        console.error('❌ Erreur chargement demandes:', error);
+        this.demandesSouscriptions = [];
+        this.demandesCount = 0;
+      }
+    });
+  }
+
+  // Méthode pour mapper une demande vers le format Subscription
+  private mapDemandeToSubscription(demande: any): Subscription {
+    return {
+      id: `DEM-${demande.id_souscription}`,
+      terrain: demande.terrain?.libelle || 'Terrain inconnu',
+      surface: demande.terrain?.superficie || '0',
+      prixTotal: parseFloat(demande.montant_total_souscrit || '0'),
+      montantPaye: 0, // Pas encore payé pour les demandes
+      resteAPayer: parseFloat(demande.montant_total_souscrit || '0'),
+      dateDebut: demande.date_debut_paiement || demande.date_souscription,
+      prochainPaiement: demande.date_prochain || '',
+      dateDemande: demande.date_souscription,
+      dateCreation: demande.created_at,
+      origine: demande.origine || 'utilisateur',
+      statut: demande.statut_souscription as any,
+      progression: 0, // Pas de progression pour les demandes
+      payments: []
+    };
+  }
+
+  // Méthode pour basculer entre les modes
+  switchViewMode(mode: 'souscriptions' | 'demandes'): void {
+    console.log('🔄 Basculement vers:', mode);
+    this.currentViewMode = mode;
+    this.resetFilters();
+    this.currentPage = 1;
+    
+    if (mode === 'souscriptions') {
+      this.filteredSubscriptions = [...this.subscriptions];
+      this.totalItems = this.souscriptionsCount;
+    } else {
+      this.filteredSubscriptions = [...this.demandesSouscriptions];
+      this.totalItems = this.demandesCount;
+    }
+    
+    this.updatePaginatedData();
+  }
+
   loadSubscriptions(): void {
     console.log('🚀 === CHARGEMENT SOUSCRIPTIONS ===');
     this.loading = true;
@@ -269,8 +356,14 @@ export class SubscriptionComponent {
         console.log('🔧 Après filtrage client:', mappedSubscriptions.length, 'éléments');
 
         this.subscriptions = mappedSubscriptions;
-        this.filteredSubscriptions = [...this.subscriptions];
-        this.totalItems = response.pagination.total;
+        this.souscriptionsCount = response.pagination.total;
+        
+        // Mettre à jour les données affichées selon le mode actuel
+        if (this.currentViewMode === 'souscriptions') {
+          this.filteredSubscriptions = [...this.subscriptions];
+          this.totalItems = this.souscriptionsCount;
+        }
+        
         this.loading = false;
         this.animateProgressBars();
 
@@ -564,6 +657,9 @@ export class SubscriptionComponent {
       case 'en-cours': return 'fa-clock';
       case 'en-retard': return 'fa-exclamation-triangle';
       case 'termine': return 'fa-check-circle';
+      case 'en_attente': return 'fa-hourglass-half';
+      case 'approuve': return 'fa-check';
+      case 'rejete': return 'fa-times';
       default: return 'fa-clock';
     }
   }
@@ -573,12 +669,29 @@ export class SubscriptionComponent {
       case 'en-cours': return 'En cours';
       case 'en-retard': return 'En retard';
       case 'termine': return 'Terminé';
+      case 'en_attente': return 'En attente';
+      case 'approuve': return 'Approuvé';
+      case 'rejete': return 'Rejeté';
       default: return 'Inconnu';
     }
   }
 
   getStatusClass(status: string): string {
-    return `status-${status}`;
+    return `status-${status.replace('_', '-')}`;
+  }
+
+  // Méthodes utilitaires pour le basculement
+  resetFilters(): void {
+    this.searchTerm = '';
+    this.statusFilter = '';
+    this.terrainFilter = '';
+  }
+
+  updatePaginatedData(): void {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    // Cette méthode sera appelée automatiquement par la pagination ng-zorro
+    console.log('📄 Mise à jour pagination:', { startIndex, endIndex, currentPage: this.currentPage });
   }
 
   filterData(): void {
@@ -586,12 +699,19 @@ export class SubscriptionComponent {
     console.log('🎯 Filtres actifs:', {
       searchTerm: this.searchTerm,
       statusFilter: this.statusFilter,
-      terrainFilter: this.terrainFilter
+      terrainFilter: this.terrainFilter,
+      currentViewMode: this.currentViewMode
     });
 
     this.currentPage = 1;
     console.log('📄 Pagination remise à 1');
-    this.loadSubscriptions();
+    
+    // Charger les données selon le mode actuel
+    if (this.currentViewMode === 'souscriptions') {
+      this.loadSubscriptions();
+    } else {
+      this.loadDemandesSouscriptions();
+    }
     console.log('🔥 === FIN FILTRAGE ===');
   }
 
@@ -630,12 +750,35 @@ export class SubscriptionComponent {
     console.log('Télécharger contrat:', subscription);
   }
 
+  // Nouvelle méthode pour afficher les détails d'une demande
+  showDemandeInfo(demande: Subscription): void {
+    console.log('📋 Affichage détails demande:', demande.id);
+    this.modal.info({
+      nzTitle: 'Détails de la demande',
+      nzContent: `
+        <div class="demande-details">
+          <p><strong>ID:</strong> ${demande.id}</p>
+          <p><strong>Terrain:</strong> ${demande.terrain}</p>
+          <p><strong>Surface:</strong> ${demande.surface} m²</p>
+          <p><strong>Prix total:</strong> ${this.formatAmount(demande.prixTotal)}</p>
+          <p><strong>Date demande:</strong> ${this.formatDate(demande.dateDemande || '')}</p>
+          <p><strong>Statut:</strong> ${this.getStatusLabel(demande.statut)}</p>
+          <p><strong>Origine:</strong> ${demande.origine || 'Utilisateur'}</p>
+        </div>
+      `,
+      nzWidth: 500
+    });
+  }
+
   refreshData(): void {
     console.log('🔄 ACTUALISATION COMPLÈTE DÉMARRÉE');
     this.loading = true;
     this.subscriptions = [];
+    this.demandesSouscriptions = [];
     this.filteredSubscriptions = [];
     this.totalItems = 0;
+    this.souscriptionsCount = 0;
+    this.demandesCount = 0;
     this.globalStats = {
       totalAmount: 0,
       totalPaid: 0,
@@ -645,6 +788,10 @@ export class SubscriptionComponent {
     this.currentPage = 1;
 
     console.log('🧹 Données vidées, rechargement depuis l\'API...');
+    
+    // Recharger les deux types de données
+    this.loadSubscriptions();
+    this.loadDemandesSouscriptions();
 
     const forceRefreshFilters: any = {
       page: this.currentPage,
@@ -791,13 +938,4 @@ export class SubscriptionComponent {
     window.URL.revokeObjectURL(url);
   }
 
-  resetFilters(): void {
-    console.log('Réinitialisation des filtres');
-    this.searchTerm = '';
-    this.statusFilter = '';
-    this.terrainFilter = '';
-    this.currentPage = 1;
-    this.loadSubscriptions();
-    this.loadGlobalStats();
-  }
 }
