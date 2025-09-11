@@ -139,7 +139,7 @@ export class RecompensesComponent implements OnInit, OnDestroy {
   }
 
   // Méthodes pour les actions sur les récompenses
-  updateRecompenseStatus(id: number, newStatus: 'due' | 'payee' | 'en_attente'): void {
+  updateRecompenseStatus(id: number, newStatus: 'due' | 'attribuee' | 'annulee'): void {
     this.recompensesService.updateStatutRecompense(id, newStatus)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -224,14 +224,14 @@ export class RecompensesComponent implements OnInit, OnDestroy {
     return this.recompenses.filter(r => r.statut_recompense === status);
   }
 
-  // Calcul des récompenses en attente (non encore attribuées)
+  // Calcul des récompenses en attente (dues)
   getRecompensesEnAttente(): Recompense[] {
-    return this.recompenses.filter(r => r.statut_recompense === 'en_attente' || !r.date_attribution_effective);
+    return this.recompenses.filter(r => r.statut_recompense === 'due');
   }
 
-  // Calcul des récompenses attribuées (payées)
+  // Calcul des récompenses attribuées
   getRecompensesAttribuees(): Recompense[] {
-    return this.recompenses.filter(r => r.statut_recompense === 'payee' || r.date_attribution_effective);
+    return this.recompenses.filter(r => r.statut_recompense === 'attribuee');
   }
 
   getRewardIcon(typeRecompense: string): string {
