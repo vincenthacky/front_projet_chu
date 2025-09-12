@@ -1,4 +1,4 @@
-<!-- evenements.component.html - Version avec pagination -->
+<!-- evenements.component.html - Version corrigée sans erreurs TypeScript -->
 <section class="content">
   <div class="container-fluid">
     <h6 class="evenements-title">
@@ -19,39 +19,64 @@
         </div>
         <div class="section-subtitle">Suivi personnalisé de vos terrains</div>
       </div>
-
+      
       <div class="timeline" *ngIf="evenementsSouscription.length > 0">
         <!-- Label de date pour les souscriptions -->
         <div class="time-label blue">
           <span>{{ getDateRangeLabel(evenementsSouscription) }} - Mes Projets</span>
         </div>
-
+        
         <!-- Boucle sur les événements de souscription paginés -->
         <div *ngFor="let event of getPaginatedEvents(); let i = index">
           <i class="fas" 
              [ngClass]="getEventIcon(event.type_evenement)" 
-             [class]="getEventColor(event.type_evenement, event.niveau_avancement_pourcentage)"
+             [class]="getEventColor(event.type_evenement, getEventStatusDynamic(event).percentage)"
              [style.background-color]="event.type_evenement.couleur_affichage"></i>
           
           <div class="timeline-item">
             <span class="time">
               <i class="fas fa-clock"></i> 
-              {{ getEventStatus(event.niveau_avancement_pourcentage) }}
+              {{ getEventStatusDynamic(event).status }}
             </span>
             
             <h3 class="timeline-header">
               <a href="#" (click)="onEventClick(event)">{{ event.titre }}</a>
               <span *ngIf="event.lieu"> - {{ event.lieu }}</span>
             </h3>
-
+            
             <div class="timeline-body">
               {{ event.description }}
               <br><br>
-              <img *ngFor="let photo of getEventPhotos(event)" 
-                   [src]="photo" 
-                   [alt]="event.titre"
-                   (click)="openPhotoModal(photo)"
-                   style="cursor: pointer; max-width: 150px; max-height: 100px; margin: 5px;">
+              
+              <!-- AFFICHAGE DIRECT DES MÉDIAS DANS LA TIMELINE -->
+              <div class="event-medias" *ngIf="getEventImages(event).length > 0 || getEventVideos(event).length > 0">
+                <div class="medias-container">
+                  <img 
+                    *ngFor="let doc of getEventImages(event); let i = index" 
+                    [src]="getDocumentUrl(doc)"
+                    [alt]="event.titre + ' - Image ' + (i + 1)"
+                    class="event-image"
+                    (click)="openImageModal(getDocumentUrl(doc), event.titre)"
+                    (error)="onImageError($event)">
+                  
+                  <div 
+                    *ngFor="let doc of getEventVideos(event); let i = index"
+                    class="event-video-container">
+                    <video 
+                      [src]="getDocumentUrl(doc)"
+                      class="event-video"
+                      controls
+                      preload="metadata"
+                      (error)="onVideoError($event)">
+                      Votre navigateur ne supporte pas la lecture vidéo.
+                    </video>
+                    <div class="video-label">
+                      <i class="fas fa-play-circle"></i>
+                      {{ doc.nom_original }}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div class="evenement-info">
@@ -60,8 +85,12 @@
               </span>
               <span class="tag etape" *ngIf="event.etape_actuelle">{{ event.etape_actuelle }}</span>
               <span class="tag">{{ event.lieu }}</span>
-              <span class="tag" [ngClass]="getStatutClass(event.statut_evenement)">
-                {{ event.badge_statut.libelle }}
+              <!-- CORRECTION: Couleurs dynamiques des statuts -->
+              <span class="tag status-tag" 
+                    [style.background-color]="getEventStatusDynamic(event).bgColor"
+                    [style.color]="getEventStatusDynamic(event).color"
+                    [style.border-color]="getEventStatusDynamic(event).color">
+                {{ getEventStatusDynamic(event).status }}
               </span>
             </div>
 
@@ -85,11 +114,13 @@
               </div>
               <div class="progress-bar">
                 <div class="progress-fill" 
-                     [style.width.%]="event.niveau_avancement_pourcentage"
-                     [style.background]="getProgressGradient(event.niveau_avancement_pourcentage)"></div>
+                     [style.width.%]="getEventStatusDynamic(event).percentage"
+                     [style.background]="getProgressGradient(0, event)"></div>
               </div>
-              <div class="progress-text">
-                {{ event.niveau_avancement_pourcentage === 100 ? 'Terminé avec succès ✓' : event.niveau_avancement_pourcentage + '% complété' }}
+              <div class="progress-text" [style.color]="getEventStatusDynamic(event).color">
+                {{ getEventStatusDynamic(event).percentage === 100 ? 'Terminé avec succès ✓' : 
+                   getEventStatusDynamic(event).percentage === 0 ? 'À venir' : 
+                   getEventStatusDynamic(event).percentage + '% en cours' }}
               </div>
             </div>
 
@@ -140,3 +171,20 @@
     </div>
   </div>
 </section>
+
+<!-- MODAL SIMPLE POUR AGRANDIR UNE IMAGE -->
+<nz-modal
+  [(nzVisible)]="isImageModalVisible"
+  (nzOnCancel)="closeImageModal()"
+  [nzTitle]="selectedImageTitle"
+  [nzFooter]="null"
+  [nzWidth]="'80vw'"
+  nzCentered>
+  
+  <div class="image-modal-content" *nzModalContent>
+    <img 
+      [src]="selectedImageUrl" 
+      [alt]="selectedImageTitle"
+      class="modal-image">
+  </div>
+</nz-modal>
