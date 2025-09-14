@@ -1,4 +1,4 @@
-<!-- Template HTML EventAdminComponent avec saisie libre et gestion corrigée des documents -->
+<!-- src/app/pages/details/details-admin/new-event-admin/new-event-admin.component.html -->
 <div class="event-creation-container">
   
     <!-- En-tête -->
@@ -84,7 +84,8 @@
                      id="titre"
                      formControlName="titre"
                      placeholder="Ex: Concert de louange"
-                     class="modern-input" />
+                     class="modern-input"
+                     maxlength="100" />
               <div class="input-hint">
                 {{ eventForm.get('titre')?.value?.length || 0 }}/100 caractères
               </div>
@@ -105,15 +106,13 @@
                      formControlName="type_evenement_libre"
                      placeholder="Ex: Concert, Conférence, Cérémonie..."
                      class="modern-input"
-                     list="types-suggestions" />
+                     maxlength="100" />
               
-              <!-- Datalist pour suggestions -->
-              <datalist id="types-suggestions">
-                <option *ngFor="let type of typesSuggeres" [value]="type">
-              </datalist>
-              
-              <div class="suggestions-hint">
-                Tapez votre type d'événement ou choisissez parmi les suggestions
+              <div class="input-hint">
+                Tapez votre type d'événement
+                <small class="char-counter">
+                  {{ eventForm.get('type_evenement_libre')?.value?.length || 0 }}/100 caractères
+                </small>
               </div>
             </nz-form-control>
           </nz-form-item>
@@ -132,7 +131,8 @@
                         formControlName="description"
                         placeholder="Décrivez votre événement..."
                         [nzAutosize]="{ minRows: 4, maxRows: 8 }"
-                        class="modern-textarea"></textarea>
+                        class="modern-textarea"
+                        maxlength="500"></textarea>
               <div class="input-hint">
                 {{ eventForm.get('description')?.value?.length || 0 }}/500 caractères
               </div>
@@ -236,12 +236,7 @@
                        formControlName="lieu"
                        placeholder="Ex: Cathédrale Saint Paul, Abidjan"
                        class="modern-input"
-                       list="lieux-suggestions" />
-                
-                <!-- Datalist pour suggestions de lieux -->
-                <datalist id="lieux-suggestions">
-                  <option *ngFor="let lieu of lieuxSuggeres" [value]="lieu">
-                </datalist>
+                       maxlength="200" />
                 
                 <div class="input-hint">
                   <i nz-icon nzType="environment"></i>
@@ -289,7 +284,7 @@
                       <span class="terrain-name">{{ souscription.terrain.libelle }}</span>
                     </div>
                     <div class="subscription-details">
-                      <!-- <span class="amount">{{ souscriptionService.formatCurrency(souscription.montant_total_souscrit) }}</span> -->
+                      <span class="amount">{{ souscriptionService.formatCurrency(souscription.montant_total_souscrit) }}</span>
                       <nz-tag [nzColor]="souscription.statut_souscription === 'termine' ? 'green' : 'blue'" nzSize="small">
                         {{ souscription.statut_souscription }}
                       </nz-tag>
@@ -338,14 +333,17 @@
   
           <nz-divider nzText="Documents"></nz-divider>
   
-          <!-- Section Upload de documents CORRIGÉE -->
+          <!-- Section Upload de documents -->
           <nz-form-item>
             <nz-form-label nzFor="documents">
               <i nz-icon nzType="cloud-upload" class="field-icon"></i>
               Photos et vidéos
+              <span class="optional-label">(optionnel)</span>
             </nz-form-label>
             <nz-form-control>
               <div class="upload-section">
+                
+                <!-- Zone d'upload avec validation -->
                 <nz-upload
                   [nzBeforeUpload]="beforeUpload"
                   [nzRemove]="removeFile"
@@ -353,22 +351,43 @@
                   [nzMultiple]="true"
                   [nzAccept]="'image/*,video/*,.jpg,.jpeg,.png,.gif,.webp,.mp4,.avi,.mov'"
                   [nzShowUploadList]="false"
+                  [nzDisabled]="uploadedDocuments.length >= maxFiles"
                   nzType="drag"
                   class="upload-dragger">
-                  <div class="upload-area">
+                  <div class="upload-area" [class.disabled]="uploadedDocuments.length >= maxFiles">
                     <p class="ant-upload-drag-icon">
                       <i nz-icon nzType="inbox" class="upload-icon"></i>
                     </p>
-                    <p class="ant-upload-text">Cliquez ou glissez vos fichiers ici</p>
+                    <p class="ant-upload-text" *ngIf="uploadedDocuments.length < maxFiles">
+                      Cliquez ou glissez vos fichiers ici
+                    </p>
+                    <p class="ant-upload-text" *ngIf="uploadedDocuments.length >= maxFiles">
+                      Limite de {{ maxFiles }} fichiers atteinte
+                    </p>
                     <p class="ant-upload-hint">
-                      Formats supportés: JPG, PNG, GIF, WEBP, MP4, AVI, MOV (max 50MB par fichier)
+                      Formats: JPG, PNG, GIF, WEBP, MP4, AVI, MOV (max {{ formatFileSize(maxFileSize) }}/fichier)
                     </p>
                     <p class="upload-status" *ngIf="uploadedDocuments.length > 0">
                       <i nz-icon nzType="check-circle" class="success-icon"></i>
-                      {{ uploadedDocuments.length }} fichier(s) ajouté(s)
+                      {{ uploadedDocuments.length }}/{{ maxFiles }} fichier(s) ajouté(s)
                     </p>
                   </div>
                 </nz-upload>
+  
+                <!-- Message d'erreur pour l'upload -->
+                <nz-alert *ngIf="uploadError" 
+                          [nzType]="'error'" 
+                          [nzMessage]="uploadError" 
+                          [nzCloseable]="true"
+                          (nzOnClose)="uploadError = null"
+                          class="upload-error">
+                </nz-alert>
+  
+                <!-- Barre de progression globale si nécessaire -->
+                <div class="upload-progress" *ngIf="isUploading">
+                  <nz-progress [nzPercent]="uploadProgress" nzStatus="active"></nz-progress>
+                  <p>Upload en cours...</p>
+                </div>
   
                 <!-- Liste des fichiers uploadés -->
                 <div class="files-preview" *ngIf="uploadedDocuments.length > 0">
@@ -511,11 +530,11 @@
                 nzSize="large"
                 (click)="onSubmit()" 
                 [nzLoading]="isSubmitting"
-                [disabled]="!eventForm.valid"
+                [disabled]="!eventForm.valid || isSubmitting"
                 *ngIf="currentStep === 2"
                 class="submit-btn">
           <i nz-icon nzType="check" *ngIf="!isSubmitting"></i>
-          <i nz-icon nzType="loading" *ngIf="isSubmitting"></i>
+          <i nz-icon nzType="loading" nzSpin *ngIf="isSubmitting"></i>
           {{ isSubmitting ? 'Création en cours...' : 'Créer l\'événement' }}
         </button>
       </div>

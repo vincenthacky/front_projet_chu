@@ -267,6 +267,12 @@ export class DocumentService {
   }
 
   getDocumentUrl(cheminFichier: string): string {
-    return `${this.API_URL.replace('/api', '')}/${cheminFichier}`;
+    // Enlever le préfixe 'documents/' du chemin si présent
+    const cleanPath = cheminFichier.startsWith('documents/') 
+      ? cheminFichier 
+      : `documents/${cheminFichier}`;
+    
+    // Construire l'URL complète avec /storage/
+    return `${this.API_URL.replace('/api', '')}/storage/${cleanPath}`;
   }
 }

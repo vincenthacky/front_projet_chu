@@ -163,6 +163,29 @@ export interface EvenementFilters {
   souscription_id?: number;
 }
 
+// Interface pour les données de création d'événement
+export interface CreateEventRequest {
+  id_type_evenement: number;
+  id_souscription: number;
+  titre: string;
+  description: string;
+  date_debut_evenement: string;
+  date_fin_evenement: string;
+  lieu: string;
+  est_public: boolean; // Strictement boolean
+  type_evenement_libre?: string;
+}
+
+// Interface pour la réponse de création
+export interface CreateEventResponse {
+  success: boolean;
+  status_code: number;
+  message: string;
+  data: {
+    evenement: ApiEvenement;
+  };
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -170,6 +193,67 @@ export class EvenementsService {
   private readonly API_URL = 'http://192.168.252.75:8000/api';
 
   constructor(private http: HttpClient) { }
+
+  /**
+   * Crée un nouvel événement avec documents optionnels
+   */
+  creerEvenement(eventData: CreateEventRequest, documents?: File[]): Observable<CreateEventResponse> {
+    // Si des documents sont fournis, utiliser FormData
+    if (documents && documents.length > 0) {
+      const formData = new FormData();
+      
+      // Ajouter les données de l'événement
+      formData.append('id_type_evenement', eventData.id_type_evenement.toString());
+      formData.append('id_souscription', eventData.id_souscription.toString());
+      formData.append('titre', eventData.titre);
+      formData.append('description', eventData.description);
+      formData.append('date_debut_evenement', eventData.date_debut_evenement);
+      formData.append('date_fin_evenement', eventData.date_fin_evenement);
+      formData.append('lieu', eventData.lieu);
+      
+      // Laravel accepte ces valeurs comme booléens
+      if (eventData.est_public) {
+        formData.append('est_public', '1');
+      } else {
+        formData.append('est_public', '0');
+      }
+      
+      // Ajouter le type libre si fourni
+      if (eventData.type_evenement_libre) {
+        formData.append('type_evenement_libre', eventData.type_evenement_libre);
+      }
+      
+      // Ajouter les documents
+      documents.forEach(file => {
+        formData.append('documents[]', file, file.name);
+      });
+      
+      // Ajouter l'en-tête pour indiquer qu'on envoie du multipart
+      return this.http.post<CreateEventResponse>(`${this.API_URL}/evenements`, formData)
+        .pipe(
+          tap(response => {
+            console.log('Événement créé avec documents:', response);
+          })
+        );
+    } else {
+      // Sans documents, envoyer du JSON simple avec headers appropriés
+      const payload = {
+        ...eventData,
+        est_public: eventData.est_public === true ? true : false // Force le type booléen
+      };
+      
+      return this.http.post<CreateEventResponse>(`${this.API_URL}/evenements`, payload, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+        .pipe(
+          tap(response => {
+            console.log('Événement créé sans documents:', response);
+          })
+        );
+    }
+  }
 
   /**
    * Récupère tous les événements de l'utilisateur connecté avec pagination et filtres

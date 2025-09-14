@@ -5,14 +5,28 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzProgressModule } from 'ng-zorro-antd/progress';
 import { NzGridModule } from 'ng-zorro-antd/grid';
 import { NzPaginationModule } from 'ng-zorro-antd/pagination';
+import { NzModalModule } from 'ng-zorro-antd/modal';
+import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzIconModule } from 'ng-zorro-antd/icon';
 import { isPlatformBrowser } from '@angular/common';
 import { Inject, PLATFORM_ID } from '@angular/core';
 import { ApiEvenement, EvenementOrganise, EvenementsService, TypeEvenement } from 'src/app/core/services/evenements.service';
+import { DocumentService, ApiDocument } from 'src/app/core/services/documents.service';
 
 @Component({
   selector: 'app-evenements',
   standalone: true,
-  imports: [CommonModule, NzCardModule, NzTagModule, NzProgressModule, NzGridModule, NzPaginationModule],
+  imports: [
+    CommonModule, 
+    NzCardModule, 
+    NzTagModule, 
+    NzProgressModule, 
+    NzGridModule, 
+    NzPaginationModule,
+    NzModalModule,
+    NzButtonModule,
+    NzIconModule
+  ],
   templateUrl: './evenements.component.html',
   styleUrls: ['./evenements.component.css']
 })
@@ -29,23 +43,32 @@ export class EvenementsComponent implements OnInit {
   currentPage: number = 1;
   pageSize: number = 3;
   
-  // Méthode pour afficher les informations de pagination
-  getPaginationInfo(): string {
-    const start = (this.currentPage - 1) * this.pageSize + 1;
-    const end = Math.min(this.currentPage * this.pageSize, this.evenementsSouscription.length);
-    return `${start}-${end} sur ${this.evenementsSouscription.length}`;
-  }
+  // Modal pour agrandir une image
+  isImageModalVisible: boolean = false;
+  selectedImageUrl: string = '';
+  selectedImageTitle: string = '';
   
   // Filtres
   selectedStatut: string = '';
   searchQuery: string = '';
 
-  constructor(@Inject(PLATFORM_ID) private platformId: Object, private evenementsService: EvenementsService) {
+  constructor(
+    @Inject(PLATFORM_ID) private platformId: Object, 
+    private evenementsService: EvenementsService,
+    private documentService: DocumentService
+  ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
   }
 
   ngOnInit(): void {
     this.chargerMesEvenements();
+  }
+
+  // Méthode pour afficher les informations de pagination
+  getPaginationInfo(): string {
+    const start = (this.currentPage - 1) * this.pageSize + 1;
+    const end = Math.min(this.currentPage * this.pageSize, this.evenementsSouscription.length);
+    return `${start}-${end} sur ${this.evenementsSouscription.length}`;
   }
 
   // Méthode pour obtenir les événements paginés
@@ -60,9 +83,115 @@ export class EvenementsComponent implements OnInit {
     this.currentPage = page;
   }
 
+  // NOUVELLE MÉTHODE: Gestion dynamique du statut basé sur les dates
+  getEventStatusDynamic(event: ApiEvenement): { 
+    status: string; 
+    percentage: number; 
+    color: string;
+    bgColor: string;
+  } {
+    const now = new Date();
+    const dateDebut = new Date(event.date_debut_evenement);
+    const dateFin = new Date(event.date_fin_evenement);
+    
+    // Normaliser les dates (enlever l'heure pour la comparaison)
+    now.setHours(0, 0, 0, 0);
+    dateDebut.setHours(0, 0, 0, 0);
+    dateFin.setHours(0, 0, 0, 0);
+    
+    if (now < dateDebut) {
+      // À venir
+      return {
+        status: 'À venir',
+        percentage: 0,
+        color: '#6b7280',
+        bgColor: '#f3f4f6'
+      };
+    } else if (now >= dateDebut && now <= dateFin) {
+      // En cours
+      return {
+        status: 'En cours',
+        percentage: 50,
+        color: '#3b82f6',
+        bgColor: '#dbeafe'
+      };
+    } else {
+      // Terminé
+      return {
+        status: 'Terminé',
+        percentage: 100,
+        color: '#10b981',
+        bgColor: '#d1fae5'
+      };
+    }
+  }
+
+  // NOUVELLES MÉTHODES POUR AFFICHAGE DIRECT DES MÉDIAS
+  
+  // Récupère les images d'un événement
+  getEventImages(event: ApiEvenement): any[] {
+    if (!event.documents || event.documents.length === 0) {
+      return [];
+    }
+    
+    return event.documents.filter((doc: any) => {
+      const extension = doc.nom_original?.split('.').pop()?.toLowerCase() || '';
+      return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension);
+    });
+  }
+  
+  // Récupère les vidéos d'un événement
+  getEventVideos(event: ApiEvenement): any[] {
+    if (!event.documents || event.documents.length === 0) {
+      return [];
+    }
+    
+    return event.documents.filter((doc: any) => {
+      const extension = doc.nom_original?.split('.').pop()?.toLowerCase() || '';
+      return ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv'].includes(extension);
+    });
+  }
+  
+  // Génère l'URL d'un document
+  getDocumentUrl(doc: any): string {
+    return this.documentService.getDocumentUrl(doc.chemin_fichier);
+  }
+  
+  // Ouvre le modal pour agrandir une image
+  openImageModal(imageUrl: string, eventTitle: string): void {
+    this.selectedImageUrl = imageUrl;
+    this.selectedImageTitle = eventTitle;
+    this.isImageModalVisible = true;
+  }
+  
+  // Ferme le modal d'image
+  closeImageModal(): void {
+    this.isImageModalVisible = false;
+    this.selectedImageUrl = '';
+    this.selectedImageTitle = '';
+  }
+  
+  // Gestion d'erreur d'image avec typage strict
+  onImageError(event: Event): void {
+    const imgElement = event.target as HTMLImageElement;
+    if (imgElement && imgElement.src) {
+      imgElement.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5Y2ExYWEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBub24gZGlzcG9uaWJsZTwvdGV4dD4KPC9zdmc+';
+      console.warn('Erreur de chargement d\'image, placeholder utilisé');
+    }
+  }
+  
+  // Gestion d'erreur vidéo
+  onVideoError(event: Event): void {
+    const videoElement = event.target as HTMLVideoElement;
+    if (videoElement) {
+      console.warn('Erreur de chargement vidéo:', videoElement.src);
+      // Optionnel: masquer la vidéo en erreur
+      videoElement.style.display = 'none';
+    }
+  }
+
   // Obtenir l'icône selon le type d'événement
   getEventIcon(typeEvenement: TypeEvenement): string {
-    // Utiliser l'icône de l'API ou fallback selon le libellé
     if (typeEvenement.icone_type) {
       return typeEvenement.icone_type.replace('fas ', '');
     }
@@ -85,7 +214,6 @@ export class EvenementsComponent implements OnInit {
       return 'bg-green';
     }
     
-    // Utiliser la couleur de l'API ou fallback
     if (typeEvenement.couleur_affichage) {
       return `bg-custom`;
     }
@@ -107,7 +235,13 @@ export class EvenementsComponent implements OnInit {
     return 'type-' + typeLibelle.toLowerCase().replace(/\s+/g, '-');
   }
 
-  getEventStatus(avancement: number): string {
+  // MODIFIÉE: Utiliser le nouveau système de statut
+  getEventStatus(avancement: number, event?: ApiEvenement): string {
+    if (event) {
+      return this.getEventStatusDynamic(event).status;
+    }
+    
+    // Fallback vers l'ancien système
     if (avancement === 100) {
       return 'Terminé';
     } else if (avancement > 0) {
@@ -131,8 +265,20 @@ export class EvenementsComponent implements OnInit {
     return labels[typeLibelle] || 'Progression';
   }
 
-  // Obtenir le dégradé de couleur pour la barre de progression
-  getProgressGradient(avancement: number): string {
+  // MODIFIÉE: Utiliser le nouveau système pour le dégradé
+  getProgressGradient(avancement: number, event?: ApiEvenement): string {
+    if (event) {
+      const statusInfo = this.getEventStatusDynamic(event);
+      if (statusInfo.percentage === 100) {
+        return 'linear-gradient(135deg, #10b981, #059669)';
+      } else if (statusInfo.percentage >= 50) {
+        return 'linear-gradient(135deg, #3b82f6, #1e40af)';
+      } else {
+        return 'linear-gradient(135deg, #6b7280, #4b5563)';
+      }
+    }
+    
+    // Fallback
     if (avancement === 100) {
       return 'linear-gradient(135deg, #10b981, #059669)';
     } else if (avancement >= 50) {
@@ -151,21 +297,6 @@ export class EvenementsComponent implements OnInit {
   openPhotoModal(photo: string): void {
     console.log('Ouvrir photo:', photo);
     // Ouvrir la photo en grand dans un modal
-  }
-
-  // Obtenir les photos d'un événement
-  getEventPhotos(event: ApiEvenement): string[] {
-    if (!event.documents || event.documents.length === 0) {
-      return [];
-    }
-    
-    // Filtrer pour ne garder que les documents de type image
-    return event.documents
-      .filter(doc => doc.type_document === 'photo' || 
-                     doc.mime_type?.startsWith('image/') ||
-                     doc.extension?.match(/\.(jpg|jpeg|png|gif|webp)$/i))
-      .map(doc => doc.url_document || doc.chemin_fichier)
-      .filter(url => url); // Enlever les URLs vides
   }
 
   // Animation des barres de progression
@@ -201,7 +332,6 @@ export class EvenementsComponent implements OnInit {
   getDateRangeLabel(events: ApiEvenement[]): string {
     if (!events || events.length === 0) return '';
     
-    // Trier les événements par date
     const sortedEvents = events.sort((a, b) => 
       new Date(a.date_debut_evenement).getTime() - new Date(b.date_debut_evenement).getTime()
     );
@@ -212,17 +342,14 @@ export class EvenementsComponent implements OnInit {
     const firstDate = new Date(firstEvent.date_debut_evenement);
     const lastDate = new Date(lastEvent.date_debut_evenement);
     
-    // Si c'est le même mois et année
     if (firstDate.getMonth() === lastDate.getMonth() && firstDate.getFullYear() === lastDate.getFullYear()) {
       return this.formatMonthYear(firstDate);
     }
     
-    // Si c'est la même année mais mois différents
     if (firstDate.getFullYear() === lastDate.getFullYear()) {
       return `${this.formatMonthYear(firstDate)} - ${this.formatMonthYear(lastDate)}`;
     }
     
-    // Années différentes
     return `${this.formatMonthYear(firstDate)} - ${this.formatMonthYear(lastDate)}`;
   }
 
@@ -249,7 +376,6 @@ export class EvenementsComponent implements OnInit {
           this.evenementsOrganises = response.data.evenements_organises;
           this.statistiques = response.data.statistiques;
           this.convertirDonneesApi();
-          // Réinitialiser la page à 1 après un rechargement
           this.currentPage = 1;
           console.log('Événements chargés:', this.evenementsOrganises);
         }
@@ -263,15 +389,12 @@ export class EvenementsComponent implements OnInit {
   }
 
   convertirDonneesApi(): void {
-    // Réinitialiser les tableaux
     this.evenementsSouscription = [];
     this.evenementsGlobaux = [];
     
-    // Parcourir tous les événements organisés
     this.evenementsOrganises.forEach(typeGroup => {
       typeGroup.mois.forEach(mois => {
         mois.evenements.forEach(apiEvent => {
-          // Séparer selon le type ou d'autres critères
           if (this.estEvenementPersonnel(apiEvent)) {
             this.evenementsSouscription.push(apiEvent);
           } else {
@@ -281,19 +404,15 @@ export class EvenementsComponent implements OnInit {
       });
     });
     
-    // Trier par date
     this.sortEventsByDate();
   }
 
   estEvenementPersonnel(event: ApiEvenement): boolean {
-    // Logique pour déterminer si c'est un événement personnel
-    // Basé sur le type d'événement ou d'autres critères
     return event.souscription !== null && 
            (event.type_evenement.categorie_type === 'travaux_terrain' || 
             event.type_evenement.categorie_type === 'personnel');
   }
 
-  // Filtrage et tri
   sortEventsByDate(): void {
     this.evenementsSouscription.sort((a, b) => 
       new Date(b.date_debut_evenement).getTime() - new Date(a.date_debut_evenement).getTime()
@@ -313,7 +432,6 @@ export class EvenementsComponent implements OnInit {
 
   voirDocuments(event: ApiEvenement): void {
     console.log('Voir documents de l\'événement:', event);
-    // Afficher les documents liés à l'événement
   }
 
   // Méthodes utilitaires du service
@@ -334,9 +452,9 @@ export class EvenementsComponent implements OnInit {
   }
 
   getProgressColor(percentage: number): string {
-    if (percentage < 25) return '#dc3545'; // Rouge
-    if (percentage < 50) return '#fd7e14'; // Orange
-    if (percentage < 75) return '#ffc107'; // Jaune
-    return '#28a745'; // Vert
+    if (percentage < 25) return '#dc3545';
+    if (percentage < 50) return '#fd7e14';
+    if (percentage < 75) return '#ffc107';
+    return '#28a745';
   }
 }

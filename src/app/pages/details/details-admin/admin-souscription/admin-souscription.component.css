@@ -57,7 +57,7 @@
   }
 }
 
-/* Controls Section - Identique à l'original */
+/* Controls Section */
 .controls-section {
   display: flex;
   flex-direction: column;
@@ -176,20 +176,24 @@
   }
 }
 
-/* Stats Bar */
+/* Stats Bar - CORRECTION APPLIQUÉE */
 .stats-bar {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
   margin-bottom: 20px;
   
   .stat-card {
     background: linear-gradient(135deg, #f8fafc, #e2e8f0);
-    padding: 15px;
+    padding: 12px 8px;
     border-radius: 12px;
     text-align: center;
     border: 1px solid rgba(102, 126, 234, 0.1);
     transition: all 0.3s ease;
+    min-height: 70px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     
     &:hover {
       transform: translateY(-3px);
@@ -197,18 +201,23 @@
     }
     
     .stat-number {
-      font-size: 1.5rem;
-      font-weight: 800;
+      font-size: 1.1rem;
+      font-weight: 700;
       color: #1f2937;
-      margin-bottom: 5px;
+      margin-bottom: 4px;
       line-height: 1.1;
+      word-break: break-word;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     
     .stat-label {
       color: #6b7280;
-      font-size: 0.85rem;
+      font-size: 0.75rem;
       font-weight: 500;
-      line-height: 1.3;
+      line-height: 1.2;
+      word-break: break-word;
     }
     
     &:nth-child(3) .stat-number {
@@ -269,7 +278,7 @@
   }
 }
 
-/* CORRECTION PRINCIPALE: En-tête utilisateur dans l'accordéon avec statistiques HORIZONTALES */
+/* En-tête utilisateur dans l'accordéon avec statistiques HORIZONTALES */
 .user-header-content {
   display: flex;
   align-items: center;
@@ -288,7 +297,7 @@
   margin-right: 16px !important;
   
   ::ng-deep .ant-avatar {
-    background: #8b5cf6 !important;  /* Vraie couleur violette comme dans votre design */
+    background: #8b5cf6 !important;
     color: white !important;
     font-weight: 700 !important;
     font-size: 1.1rem !important;
@@ -319,7 +328,7 @@
   }
 }
 
-/* CORRECTION PRINCIPALE: Statistiques utilisateur alignées HORIZONTALEMENT */
+/* Statistiques utilisateur alignées HORIZONTALEMENT */
 .user-stats {
   display: flex;
   align-items: center;
@@ -371,7 +380,7 @@
   overflow-x: auto;
 }
 
-/* Styles de tableau personnalisés pour reproduire exactement l'image */
+/* Styles de tableau personnalisés */
 ::ng-deep .subscription-table {
   width: 100% !important;
   margin: 0 !important;
@@ -509,6 +518,12 @@
   font-size: 0.9rem;
 }
 
+.date-debut {
+  font-size: 0.9rem;
+  color: #1f2937;
+  font-weight: 500;
+}
+
 .next-payment-date {
   font-size: 0.9rem;
   color: #1f2937;
@@ -568,7 +583,7 @@
   }
 }
 
-/* ===== STYLES MODAL COMPACT ET RESPONSIVE ===== */
+/* ===== STYLES MODAL COMPACT ===== */
 
 /* Override Angular Modal */
 ::ng-deep .compact-modal .ant-modal {
@@ -601,7 +616,7 @@
   line-height: 1.4;
 }
 
-/* ===== SECTION INFORMATIONS SOUSCRIPTION COMPACTE ===== */
+/* Section informations souscription compacte */
 .subscription-info-compact {
   background: linear-gradient(135deg, #f8fafc 0%, #f0f9ff 100%);
   padding: 12px;
@@ -697,7 +712,7 @@
   color: #ff4d4f;
 }
 
-/* ===== SECTION PAIEMENTS COMPACTE ===== */
+/* Section paiements compacte */
 .payments-section-compact {
   margin-bottom: 12px;
 }
@@ -826,7 +841,7 @@
   margin: 0 !important;
 }
 
-/* ===== MESSAGE AUCUN PAIEMENT COMPACT ===== */
+/* Message aucun paiement compact */
 .no-payments-compact {
   text-align: center;
   padding: 20px 10px;
@@ -846,7 +861,7 @@
   color: #d9d9d9;
 }
 
-/* ===== ACTIONS MODAL COMPACTES ===== */
+/* Actions modal compactes */
 .modal-actions-compact {
   display: flex;
   gap: 8px;
@@ -891,165 +906,182 @@
   border-color: #40a9ff;
 }
 
-/* ===== STYLES MODAL ORIGINAUX - MAINTENUS POUR COMPATIBILITÉ ===== */
-.modal-header-blue {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 20px 24px;
-  border-radius: 12px 12px 0 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: -24px -24px 0 -24px;
-  width: calc(100% + 48px);
-  justify-content: flex-start;
+/* Responsive breakpoints pour les stats */
+@media (max-width: 768px) {
+  .stats-bar {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    
+    .stat-card {
+      padding: 10px 6px;
+      min-height: 65px;
+      
+      .stat-number {
+        font-size: 0.95rem;
+      }
+      
+      .stat-label {
+        font-size: 0.7rem;
+      }
+    }
+  }
 }
 
-.modal-close-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: white;
-  padding: 8px;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
+@media (max-width: 480px) {
+  .stats-bar {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    
+    .stat-card {
+      padding: 8px 4px;
+      min-height: 60px;
+      
+      .stat-number {
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+      
+      .stat-label {
+        font-size: 0.65rem;
+        line-height: 1.1;
+      }
+    }
+  }
 }
 
-.modal-close-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.1);
-}
-
-.modal-header-content {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.modal-icon {
-  font-size: 1.2rem;
-}
-
-.modal-title-text {
-  font-size: 1.1rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-.modal-content {
-  padding: 0;
-}
-
-/* ✅ Section informations souscription */
-.subscription-info {
-  background: linear-gradient(135deg, #f6f9fc 0%, #eef7ff 100%);
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  border: 1px solid #e8f4fd;
-}
-
-.subscription-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.subscription-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1890ff;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.subscription-title i {
-  font-size: 20px;
-}
-
-.terrain-details {
+@media (max-width: 320px) {
+  .stats-bar {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    
+    .stat-card {
+      padding: 6px 3px;
+      min-height: 55px;
+      
+      .stat-number {
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
+      
+      .stat-label {
+        font-size: 0.6rem;
+      }
+    }
+  }
+}/* Stats Bar - Correction des tailles et responsive */
+.stats-bar {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 12px;
-  margin-bottom: 16px;
-}
-
-.terrain-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-}
-
-.terrain-item .label {
-  font-weight: 500;
-  color: #666;
-}
-
-.terrain-item .value {
-  font-weight: 600;
-  color: #333;
-}
-
-.amounts-summary {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #e8f4fd;
-}
-
-.amount-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.amount-item .label {
-  font-size: 12px;
-  color: #666;
-  margin-bottom: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.amount-item .value {
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.amount-item .value.paid {
-  color: #52c41a;
-}
-
-.amount-item .value.remaining {
-  color: #ff4d4f;
-}
-
-/* ✅ Section historique des paiements */
-.payments-section {
   margin-bottom: 20px;
+  
+  .stat-card {
+    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+    padding: 12px 8px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid rgba(102, 126, 234, 0.1);
+    transition: all 0.3s ease;
+    min-height: 70px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stat-number {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 4px;
+      line-height: 1.1;
+      word-break: break-word;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    .stat-label {
+      color: #6b7280;
+      font-size: 0.75rem;
+      font-weight: 500;
+      line-height: 1.2;
+      word-break: break-word;
+    }
+    
+    &:nth-child(3) .stat-number {
+      color: #10b981 !important;
+    }
+    
+    &:nth-child(4) .stat-number {
+      color: #f59e0b !important;
+    }
+  }
 }
 
-.payments-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
+/* Responsive breakpoints pour les stats */
+@media (max-width: 768px) {
+  .stats-bar {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    
+    .stat-card {
+      padding: 10px 6px;
+      min-height: 65px;
+      
+      .stat-number {
+        font-size: 0.95rem;
+      }
+      
+      .stat-label {
+        font-size: 0.7rem;
+      }
+    }
+  }
 }
 
-.payments-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  display: flex;
-  align-items: center;
+@media (max-width: 480px) {
+  .stats-bar {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    
+    .stat-card {
+      padding: 8px 4px;
+      min-height: 60px;
+      
+      .stat-number {
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+      
+      .stat-label {
+        font-size: 0.65rem;
+        line-height: 1.1;
+      }
+    }
+  }
+}
+
+@media (max-width: 320px) {
+  .stats-bar {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    
+    .stat-card {
+      padding: 6px 3px;
+      min-height: 55px;
+      
+      .stat-number {
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
+      
+      .stat-label {
+        font-size: 0.6rem;
+      }
+    }
+  }
 }

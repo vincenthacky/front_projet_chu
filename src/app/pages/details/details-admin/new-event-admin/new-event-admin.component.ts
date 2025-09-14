@@ -1,3 +1,4 @@
+// src/app/pages/details/details-admin/new-event-admin/new-event-admin.component.ts
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -26,21 +27,8 @@ import { NzProgressModule } from 'ng-zorro-antd/progress';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 
 // Services
-import { EvenementsService, TypeEvenement } from 'src/app/core/services/evenements.service';
+import { EvenementsService, CreateEventRequest, CreateEventResponse } from 'src/app/core/services/evenements.service';
 import { SouscriptionService, ApiSouscription } from 'src/app/core/services/souscription.service';
-
-interface CreateEventData {
-  id_type_evenement: number;
-  id_souscription: number;
-  titre: string;
-  description: string;
-  type_evenement_libre: string;
-  date_debut_evenement: string;
-  date_fin_evenement: string;
-  lieu: string;
-  est_public: boolean;
-  documents: File[];
-}
 
 @Component({
   selector: 'app-new-event-admin',
@@ -79,30 +67,12 @@ export class NewEventAdminComponent implements OnInit {
   // Gestion des fichiers
   fileList: NzUploadFile[] = [];
   uploadedDocuments: File[] = [];
+  uploadError: string | null = null;
+  isUploading = false;
+  uploadProgress = 0;
+  maxFiles = 10;
+  maxFileSize = 50 * 1024 * 1024; // 50MB
   
-  // Suggestions pour l'autocomplétion
-  typesSuggeres = [
-    'Cérémonie religieuse',
-    'Concert de musique',
-    'Événement culturel',
-    'Conférence',
-    'Formation',
-    'Réunion',
-    'Célébration',
-    'Festival'
-  ];
-  
-  lieuxSuggeres = [
-    'Cathédrale Saint Paul, Abidjan',
-    'Basilique Notre-Dame de la Paix, Yamoussoukro',
-    'Église Saint-Michel, Cocody',
-    'Centre paroissial Sainte-Anne',
-    'Salle des fêtes municipale',
-    'Centre de conférences',
-    'Auditorium',
-    'Salle polyvalente'
-  ];
-
   constructor(
     private fb: FormBuilder,
     private router: Router,
@@ -153,51 +123,52 @@ export class NewEventAdminComponent implements OnInit {
     });
   }
 
-  // Fonction corrigée pour l'upload de fichiers
+  // Fonction améliorée pour l'upload de fichiers
   beforeUpload = (file: NzUploadFile): boolean => {
+    // Réinitialiser les erreurs
+    this.uploadError = null;
+    
     console.log('Fichier reçu:', file);
-    console.log('Type de file:', typeof file);
-    console.log('Propriétés du file:', Object.keys(file));
+    
+    // Vérifier la limite de nombre de fichiers
+    if (this.uploadedDocuments.length >= this.maxFiles) {
+      this.uploadError = `Maximum ${this.maxFiles} fichiers autorisés`;
+      return false;
+    }
     
     // Méthode robuste pour récupérer le fichier
     let actualFile: File;
     
     if (file instanceof File) {
       actualFile = file;
-      console.log('Fichier est une instance de File');
     } else if (file.originFileObj) {
       actualFile = file.originFileObj as File;
-      console.log('Fichier récupéré via originFileObj');
     } else {
-      console.error('Impossible de récupérer le fichier:', file);
-      this.message.error('Format de fichier invalide. Veuillez réessayer.');
+      this.uploadError = 'Format de fichier invalide. Veuillez réessayer.';
       return false;
     }
 
     console.log('Fichier à traiter:', actualFile.name, actualFile.type, actualFile.size);
 
-    // Validation du type de fichier
+    // Validation du type de fichier avec fallback
     const allowedTypes = [
       'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
       'video/mp4', 'video/avi', 'video/mov', 'video/quicktime', 'video/x-msvideo'
     ];
     
-    // Validation par extension en cas de problème avec le MIME type
     const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp4', '.avi', '.mov'];
     const fileExtension = actualFile.name.toLowerCase().substring(actualFile.name.lastIndexOf('.'));
     
     const isValidType = allowedTypes.includes(actualFile.type) || allowedExtensions.includes(fileExtension);
     
     if (!isValidType) {
-      console.error('Type de fichier non autorisé:', actualFile.type, 'Extension:', fileExtension);
-      this.message.error(`Type de fichier non autorisé. Formats acceptés: JPG, PNG, GIF, MP4, AVI, MOV`);
+      this.uploadError = `Type de fichier non autorisé: ${actualFile.type || fileExtension}. Formats acceptés: JPG, PNG, GIF, WEBP, MP4, AVI, MOV`;
       return false;
     }
 
-    // Vérifier la taille (max 50MB)
-    const maxSize = 50 * 1024 * 1024; // 50MB
-    if (actualFile.size > maxSize) {
-      this.message.error('Le fichier doit faire moins de 50MB');
+    // Vérifier la taille
+    if (actualFile.size > this.maxFileSize) {
+      this.uploadError = `Le fichier "${actualFile.name}" dépasse la limite de ${this.formatFileSize(this.maxFileSize)}`;
       return false;
     }
 
@@ -207,7 +178,7 @@ export class NewEventAdminComponent implements OnInit {
     );
     
     if (isDuplicate) {
-      this.message.warning('Ce fichier est déjà présent dans la liste');
+      this.uploadError = `Le fichier "${actualFile.name}" est déjà présent`;
       return false;
     }
 
@@ -218,11 +189,9 @@ export class NewEventAdminComponent implements OnInit {
     if (actualFile.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onload = () => {
-        // Mettre à jour l'aperçu dans le NzUploadFile
         file.url = reader.result as string;
         file.thumbUrl = reader.result as string;
         
-        // Mettre à jour aussi dans fileList si nécessaire
         const fileInList = this.fileList.find(f => 
           f.name === actualFile.name && f.size === actualFile.size
         );
@@ -232,7 +201,7 @@ export class NewEventAdminComponent implements OnInit {
         }
       };
       reader.onerror = () => {
-        console.error('Erreur lors de la génération de l\'aperçu pour:', actualFile.name);
+        console.error('Erreur génération aperçu:', actualFile.name);
       };
       reader.readAsDataURL(actualFile);
     }
@@ -240,21 +209,19 @@ export class NewEventAdminComponent implements OnInit {
     console.log(`Fichier ajouté: ${actualFile.name} (${this.formatFileSize(actualFile.size)})`);
     console.log('Total fichiers:', this.uploadedDocuments.length);
     
-    this.message.success(`Fichier "${actualFile.name}" ajouté avec succès`);
+    this.message.success(`Fichier "${actualFile.name}" ajouté`);
     
     return false; // Empêcher l'upload automatique
   };
 
-  // Fonction corrigée pour supprimer un fichier
+  // Fonction pour supprimer un fichier
   removeFile = (file: NzUploadFile): boolean => {
     console.log('Suppression du fichier:', file.name);
     
-    // Trouver le fichier dans la liste des documents uploadés
     const fileName = file.name;
     const fileSize = file.size;
     
     if (fileName) {
-      // Supprimer de uploadedDocuments
       this.uploadedDocuments = this.uploadedDocuments.filter(doc => 
         !(doc.name === fileName && doc.size === fileSize)
       );
@@ -263,18 +230,16 @@ export class NewEventAdminComponent implements OnInit {
       this.message.info(`Fichier "${fileName}" supprimé`);
     }
     
-    return true; // Permettre la suppression
+    return true;
   };
 
-  // Méthode pour supprimer un fichier par index (utilisée dans le template)
+  // Méthode pour supprimer un fichier par index
   removeFileFromList(index: number): void {
     if (index >= 0 && index < this.uploadedDocuments.length) {
       const fileName = this.uploadedDocuments[index].name;
       
-      // Supprimer de la liste des documents uploadés
       this.uploadedDocuments.splice(index, 1);
       
-      // Supprimer aussi de fileList si nécessaire
       if (index < this.fileList.length) {
         this.fileList.splice(index, 1);
       }
@@ -357,75 +322,130 @@ export class NewEventAdminComponent implements OnInit {
     return true;
   }
 
+  // Méthode pour valider les fichiers avant soumission
+  private validateFiles(): boolean {
+    if (this.uploadedDocuments.length === 0) {
+      return true; // Pas de fichiers = OK (optionnel)
+    }
+
+    for (const file of this.uploadedDocuments) {
+      if (!file || file.size === 0) {
+        this.message.error('Un ou plusieurs fichiers sont corrompus');
+        return false;
+      }
+      
+      if (file.size > this.maxFileSize) {
+        this.message.error(`Le fichier "${file.name}" dépasse la taille autorisée`);
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   onSubmit(): void {
-    if (this.eventForm.valid && this.validateDates()) {
+    if (this.eventForm.valid && this.validateDates() && this.validateFiles()) {
       this.isSubmitting = true;
       
       const formData = this.eventForm.value;
-      const eventData: CreateEventData = this.prepareEventData(formData);
+      const eventData: CreateEventRequest = this.prepareEventData(formData);
 
       console.log('Données à envoyer:', eventData);
+      console.log('Type de est_public:', typeof eventData.est_public, 'Valeur:', eventData.est_public);
       console.log('Documents à joindre:', this.uploadedDocuments);
 
-      // Simulation d'appel API
-      setTimeout(() => {
-        this.isSubmitting = false;
-        this.notification.success(
-          'Événement créé',
-          `L'événement a été créé avec succès! ${this.uploadedDocuments.length} document(s) joint(s).`
-        );
-        this.router.navigate(['/dashboard/admin/events']);
-      }, 2000);
-
-      // Code pour un vrai appel API avec FormData :
-      /*
-      const formDataToSend = new FormData();
-      Object.keys(eventData).forEach(key => {
-        if (key !== 'documents') {
-          formDataToSend.append(key, eventData[key as keyof CreateEventData] as string);
-        }
-      });
-      this.uploadedDocuments.forEach((file, index) => {
-        formDataToSend.append(`documents[${index}]`, file);
-      });
-      this.evenementsService.createEvenement(formDataToSend).subscribe({
-        next: (response) => {
+      // Appel réel à l'API
+      this.evenementsService.creerEvenement(eventData, this.uploadedDocuments).subscribe({
+        next: (response: CreateEventResponse) => {
           this.isSubmitting = false;
-          this.notification.success('Événement créé', 'L\'événement a été créé avec succès!');
-          this.router.navigate(['/dashboard/admin/events']);
+          
+          if (response.success) {
+            this.notification.success(
+              'Événement créé',
+              `L'événement "${response.data.evenement.titre}" a été créé avec succès! ${this.uploadedDocuments.length} document(s) joint(s).`
+            );
+            
+            // Redirection vers la liste des événements
+            this.router.navigate(['/dashboard/admin/event-admin']);
+          } else {
+            this.message.error(response.message || 'Erreur lors de la création');
+          }
         },
         error: (error) => {
           this.isSubmitting = false;
-          this.message.error('Erreur lors de la création de l\'événement');
-          console.error('Erreur:', error);
+          console.error('Erreur création événement:', error);
+          console.error('Détails de l\'erreur:', error.error);
+          
+          // Gestion des erreurs spécifiques
+          if (error.error && error.error.message) {
+            this.message.error(error.error.message);
+          } else if (error.status === 422 && error.error.errors) {
+            // Erreurs de validation
+            const validationErrors = error.error.errors;
+            Object.keys(validationErrors).forEach(field => {
+              this.message.error(`${field}: ${validationErrors[field][0]}`);
+            });
+          } else if (error.status === 413) {
+            this.message.error('Les fichiers sont trop volumineux. Veuillez réduire la taille.');
+          } else {
+            this.message.error('Erreur lors de la création de l\'événement. Veuillez réessayer.');
+          }
         }
       });
-      */
+         // Redirection vers la liste des événements
+         this.router.navigate(['/dashboard/admin/details/event-admin']);
+
     } else {
-      this.message.error('Veuillez corriger les erreurs dans le formulaire');
+      this.message.error('Veuillez corriger les erreurs dans le formulaire et les fichiers');
       this.markAllFieldsAsTouched();
     }
   }
 
-  private prepareEventData(formData: any): CreateEventData {
+  private prepareEventData(formData: any): CreateEventRequest {
     const dateDebut = new Date(formData.date_debut);
     dateDebut.setHours(formData.heure_debut.getHours(), formData.heure_debut.getMinutes());
 
     const dateFin = new Date(formData.date_fin);
     dateFin.setHours(formData.heure_fin.getHours(), formData.heure_fin.getMinutes());
 
+    // Conversion stricte en booléen - NzSwitch peut retourner différents types
+    let estPublic: boolean = false;
+    
+    if (formData.est_public === true || formData.est_public === 'true' || formData.est_public === 1 || formData.est_public === '1') {
+      estPublic = true;
+    } else if (formData.est_public === false || formData.est_public === 'false' || formData.est_public === 0 || formData.est_public === '0') {
+      estPublic = false;
+    } else {
+      // Valeur par défaut si indéterminée
+      estPublic = Boolean(formData.est_public);
+    }
+
+    console.log('Valeur brute est_public du formulaire:', formData.est_public, 'Type:', typeof formData.est_public);
+    console.log('Valeur convertie est_public:', estPublic, 'Type:', typeof estPublic);
+
     return {
-      id_type_evenement: 1, // Valeur par défaut
+      id_type_evenement: 3, // Vous pouvez ajuster ou rendre dynamique
       id_souscription: formData.id_souscription,
       titre: formData.titre.trim(),
       description: formData.description.trim(),
-      type_evenement_libre: formData.type_evenement_libre.trim(),
-      date_debut_evenement: dateDebut.toISOString(),
-      date_fin_evenement: dateFin.toISOString(),
+      date_debut_evenement: this.formatDateForAPI(dateDebut),
+      date_fin_evenement: this.formatDateForAPI(dateFin),
       lieu: formData.lieu.trim(),
-      est_public: formData.est_public,
-      documents: this.uploadedDocuments
+      est_public: estPublic, // Booléen strict garanti
+      type_evenement_libre: formData.type_evenement_libre?.trim()
     };
+  }
+
+  private formatDateForAPI(date: Date): string {
+    // Format requis: "2025-09-15 18:00:00"
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = '00';
+    
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   }
 
   private markAllFieldsAsTouched(): void {
@@ -451,7 +471,7 @@ export class NewEventAdminComponent implements OnInit {
   }
 
   getSouscriptionLabel(souscription: ApiSouscription): string {
-    return `#${souscription.id_souscription} - ${souscription.terrain.libelle} (${this.souscriptionService.formatCurrency(souscription.montant_total_souscrit)})`;
+    return `#${souscription.id_souscription} - ${souscription.terrain.libelle}`;
   }
 
   resetForm(): void {
@@ -459,6 +479,7 @@ export class NewEventAdminComponent implements OnInit {
     this.currentStep = 0;
     this.fileList = [];
     this.uploadedDocuments = [];
+    this.uploadError = null;
     this.eventForm.patchValue({
       est_public: true
     });
@@ -466,7 +487,7 @@ export class NewEventAdminComponent implements OnInit {
   }
 
   cancel(): void {
-    this.router.navigate(['/dashboard/admin/events']);
+    this.router.navigate(['/dashboard/admin/event-admin']);
   }
 
   // Utilitaires pour les fichiers
