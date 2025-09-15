@@ -152,6 +152,7 @@ export interface ApiSouscription {
   
   
   export interface Terrain {
+    statut: any;
     id_terrain: number;
     libelle: string;
     localisation: string;
