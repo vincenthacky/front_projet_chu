@@ -6,15 +6,50 @@ import { NzProgressModule } from 'ng-zorro-antd/progress';
 import { NzGridModule } from 'ng-zorro-antd/grid';
 import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { NzButtonModule } from 'ng-zorro-antd/button';
+// AJOUTS POUR LES MODALS
+import { NzModalModule } from 'ng-zorro-antd/modal';
+import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { isPlatformBrowser } from '@angular/common';
 import { Inject, PLATFORM_ID } from '@angular/core';
 import { Router } from '@angular/router';
-import { ApiEvenement, EvenementOrganise, EvenementsService, TypeEvenement } from 'src/app/core/services/evenements.service';
+import { EvenementOrganise, ApiEvenement, TypeEvenement } from 'src/app/core/models/evenements';
+import { EvenementsService } from 'src/app/core/services/evenements.service';
+// AJOUT POUR DOCUMENTS
+import { DocumentService } from 'src/app/core/services/documents.service';
+
+// AJOUT INTERFACE POUR DOCUMENTS
+interface DocumentWithType {
+  id_document: number;
+  nom_original: string;
+  chemin_fichier: string;
+  type_mime: string | null;
+  taille_fichier: number;
+  description_document: string;
+  type_document?: string;
+  mime_type?: string;
+  extension?: string;
+  url_document?: string;
+}
 
 @Component({
   selector: 'app-event-admin',
   standalone: true,
-  imports: [CommonModule, NzCardModule, NzTagModule, NzProgressModule, NzGridModule, NzPaginationModule, NzButtonModule],
+  imports: [
+    CommonModule, 
+    NzCardModule, 
+    NzTagModule, 
+    NzProgressModule, 
+    NzGridModule, 
+    NzPaginationModule, 
+    NzButtonModule,
+    // AJOUTS POUR LES MODALS
+    NzModalModule,
+    NzIconModule,
+    NzSpinModule,
+    NzEmptyModule
+  ],
   templateUrl: './event-admin.component.html',
   styleUrl: './event-admin.component.css'
 })
@@ -34,6 +69,17 @@ export class EventAdminComponent {
   // Préfixe pour les images
   private readonly IMAGE_BASE_URL = 'http://192.168.252.75:8000/storage/documents/';
   
+  // AJOUTS POUR LES MODALS
+  // Modal pour agrandir une image
+  isImageModalVisible: boolean = false;
+  selectedImageUrl: string = '';
+  selectedImageTitle: string = '';
+  
+  // Modal pour visualiser un PDF
+  isPdfModalVisible: boolean = false;
+  selectedPdfUrl: string = '';
+  selectedPdfTitle: string = '';
+  
   // Méthode pour afficher les informations de pagination
   getPaginationInfo(): string {
     const start = (this.currentPage - 1) * this.pageSize + 1;
@@ -48,6 +94,8 @@ export class EventAdminComponent {
   constructor(
     @Inject(PLATFORM_ID) private platformId: Object, 
     private evenementsService: EvenementsService,
+    // AJOUT POUR DOCUMENTS
+    private documentService: DocumentService,
     private router: Router
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
@@ -72,6 +120,111 @@ export class EventAdminComponent {
   // Gestionnaire de changement de page
   onPageChange(page: number): void {
     this.currentPage = page;
+  }
+
+  // AJOUTS POUR LA GESTION DES DOCUMENTS
+  // Récupère les images d'un événement
+  getEventImages(event: ApiEvenement): DocumentWithType[] {
+    if (!event.documents || event.documents.length === 0) {
+      return [];
+    }
+    
+    return event.documents.filter((doc: any) => {
+      const extension = doc.nom_original?.split('.').pop()?.toLowerCase() || '';
+      const isImageByExtension = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(extension);
+      const isImageByMime = doc.type_mime?.startsWith('image/') || false;
+      
+      return isImageByExtension || isImageByMime;
+    });
+  }
+
+  // Récupère les PDFs d'un événement
+  getEventPdfs(event: ApiEvenement): DocumentWithType[] {
+    if (!event.documents || event.documents.length === 0) {
+      return [];
+    }
+    
+    return event.documents.filter((doc: any) => {
+      const extension = doc.nom_original?.split('.').pop()?.toLowerCase() || '';
+      const isPdfByExtension = extension === 'pdf';
+      const isPdfByMime = doc.type_mime === 'application/pdf';
+      
+      return isPdfByExtension || isPdfByMime;
+    });
+  }
+
+  // Génère l'URL complète d'un document
+  getDocumentUrl(doc: DocumentWithType): string {
+    if (!doc || !doc.chemin_fichier) {
+      return this.documentService.getImagePlaceholder();
+    }
+    return this.documentService.getDocumentUrl(doc.chemin_fichier);
+  }
+
+  // Vérifie si un événement a des documents
+  hasDocuments(event: ApiEvenement): boolean {
+    return event.documents && event.documents.length > 0;
+  }
+
+  // AJOUTS POUR LES MODALS
+  // Ouvre le modal pour agrandir une image
+  openImageModal(imageUrl: string, eventTitle: string): void {
+    this.selectedImageUrl = imageUrl;
+    this.selectedImageTitle = eventTitle;
+    this.isImageModalVisible = true;
+  }
+  
+  // Ferme le modal d'image
+  closeImageModal(): void {
+    this.isImageModalVisible = false;
+    this.selectedImageUrl = '';
+    this.selectedImageTitle = '';
+  }
+
+  // Ouvre le modal pour visualiser un PDF
+  openPdfModal(pdfUrl: string, eventTitle: string): void {
+    this.selectedPdfUrl = pdfUrl;
+    this.selectedPdfTitle = eventTitle;
+    this.isPdfModalVisible = true;
+  }
+  
+  // Ferme le modal PDF
+  closePdfModal(): void {
+    this.isPdfModalVisible = false;
+    this.selectedPdfUrl = '';
+    this.selectedPdfTitle = '';
+  }
+
+  // Ouvre le PDF dans un nouvel onglet
+  openPdfInNewTab(pdfUrl: string): void {
+    window.open(pdfUrl, '_blank');
+  }
+
+  // AJOUTS POUR LA GESTION DES ERREURS
+  // Gestion d'erreur d'image
+  onImageError(event: Event): void {
+    const imgElement = event.target as HTMLImageElement;
+    if (imgElement && imgElement.src) {
+      imgElement.src = this.documentService.getImagePlaceholder();
+      imgElement.alt = 'Image non disponible';
+    }
+  }
+  
+  // Gestion d'erreur vidéo
+  onVideoError(event: Event): void {
+    const videoElement = event.target as HTMLVideoElement;
+    if (videoElement) {
+      videoElement.style.display = 'none';
+      
+      const errorMsg = document.createElement('div');
+      errorMsg.className = 'video-error-message';
+      errorMsg.textContent = 'Vidéo non disponible';
+      errorMsg.style.cssText = 'color: #ef4444; font-size: 0.875rem; padding: 0.5rem;';
+      
+      if (videoElement.parentNode) {
+        videoElement.parentNode.insertBefore(errorMsg, videoElement.nextSibling);
+      }
+    }
   }
 
   // Obtenir l'icône selon le type d'événement
@@ -217,8 +370,8 @@ export class EventAdminComponent {
   }
 
   openPhotoModal(photo: string): void {
-    console.log('Ouvrir photo:', photo);
-    // Ouvrir la photo en grand dans un modal
+    // MODIFICATION POUR UTILISER LE NOUVEAU MODAL
+    this.openImageModal(photo, 'Photo de l\'événement');
   }
 
   // MÉTHODE MODIFIÉE POUR OBTENIR LES PHOTOS AVEC LE BON PRÉFIXE

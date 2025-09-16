@@ -10,9 +10,12 @@ import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { NzGridModule } from 'ng-zorro-antd/grid';
 import { NzCardModule } from 'ng-zorro-antd/card';
 import { CommonModule } from '@angular/common';
-import { AuthService, User } from 'src/app/core/services/auth.service';
-import { TerrainsService, Terrain, TerrainResponse } from 'src/app/core/services/terrains.service';
-import { SouscriptionService, ApiSouscription, SouscriptionSingleResponse } from 'src/app/core/services/souscription.service';
+import { User } from 'src/app/core/models/auth';
+import { Terrain, TerrainResponse, ApiSouscription, SouscriptionSingleResponse } from 'src/app/core/models/souscription';
+import { AuthService } from 'src/app/core/services/auth.service';
+import { SouscriptionService } from 'src/app/core/services/souscription.service';
+import { TerrainsService } from 'src/app/core/services/terrains.service';
+
 
 @Component({
   selector: 'app-create-subscription-admin',
@@ -71,7 +74,6 @@ export class CreateSubscriptionAdminComponent implements OnInit {
       date_souscription: [new Date(), [Validators.required]],
       date_debut_paiement: [null, [Validators.required]],
       statut_souscription: ['active', [Validators.required]],
-      groupe_souscription: ['', [Validators.required]],
       notes_admin: ['']
     });
   }
@@ -161,7 +163,6 @@ export class CreateSubscriptionAdminComponent implements OnInit {
           date_souscription: new Date(),
           date_debut_paiement: null,
           statut_souscription: 'active',
-          groupe_souscription: '',
           notes_admin: ''
         });
         this.router.navigate(['/dashboard/admin/details/souscription-admin']);

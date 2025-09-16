@@ -23,8 +23,10 @@ import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 
-import { ApiSouscription, SouscriptionFilters, SouscriptionService, SouscriptionResponse } from 'src/app/core/services/souscription.service';
+
 import { HttpClient } from '@angular/common/http';
+import { ApiSouscription, SouscriptionFilters, SouscriptionResponse } from 'src/app/core/models/souscription';
+import { SouscriptionService } from 'src/app/core/services/souscription.service';
 
 @Component({
   selector: 'app-all-subscription-requests-admin',

@@ -25,10 +25,11 @@ import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzUploadModule } from 'ng-zorro-antd/upload';
 import { NzProgressModule } from 'ng-zorro-antd/progress';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
+import { CreateEventRequest, CreateEventResponse } from 'src/app/core/models/evenements';
+import { ApiSouscription } from 'src/app/core/models/souscription';
+import { EvenementsService } from 'src/app/core/services/evenements.service';
+import { SouscriptionService } from 'src/app/core/services/souscription.service';
 
-// Services
-import { EvenementsService, CreateEventRequest, CreateEventResponse } from 'src/app/core/services/evenements.service';
-import { SouscriptionService, ApiSouscription } from 'src/app/core/services/souscription.service';
 
 @Component({
   selector: 'app-new-event-admin',

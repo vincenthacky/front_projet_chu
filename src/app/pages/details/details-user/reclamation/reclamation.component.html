@@ -47,9 +47,22 @@
     </div>
 
     <!-- Message si pas de réclamations -->
-    <div *ngIf="reclamations.length === 0" class="no-data">
-      <p>Aucune réclamation trouvée.</p>
-    </div>
+ <!-- Message si pas de réclamations - VERSION AMÉLIORÉE -->
+<div *ngIf="reclamations.length === 0 && !isLoadingReclamations" class="no-data">
+  <nz-empty 
+  nzNotFoundImage="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
+  nzNotFoundContent="Aucune réclamation trouvé">
+</nz-empty>
+</div>
+
+<!-- État de chargement -->
+<div *ngIf="isLoadingReclamations" class="loading-state">
+  <div class="loading-content">
+    <nz-spin nzSize="large">
+      <div class="loading-text">Chargement de vos réclamations...</div>
+    </nz-spin>
+  </div>
+</div>
 
     <!-- Pagination -->
     <div class="pagination-container" *ngIf="totalReclamations > pageSize">

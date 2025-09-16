@@ -8,10 +8,22 @@ import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { isPlatformBrowser } from '@angular/common';
 import { Inject, PLATFORM_ID } from '@angular/core';
-import { ApiEvenement, EvenementOrganise, EvenementsService, TypeEvenement } from 'src/app/core/services/evenements.service';
-import { DocumentService, ApiDocument } from 'src/app/core/services/documents.service';
+import { EvenementOrganise, ApiEvenement, TypeEvenement } from 'src/app/core/models/evenements';
+import { DocumentService } from 'src/app/core/services/documents.service';
+import { EvenementsService } from 'src/app/core/services/evenements.service';
+
+interface DocumentWithType {
+  id_document: number;
+  nom_original: string;
+  chemin_fichier: string;
+  type_mime: string | null;
+  taille_fichier: number;
+  description_document: string;
+}
 
 @Component({
   selector: 'app-evenements',
@@ -25,7 +37,9 @@ import { DocumentService, ApiDocument } from 'src/app/core/services/documents.se
     NzPaginationModule,
     NzModalModule,
     NzButtonModule,
-    NzIconModule
+    NzIconModule,
+    NzSpinModule,
+    NzEmptyModule
   ],
   templateUrl: './evenements.component.html',
   styleUrls: ['./evenements.component.css']
@@ -38,6 +52,7 @@ export class EvenementsComponent implements OnInit {
   evenementsGlobaux: ApiEvenement[] = [];
   statistiques: any = null;
   loading: boolean = false;
+  error: string = '';
   
   // Propriétés de pagination
   currentPage: number = 1;
@@ -47,6 +62,11 @@ export class EvenementsComponent implements OnInit {
   isImageModalVisible: boolean = false;
   selectedImageUrl: string = '';
   selectedImageTitle: string = '';
+  
+  // Modal pour visualiser un PDF
+  isPdfModalVisible: boolean = false;
+  selectedPdfUrl: string = '';
+  selectedPdfTitle: string = '';
   
   // Filtres
   selectedStatut: string = '';
@@ -83,7 +103,7 @@ export class EvenementsComponent implements OnInit {
     this.currentPage = page;
   }
 
-  // NOUVELLE MÉTHODE: Gestion dynamique du statut basé sur les dates
+  // Gestion dynamique du statut basé sur les dates
   getEventStatusDynamic(event: ApiEvenement): { 
     status: string; 
     percentage: number; 
@@ -126,34 +146,57 @@ export class EvenementsComponent implements OnInit {
     }
   }
 
-  // NOUVELLES MÉTHODES POUR AFFICHAGE DIRECT DES MÉDIAS
-  
   // Récupère les images d'un événement
-  getEventImages(event: ApiEvenement): any[] {
+  getEventImages(event: ApiEvenement): DocumentWithType[] {
     if (!event.documents || event.documents.length === 0) {
       return [];
     }
     
     return event.documents.filter((doc: any) => {
       const extension = doc.nom_original?.split('.').pop()?.toLowerCase() || '';
-      return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension);
+      const isImageByExtension = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(extension);
+      const isImageByMime = doc.type_mime?.startsWith('image/') || false;
+      
+      return isImageByExtension || isImageByMime;
     });
   }
   
   // Récupère les vidéos d'un événement
-  getEventVideos(event: ApiEvenement): any[] {
+  getEventVideos(event: ApiEvenement): DocumentWithType[] {
     if (!event.documents || event.documents.length === 0) {
       return [];
     }
     
     return event.documents.filter((doc: any) => {
       const extension = doc.nom_original?.split('.').pop()?.toLowerCase() || '';
-      return ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv'].includes(extension);
+      const isVideoByExtension = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv', 'm4v'].includes(extension);
+      const isVideoByMime = doc.type_mime?.startsWith('video/') || false;
+      
+      return isVideoByExtension || isVideoByMime;
+    });
+  }
+
+  // Récupère les PDFs d'un événement
+  getEventPdfs(event: ApiEvenement): DocumentWithType[] {
+    if (!event.documents || event.documents.length === 0) {
+      return [];
+    }
+    
+    return event.documents.filter((doc: any) => {
+      const extension = doc.nom_original?.split('.').pop()?.toLowerCase() || '';
+      const isPdfByExtension = extension === 'pdf';
+      const isPdfByMime = doc.type_mime === 'application/pdf';
+      
+      return isPdfByExtension || isPdfByMime;
     });
   }
   
-  // Génère l'URL d'un document
-  getDocumentUrl(doc: any): string {
+  // Génère l'URL complète d'un document
+  getDocumentUrl(doc: DocumentWithType): string {
+    if (!doc || !doc.chemin_fichier) {
+      return this.documentService.getImagePlaceholder();
+    }
+
     return this.documentService.getDocumentUrl(doc.chemin_fichier);
   }
   
@@ -170,13 +213,32 @@ export class EvenementsComponent implements OnInit {
     this.selectedImageUrl = '';
     this.selectedImageTitle = '';
   }
+
+  // Ouvre le modal pour visualiser un PDF
+  openPdfModal(pdfUrl: string, eventTitle: string): void {
+    this.selectedPdfUrl = pdfUrl;
+    this.selectedPdfTitle = eventTitle;
+    this.isPdfModalVisible = true;
+  }
   
-  // Gestion d'erreur d'image avec typage strict
+  // Ferme le modal PDF
+  closePdfModal(): void {
+    this.isPdfModalVisible = false;
+    this.selectedPdfUrl = '';
+    this.selectedPdfTitle = '';
+  }
+
+  // Ouvre le PDF dans un nouvel onglet
+  openPdfInNewTab(pdfUrl: string): void {
+    window.open(pdfUrl, '_blank');
+  }
+  
+  // Gestion d'erreur d'image
   onImageError(event: Event): void {
     const imgElement = event.target as HTMLImageElement;
     if (imgElement && imgElement.src) {
-      imgElement.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5Y2ExYWEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBub24gZGlzcG9uaWJsZTwvdGV4dD4KPC9zdmc+';
-      console.warn('Erreur de chargement d\'image, placeholder utilisé');
+      imgElement.src = this.documentService.getImagePlaceholder();
+      imgElement.alt = 'Image non disponible';
     }
   }
   
@@ -184,9 +246,16 @@ export class EvenementsComponent implements OnInit {
   onVideoError(event: Event): void {
     const videoElement = event.target as HTMLVideoElement;
     if (videoElement) {
-      console.warn('Erreur de chargement vidéo:', videoElement.src);
-      // Optionnel: masquer la vidéo en erreur
       videoElement.style.display = 'none';
+      
+      const errorMsg = document.createElement('div');
+      errorMsg.className = 'video-error-message';
+      errorMsg.textContent = 'Vidéo non disponible';
+      errorMsg.style.cssText = 'color: #ef4444; font-size: 0.875rem; padding: 0.5rem;';
+      
+      if (videoElement.parentNode) {
+        videoElement.parentNode.insertBefore(errorMsg, videoElement.nextSibling);
+      }
     }
   }
 
@@ -235,22 +304,6 @@ export class EvenementsComponent implements OnInit {
     return 'type-' + typeLibelle.toLowerCase().replace(/\s+/g, '-');
   }
 
-  // MODIFIÉE: Utiliser le nouveau système de statut
-  getEventStatus(avancement: number, event?: ApiEvenement): string {
-    if (event) {
-      return this.getEventStatusDynamic(event).status;
-    }
-    
-    // Fallback vers l'ancien système
-    if (avancement === 100) {
-      return 'Terminé';
-    } else if (avancement > 0) {
-      return 'En cours';
-    } else {
-      return 'À venir';
-    }
-  }
-
   // Obtenir le label de progression
   getProgressLabel(typeLibelle: string): string {
     const labels: { [key: string]: string } = {
@@ -265,7 +318,7 @@ export class EvenementsComponent implements OnInit {
     return labels[typeLibelle] || 'Progression';
   }
 
-  // MODIFIÉE: Utiliser le nouveau système pour le dégradé
+  // Obtenir le dégradé de progression
   getProgressGradient(avancement: number, event?: ApiEvenement): string {
     if (event) {
       const statusInfo = this.getEventStatusDynamic(event);
@@ -288,34 +341,9 @@ export class EvenementsComponent implements OnInit {
     }
   }
 
-  // Gestionnaires d'événements
+  // Gestionnaire de clic sur événement
   onEventClick(event: ApiEvenement): void {
-    console.log('Événement cliqué:', event);
-    // Logique pour afficher plus de détails
-  }
-
-  openPhotoModal(photo: string): void {
-    console.log('Ouvrir photo:', photo);
-    // Ouvrir la photo en grand dans un modal
-  }
-
-  // Animation des barres de progression
-  private animateProgressBars(): void {
-    if (!this.isBrowser) return;
-    
-    setTimeout(() => {
-      const progressBars = document.querySelectorAll('.progress-fill');
-      progressBars.forEach((bar, index) => {
-        setTimeout(() => {
-          const element = bar as HTMLElement;
-          const width = element.style.width;
-          element.style.width = '0%';
-          setTimeout(() => {
-            element.style.width = width;
-          }, 100);
-        }, index * 200);
-      });
-    }, 500);
+    // Action personnalisée lors du clic sur un événement
   }
 
   // Méthodes utilitaires
@@ -364,6 +392,8 @@ export class EvenementsComponent implements OnInit {
 
   chargerMesEvenements(): void {
     this.loading = true;
+    this.error = '';
+    
     const filters = {
       per_page: 50,
       ...(this.selectedStatut && { statut: this.selectedStatut }),
@@ -372,18 +402,18 @@ export class EvenementsComponent implements OnInit {
 
     this.evenementsService.getMesEvenements(filters).subscribe({
       next: (response) => {
+        this.loading = false;
         if (response.success) {
           this.evenementsOrganises = response.data.evenements_organises;
           this.statistiques = response.data.statistiques;
           this.convertirDonneesApi();
           this.currentPage = 1;
-          console.log('Événements chargés:', this.evenementsOrganises);
         }
-        this.loading = false;
       },
       error: (err) => {
-        console.error('Erreur lors du chargement des événements:', err);
         this.loading = false;
+        this.error = 'Erreur lors du chargement des événements';
+        console.error('Erreur lors du chargement des événements:', err);
       }
     });
   }
@@ -431,7 +461,7 @@ export class EvenementsComponent implements OnInit {
   }
 
   voirDocuments(event: ApiEvenement): void {
-    console.log('Voir documents de l\'événement:', event);
+    // Action pour voir les documents d'un événement
   }
 
   // Méthodes utilitaires du service
@@ -456,5 +486,38 @@ export class EvenementsComponent implements OnInit {
     if (percentage < 50) return '#fd7e14';
     if (percentage < 75) return '#ffc107';
     return '#28a745';
+  }
+
+  // Méthodes utilitaires pour le template
+
+  // Vérifie si un événement a des documents
+  hasDocuments(event: ApiEvenement): boolean {
+    return event.documents && event.documents.length > 0;
+  }
+
+  // Obtient le nombre de documents
+  getDocumentsLength(event: ApiEvenement): number {
+    return event.documents ? event.documents.length : 0;
+  }
+
+  // Obtient l'extension d'un fichier
+  getFileExtension(fileName: string): string {
+    return fileName ? fileName.split('.').pop()?.toLowerCase() || '' : '';
+  }
+
+  // Vérifie si un document est une image
+  isDocumentImage(fileName: string): boolean {
+    return this.documentService.isImage(fileName);
+  }
+
+  // Vérifie si un document est une vidéo
+  isDocumentVideo(fileName: string): boolean {
+    return this.documentService.isVideo(fileName);
+  }
+
+  // Vérifie si un document est un PDF
+  isDocumentPdf(fileName: string): boolean {
+    const extension = fileName ? fileName.split('.').pop()?.toLowerCase() : '';
+    return extension === 'pdf';
   }
 }

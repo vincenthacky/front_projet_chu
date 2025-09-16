@@ -9,7 +9,9 @@ import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { Subscription } from 'rxjs';
-import { AuthService, User } from 'src/app/core/services/auth.service';
+import { User } from 'src/app/core/models/auth';
+import { AuthService } from 'src/app/core/services/auth.service';
+
 
 
 @Component({

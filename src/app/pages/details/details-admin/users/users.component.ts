@@ -22,7 +22,9 @@ import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { Subject, Observable, of, debounceTime, distinctUntilChanged, takeUntil, tap, catchError } from 'rxjs';
-import { User, AuthService } from 'src/app/core/services/auth.service';
+import { User } from 'src/app/core/models/auth';
+import { AuthService } from 'src/app/core/services/auth.service';
+
 
 @Component({
   selector: 'app-users',

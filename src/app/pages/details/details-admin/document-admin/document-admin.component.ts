@@ -8,7 +8,9 @@ import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
-import { ApiDocument, DocumentService } from 'src/app/core/services/documents.service';
+import { ApiDocument } from 'src/app/core/models/documents';
+import { DocumentService } from 'src/app/core/services/documents.service';
+
 
 @Component({
   selector: 'app-document-admin',

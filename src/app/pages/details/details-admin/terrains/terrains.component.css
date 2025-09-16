@@ -370,14 +370,6 @@
     font-size: 16px;
     font-weight: 700;
   }
-  
-  &.gps-coords {
-    font-family: 'Courier New', monospace;
-    background: #f6f8fa;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-  }
 }
 
 /* Description */

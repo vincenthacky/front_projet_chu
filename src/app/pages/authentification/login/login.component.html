@@ -1,4 +1,3 @@
-<!-- login.component.html -->
 <div class="login-page">
   <div class="login-content">
     <!-- Section gauche avec informations et image -->
@@ -10,17 +9,19 @@
           dans un environnement sécurisé et moderne.
         </p>
         
-         <!-- Image responsive remplacée -->
-         <div class="terrain-illustration">
+        <!-- Image responsive et contact -->
+        <div class="terrain-illustration">
           <img 
-            src="For-sale-pana.png" 
+            src="image_chu.jpeg" 
             alt="Illustration de connexion sécurisée"
             class="terrain-image"
           />
+          <div class="contact-info">
+            <p style="margin-left: -40px;">Contact: 0141655251</p>
+            <p style="margin-left: 15px;">Email: <a href="mailto:adon_amiepo@yahoo.fr" class="contact-email">adon_amiepo&#64;yahoo.fr</a></p>
+          </div>
         </div>
-
       </div>
-      
     </div>
 
     <!-- Section droite avec formulaire de connexion -->
@@ -72,9 +73,7 @@
             <nz-form-control 
               nzHasFeedback
               [nzErrorTip]="passwordErrorTpl">
-              <nz-input-group [nzSuffix]="passwordSuffixTemplate" style="height: 42px !important;   /* surcharge la hauteur */
-              font-size: 13px; 
-              padding: 4px 8px;">
+              <nz-input-group [nzSuffix]="passwordSuffixTemplate" style="height: 42px !important; font-size: 13px; padding: 4px 8px;">
                 <input 
                   nz-input 
                   formControlName="mot_de_passe"
@@ -127,7 +126,7 @@
           <div class="forgot-password">
             <a 
               class="forgot-link" 
-             (click)="showModal()">
+              (click)="showModal()">
               Mot de passe oublié
             </a>
           </div>
