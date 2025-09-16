@@ -126,24 +126,6 @@
             </nz-form-control>
           </nz-form-item>
 
-          <!-- Coordonnées GPS -->
-          <nz-form-item>
-            <nz-form-label [nzXs]="{ span: 24 }" [nzSm]="{ span: 8 }" [nzMd]="{ span: 12 }" nzRequired>
-              Coordonnées GPS
-            </nz-form-label>
-            <nz-form-control 
-              [nzXs]="{ span: 24 }"
-              [nzSm]="{ span: 16 }"
-              [nzMd]="{ span: 18 }"
-              [nzErrorTip]="getFieldError('coordonnees_gps')"
-              [nzValidateStatus]="isFieldError('coordonnees_gps') ? 'error' : ''">
-              <input 
-                nz-input 
-                formControlName="coordonnees_gps"
-                placeholder="5.34567,-4.01234">
-            </nz-form-control>
-          </nz-form-item>
-
           <!-- Description -->
           <nz-form-item>
             <nz-form-label [nzXs]="{ span: 24 }" [nzSm]="{ span: 8 }" [nzMd]="{ span: 12 }" nzRequired>
@@ -228,7 +210,7 @@
                   class="action-btn">
                   <i nz-icon nzType="edit" nzTheme="outline"></i>
                 </button>
-                <button 
+                <!-- <button 
                   nz-button 
                   nzType="text" 
                   nzSize="small" 
@@ -237,7 +219,7 @@
                   nz-tooltip="Supprimer"
                   class="action-btn">
                   <i nz-icon nzType="delete" nzTheme="outline"></i>
-                </button>
+                </button> -->
               </div>
             </div>
             
@@ -278,7 +260,7 @@
                 nz-tooltip="Modifier ce terrain">
                 <i nz-icon nzType="edit" nzTheme="outline"></i>
               </button>
-              <button 
+              <!-- <button 
                 nz-button 
                 nzType="text" 
                 nzSize="small" 
@@ -286,7 +268,7 @@
                 (click)="deleteTerrain(selectedTerrain!)"
                 nz-tooltip="Supprimer ce terrain">
                 <i nz-icon nzType="delete" nzTheme="outline"></i>
-              </button>
+              </button> -->
             </div>
           </ng-template>
 
@@ -337,14 +319,6 @@
                   <div class="info-value total-price">
                     {{ calculateTotalPrice(selectedTerrain) }}
                   </div>
-                </div>
-                
-                <div class="info-card full-width">
-                  <div class="info-label">
-                    <i nz-icon nzType="compass" nzTheme="outline"></i>
-                    Coordonnées GPS
-                  </div>
-                  <div class="info-value gps-coords">{{ selectedTerrain.coordonnees_gps }}</div>
                 </div>
               </div>
             </div>

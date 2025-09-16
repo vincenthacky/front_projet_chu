@@ -4,19 +4,24 @@ import { NzGridModule } from 'ng-zorro-antd/grid';
 import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { TerrainsService, Terrain } from '../../../../core/services/terrains.service';
-import { SouscriptionService } from '../../../../core/services/souscription.service';
+import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { Terrain } from 'src/app/core/models/souscription';
+import { SouscriptionService } from 'src/app/core/services/souscription.service';
+import { TerrainsService } from 'src/app/core/services/terrains.service';
+import { NzEmptyModule } from 'ng-zorro-antd/empty';
+
 
 @Component({
   selector: 'app-welcome',
   standalone: true,
-  imports: [CommonModule, NzGridModule, NzCardModule, NzModalModule],
+  imports: [CommonModule, NzGridModule, NzCardModule, NzModalModule, NzSpinModule, NzEmptyModule],
   templateUrl: './welcome.component.html',
   styleUrls: ['./welcome.component.css']
 })
 export class WelcomeComponent implements OnInit {
   offers: any[] = [];
   terrainsData: Terrain[] = [];
+  loading: boolean = true; // Propriété pour gérer le loading principal
   
   defaultOffers = [
     {
@@ -33,8 +38,6 @@ export class WelcomeComponent implements OnInit {
       paymentEnd: 'août 2029',
       features: [
         'Terrain de 250m² viabilisé',
-        // 'Titre foncier sécurisé',
-        // 'Accès aux réseaux (eau, électricité)',
         'Zone résidentielle calme',
         'Proche des commodités'
       ],
@@ -113,14 +116,17 @@ export class WelcomeComponent implements OnInit {
   }
   
   loadTerrains() {
+    this.loading = true; // Activer le loading
     this.terrainsService.getAllTerrains().subscribe({
       next: (response) => {
+        this.loading = false; // Désactiver le loading
         if (response.success) {
           this.terrainsData = response.data;
           this.generateOffers();
         }
       },
       error: (error) => {
+        this.loading = false; // Désactiver le loading même en cas d'erreur
         console.error('Erreur lors du chargement des terrains:', error);
         this.offers = this.defaultOffers;
         this.initializeArrays();
@@ -131,12 +137,14 @@ export class WelcomeComponent implements OnInit {
   generateOffers() {
     this.offers = [];
     
-    // Afficher TOUS les terrains de l'API
-    this.terrainsData.forEach((terrain) => {
-      const superficie = parseFloat(terrain.superficie.toString());
-      const type = superficie >= 500 ? 'premium' : 'standard';
-      this.offers.push(this.createOfferFromTerrain(terrain, type));
-    });
+    // Afficher SEULEMENT les terrains disponibles
+    this.terrainsData
+      .filter(terrain => terrain.statut_terrain === 'disponible')
+      .forEach((terrain) => {
+        const superficie = parseFloat(terrain.superficie.toString());
+        const type = superficie >= 500 ? 'premium' : 'standard';
+        this.offers.push(this.createOfferFromTerrain(terrain, type));
+      });
     
     // Si pas de terrains dans l'API, utiliser les offres par défaut
     if (this.offers.length === 0) {
@@ -251,4 +259,4 @@ export class WelcomeComponent implements OnInit {
     });
   }
 
-} 
+}

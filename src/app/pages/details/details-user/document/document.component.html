@@ -13,7 +13,10 @@
   
   <!-- Message si pas de documents -->
   <div *ngIf="documents.length === 0 && !loading" class="no-documents">
-    <p>Aucun document trouvé.</p>
+    <nz-empty 
+    nzNotFoundImage="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
+    nzNotFoundContent="Aucun document trouvé">
+  </nz-empty>
   </div>
   
   <!-- Loading -->

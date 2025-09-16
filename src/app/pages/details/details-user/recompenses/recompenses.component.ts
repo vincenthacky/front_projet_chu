@@ -1,13 +1,19 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NzPaginationModule } from 'ng-zorro-antd/pagination';
+import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { Subject, takeUntil } from 'rxjs';
-import { Recompense, ApiPagination, RecompensesFilter, RecompensesService } from 'src/app/core/services/recompenses.service';
+import { Recompense, ApiPagination, RecompensesFilter } from 'src/app/core/models/recompenses';
+import { RecompensesService } from 'src/app/core/services/recompenses.service';
+// Import pour récupérer l'utilisateur connecté (à adapter selon votre système d'auth)
+// import { AuthService } from 'src/app/core/services/auth.service';
+
 
 @Component({
   selector: 'app-recompenses',
   standalone: true,
-  imports: [CommonModule, NzPaginationModule],
+  imports: [CommonModule, NzPaginationModule, NzSpinModule, NzEmptyModule],
   templateUrl: './recompenses.component.html',
   styleUrls: ['./recompenses.component.css']
 })
@@ -24,7 +30,10 @@ export class RecompensesComponent implements OnInit, OnDestroy {
   
   loading: boolean = false;
   error: string = '';
-  hasData: boolean = true;
+  hasData: boolean = false;
+
+  // ID de l'utilisateur connecté - à récupérer depuis votre service d'auth
+  currentUserId: number = 1; // Remplacez par la récupération réelle de l'ID utilisateur
 
   // Filtres
   filters: RecompensesFilter = {};
@@ -32,9 +41,15 @@ export class RecompensesComponent implements OnInit, OnDestroy {
   // Pour gérer les souscriptions
   private destroy$ = new Subject<void>();
 
-  constructor(private recompensesService: RecompensesService) {}
+  constructor(
+    private recompensesService: RecompensesService
+    // private authService: AuthService // Ajoutez votre service d'auth
+  ) {}
 
   ngOnInit(): void {
+    // Récupérer l'ID de l'utilisateur connecté
+    // this.currentUserId = this.authService.getCurrentUserId();
+    
     this.loadRecompenses();
     this.subscribeToServiceState();
   }
@@ -70,12 +85,11 @@ export class RecompensesComponent implements OnInit, OnDestroy {
   loadRecompenses(page: number = 1): void {
     this.error = '';
     
-    // Charger toutes les récompenses depuis l'API
-    this.recompensesService.getRecompenses(page, 100, this.filters)
+    // Charger les récompenses de l'utilisateur connecté
+    this.recompensesService.getUserRecompenses(page, 100, this.filters)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          // Les données sont automatiquement mises à jour via les BehaviorSubjects
           console.log('Récompenses chargées:', response.data?.length || 0);
         },
         error: (error) => {
@@ -202,10 +216,10 @@ export class RecompensesComponent implements OnInit, OnDestroy {
     switch (status) {
       case 'due':
         return 'status-due';
-      case 'payee':
-        return 'attribuee'; // Changé pour correspondre au CSS
-      case 'en_attente':
-        return 'en-attente';
+      case 'attribuee':
+        return 'status-attribuee';
+      case 'annulee':
+        return 'status-annulee';
       default:
         return 'status-default';
     }
@@ -251,8 +265,8 @@ export class RecompensesComponent implements OnInit, OnDestroy {
   getStatusLabel(status: string): string {
     const labels: {[key: string]: string} = {
       'due': 'Due',
-      'payee': 'Attribuée', 
-      'en_attente': 'En attente'
+      'attribuee': 'Attribuée', 
+      'annulee': 'Annulée'
     };
     return labels[status] || status;
   }

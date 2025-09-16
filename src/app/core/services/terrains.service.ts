@@ -1,39 +1,16 @@
-export interface Terrain {
-  id_terrain?: number;
-  libelle: string;
-  localisation: string;
-  superficie: string | number;
-  prix_unitaire: string | number;
-  description: string;
-  statut_terrain: 'disponible' | 'vendu' | 'reserve';
-  coordonnees_gps: string;
-  date_creation: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface TerrainResponse {
-  success: boolean;
-  message: string;
-  data: Terrain[];
-}
-
-export interface TerrainSingleResponse {
-  success: boolean;
-  message: string;
-  data: Terrain;
-}
-
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { TerrainResponse, Terrain } from '../models/souscription';
+import { TerrainSingleResponse } from '../models/terrain';
+import { environment } from '@/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TerrainsService {
 
-  private apiUrl = 'http://192.168.252.75:8000/api/terrains';
+  private apiUrl = `${environment.apiUrl}/terrains`;
 
   constructor(private http: HttpClient) {}
 

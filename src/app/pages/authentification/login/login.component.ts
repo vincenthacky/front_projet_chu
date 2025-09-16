@@ -11,7 +11,8 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzModalModule } from 'ng-zorro-antd/modal';
-import { AuthService, LoginResponse, ForgotPasswordResponse } from 'src/app/core/services/auth.service';
+import { LoginResponse, ForgotPasswordResponse } from 'src/app/core/models/auth';
+import { AuthService } from 'src/app/core/services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -56,8 +57,6 @@ export class LoginComponent implements OnInit {
       this.initAnimations();
       this.checkIfAlreadyAuthenticated();
       
-      // Test du décodage Unicode (optionnel, pour debug)
-      // this.authService.testDecoding();
     }
   }
 
@@ -152,7 +151,7 @@ export class LoginComponent implements OnInit {
         // Gestion des erreurs selon le status code
         switch (error.status) {
           case 401:
-            errorMessage = 'Identifiants incorrects';
+            errorMessage = 'Adresse mail ou mot de passe incorrect';
             break;
           case 0:
             errorMessage = 'Impossible de se connecter au serveur. Vérifiez votre connexion.';

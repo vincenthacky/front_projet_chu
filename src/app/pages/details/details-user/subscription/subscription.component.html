@@ -1,233 +1,235 @@
 <div class="subscription-wrapper">
-    <!-- En-tête -->
-    <div class="header-section">
-        <div class="header-top">
-            <div class="header-info">
-                <h1 class="main-title">
-                    <i class="fas" [ngClass]="currentViewMode === 'souscriptions' ? 'fa-map-marked-alt' : 'fa-paper-plane'"></i>
-                    {{ currentViewMode === 'souscriptions' ? 'Mes Souscriptions' : 'Mes Demandes de Souscription' }}
-                </h1>
-                <p class="subtitle">
-                    {{ currentViewMode === 'souscriptions' ? 'Gérez et suivez tous vos terrains en temps réel' : 'Consultez toutes vos demandes de souscription' }}
-                </p>
-            </div>
-            
-            <!-- Toggle buttons -->
-            <div class="view-toggle">
-                <button 
-                    class="toggle-btn" 
-                    [class.active]="currentViewMode === 'souscriptions'"
-                    (click)="switchViewMode('souscriptions')">
-                    <i class="fas fa-map-marked-alt"></i>
-                    Souscriptions
-                    <span class="count-badge" *ngIf="souscriptionsCount > 0">{{ souscriptionsCount }}</span>
-                </button>
-                <button 
-                    class="toggle-btn" 
-                    [class.active]="currentViewMode === 'demandes'"
-                    (click)="switchViewMode('demandes')">
-                    <i class="fas fa-paper-plane"></i>
-                    Demandes
-                    <span class="count-badge" *ngIf="demandesCount > 0">{{ demandesCount }}</span>
-                </button>
-            </div>
-        </div>
-    </div>
-  
-    <!-- Contrôles -->
-    <div class="controls-section">
-        <div class="search-container">
-            <i class="fas fa-search search-icon"></i>
-            <input 
-                type="text" 
-                class="search-input" 
-                placeholder="Rechercher par ID, terrain, montant..."
-                [(ngModel)]="searchTerm"
-                (input)="onSearchChange()"
-            >
-        </div>
-        <div class="filters-section">
-            <select class="filter-select" [(ngModel)]="statusFilter" (change)="onStatusFilterChange()">
-                <option value="">Tous les statuts</option>
-                <ng-container *ngIf="currentViewMode === 'souscriptions'">
-                    <option value="en-cours">En cours</option>
-                    <option value="en-retard">En retard</option>
-                    <option value="termine">Terminé</option>
-                </ng-container>
-                <ng-container *ngIf="currentViewMode === 'demandes'">
-                    <option value="en_attente">En attente</option>
-                    <option value="approuve">Approuvé</option>
-                    <option value="rejete">Rejeté</option>
-                </ng-container>
-            </select>
-            <select class="filter-select" [(ngModel)]="terrainFilter" (change)="onTerrainFilterChange()">
-                <option value="">Toutes les surfaces</option>
-                <option value="250">250m²</option>
-                <option value="500">500m²</option>
-            </select>
-            <button class="refresh-btn" (click)="refreshData()" [disabled]="loading">
-                <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
-                {{ loading ? 'Chargement...' : 'Actualiser' }}
-            </button>
-        </div>
-    </div>
-  
-    <!-- Statistiques -->
-    <div class="stats-bar">
-        <div class="stat-card">
-            <div class="stat-number">{{ totalSubscriptions }}</div>
-            <div class="stat-label">Total Souscriptions</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">{{ formatAmount(totalAmount) }}</div>
-            <div class="stat-label">Montant Total</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">{{ formatAmount(totalPaid) }}</div>
-            <div class="stat-label">Déjà Payé</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">{{ formatAmount(totalRemaining) }}</div>
-            <div class="stat-label">Reste à Payer</div>
-        </div>
-    </div>
-  
-    <!-- Tableau -->
-    <div class="table-responsive desktop-only">
-        <!-- Titre mobile pour le tableau -->
-        <div class="mobile-table-title">
-            {{ currentViewMode === 'souscriptions' ? '📋 Liste des Souscriptions' : '📄 Liste des Demandes' }}
-        </div>
-        
-        <!-- Indicateur de défilement pour mobile -->
-        <div class="table-scroll-indicator">
-            <i class="fas fa-arrow-right"></i>
-            Faites défiler horizontalement pour voir plus
-        </div>
+  <!-- En-tête -->
+  <div class="header-section">
+      <div class="header-top">
+          <div class="header-info">
+              <h1 class="main-title">
+                  <i class="fas" [ngClass]="currentViewMode === 'souscriptions' ? 'fa-map-marked-alt' : 'fa-paper-plane'"></i>
+                  {{ currentViewMode === 'souscriptions' ? 'Mes Souscriptions' : 'Mes Demandes de Souscription' }}
+              </h1>
+              <p class="subtitle">
+                  {{ currentViewMode === 'souscriptions' ? 'Gérez et suivez tous vos terrains en temps réel' : 'Consultez toutes vos demandes de souscription' }}
+              </p>
+          </div>
+          
+          <!-- Toggle buttons -->
+          <div class="view-toggle">
+              <button 
+                  class="toggle-btn" 
+                  [class.active]="currentViewMode === 'souscriptions'"
+                  (click)="switchViewMode('souscriptions')">
+                  <i class="fas fa-map-marked-alt"></i>
+                  Souscriptions
+                  <span class="count-badge" *ngIf="souscriptionsCount > 0">{{ souscriptionsCount }}</span>
+              </button>
+              <button 
+                  class="toggle-btn" 
+                  [class.active]="currentViewMode === 'demandes'"
+                  (click)="switchViewMode('demandes')">
+                  <i class="fas fa-paper-plane"></i>
+                  Demandes
+                  <span class="count-badge" *ngIf="demandesCount > 0">{{ demandesCount }}</span>
+              </button>
+          </div>
+      </div>
+  </div>
 
-        <div class="table-container">
-            <table class="modern-table">
-                <thead class="table-header">
-                    <tr>
-                        <th>{{ currentViewMode === 'souscriptions' ? 'Souscription' : 'Demande' }}</th>
-                        <th>Terrain</th>
-                        <th>Prix Total</th>
-                        <th>{{ currentViewMode === 'souscriptions' ? 'Montant Payé' : 'Date Demande' }}</th>
-                        <th>{{ currentViewMode === 'souscriptions' ? 'Reste à Payer' : 'Origine' }}</th>
-                        <th>Date Début</th>
-                        <th>{{ currentViewMode === 'souscriptions' ? 'Prochain Paiement' : 'Date Création' }}</th>
-                        <th>Statut</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody">
-                    <tr class="table-row" *ngFor="let subscription of paginatedData; trackBy: trackByFn">
-                        <td class="table-cell">
-                            <div class="subscription-id">{{ subscription.id }}</div>
-                        </td>
-                        <td class="table-cell">
-                            <div class="terrain-info">
-                                <div class="terrain-icon">
-                                    <i class="fas fa-map"></i>
-                                </div>
-                                <div class="terrain-details">
-                                    <h4>{{ subscription.terrain }}</h4>
-                                    <div class="terrain-surface">{{ subscription.surface }}m²</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="table-cell">
-                            <div class="price-display">{{ formatAmount(subscription.prixTotal) }}</div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" [style.width.%]="subscription.progression"></div>
-                            </div>
-                        </td>
-                        <td class="table-cell">
-                            <div *ngIf="currentViewMode === 'souscriptions'" class="amount-paid">{{ formatAmount(subscription.montantPaye) }}</div>
-                            <div *ngIf="currentViewMode === 'demandes'" class="date-display">{{ formatDate(subscription.dateDemande || '') }}</div>
-                        </td>
-                        <td class="table-cell">
-                            <div *ngIf="currentViewMode === 'souscriptions'" class="amount-remaining">{{ formatAmount(subscription.resteAPayer) }}</div>
-                            <div *ngIf="currentViewMode === 'demandes'" class="origine-badge">
-                                <i class="fas" [ngClass]="subscription.origine === 'utilisateur' ? 'fa-user' : 'fa-user-shield'"></i>
-                                {{ subscription.origine === 'utilisateur' ? 'Utilisateur' : 'Admin' }}
-                            </div>
-                        </td>
-                        <td class="table-cell">
-                            <div class="date-display">{{ formatDate(subscription.dateDebut) }}</div>
-                        </td>
-                        <td class="table-cell">
-                            <div *ngIf="currentViewMode === 'souscriptions'" class="next-payment">
-                                <i class="fas fa-calendar-alt"></i>
-                                {{ formatDate(subscription.prochainPaiement) }}
-                            </div>
-                            <div *ngIf="currentViewMode === 'demandes'" class="date-display">
-                                <i class="fas fa-clock"></i>
-                                {{ formatDate(subscription.dateCreation || '') }}
-                            </div>
-                        </td>
-                        <td class="table-cell">
-                            <div class="status-badge" [ngClass]="getStatusClass(subscription.statut)">
-                                <i class="fas" [ngClass]="getStatusIcon(subscription.statut)"></i>
-                                {{ getStatusLabel(subscription.statut) }}
-                            </div>
-                        </td>
-                        <td class="table-cell">
-                            <div class="action-buttons">
-                                <button *ngIf="currentViewMode === 'souscriptions'" class="action-btn btn-view" nz-button [nzType]="'primary'" (click)="showModal(subscription)" title="Voir plus">
-                                    <i class="fas fa-eye"></i>
-                                    <span class="btn-text">Voir</span>
-                                </button>
-                                <button *ngIf="currentViewMode === 'demandes'" class="action-btn btn-info" nz-button [nzType]="'default'" (click)="showDemandeInfo(subscription)" title="Détails de la demande">
-                                    <i class="fas fa-info-circle"></i>
-                                    <span class="btn-text">Détails</span>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    <!-- Ligne de chargement -->
-                    <tr *ngIf="loading">
-                        <td colspan="9" class="loading-cell">
-                            <div class="loading-content">
-                                <i class="fas fa-spinner loading-spinner"></i>
-                                <span class="loading-text">
-                                    {{ currentViewMode === 'souscriptions' ? 'Chargement des souscriptions...' : 'Chargement des demandes...' }}
-                                </span>
-                            </div>
-                        </td>
-                    </tr>
-                    <!-- Ligne vide si aucune donnée -->
-                    <tr *ngIf="!loading && paginatedData.length === 0">
-                        <td colspan="9" class="no-results">
-                            <i class="fas fa-search"></i>
-                            <h3>{{ currentViewMode === 'souscriptions' ? 'Aucune souscription trouvée' : 'Aucune demande trouvée' }}</h3>
-                            <p>Essayez de modifier vos critères de recherche</p>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+  <!-- Contrôles -->
+  <div class="controls-section">
+      <div class="search-container">
+          <i class="fas fa-search search-icon"></i>
+          <input 
+              type="text" 
+              class="search-input" 
+              placeholder="Rechercher par ID, terrain, montant..."
+              [(ngModel)]="searchTerm"
+              (input)="onSearchChange()"
+          >
+      </div>
+      <div class="filters-section">
+          <select class="filter-select" [(ngModel)]="statusFilter" (change)="onStatusFilterChange()">
+              <option value="">Tous les statuts</option>
+              <ng-container *ngIf="currentViewMode === 'souscriptions'">
+                  <option value="active">Active</option>
+                  <option value="en-cours">En cours</option>
+                  <option value="en-retard">En retard</option>
+                  <option value="termine">Terminé</option>
+                  <option value="suspendu">Suspendu</option>
+              </ng-container>
+              <ng-container *ngIf="currentViewMode === 'demandes'">
+                  <option value="en_attente">En attente</option>
+                  <option value="approuve">Approuvé</option>
+                  <option value="rejete">Rejeté</option>
+              </ng-container>
+          </select>
+          <select class="filter-select" [(ngModel)]="terrainFilter" (change)="onTerrainFilterChange()">
+              <option value="">Toutes les surfaces</option>
+              <option value="250">250m²</option>
+              <option value="500">500m²</option>
+          </select>
+          <button class="refresh-btn" (click)="refreshData()" [disabled]="loading">
+              <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
+              {{ loading ? 'Chargement...' : 'Actualiser' }}
+          </button>
+      </div>
+  </div>
 
-        <!-- Pagination ng-zorro CORRIGÉE -->
-        <div class="pagination-container">
-            <nz-pagination
-                [nzTotal]="totalItems"
-                [nzPageSize]="itemsPerPage"
-                [nzPageIndex]="currentPage"
-                [nzShowSizeChanger]="true"
-                [nzShowQuickJumper]="true"
-                [nzShowTotal]="totalTemplate"
-                [nzPageSizeOptions]="[10, 20, 50, 100]"
-                (nzPageIndexChange)="onPageChange($event)"
-                (nzPageSizeChange)="onPageSizeChange($event)">
-            </nz-pagination>
+  <!-- Statistiques -->
+  <div class="stats-bar">
+      <div class="stat-card">
+          <div class="stat-number">{{ totalSubscriptions }}</div>
+          <div class="stat-label">Total Souscriptions</div>
+      </div>
+      <div class="stat-card">
+          <div class="stat-number">{{ formatAmount(totalAmount) }}</div>
+          <div class="stat-label">Montant Total</div>
+      </div>
+      <div class="stat-card">
+          <div class="stat-number">{{ formatAmount(totalPaid) }}</div>
+          <div class="stat-label">Déjà Payé</div>
+      </div>
+      <div class="stat-card">
+          <div class="stat-number">{{ formatAmount(totalRemaining) }}</div>
+          <div class="stat-label">Reste à Payer</div>
+      </div>
+  </div>
 
-            <ng-template #totalTemplate let-total let-range="range">
-            </ng-template>
-        </div>
-    </div>
+  <!-- Tableau -->
+  <div class="table-responsive desktop-only">
+      <!-- Titre mobile pour le tableau -->
+      <div class="mobile-table-title">
+          {{ currentViewMode === 'souscriptions' ? '📋 Liste des Souscriptions' : '📄 Liste des Demandes' }}
+      </div>
+      
+      <!-- Indicateur de défilement pour mobile -->
+      <div class="table-scroll-indicator">
+          <i class="fas fa-arrow-right"></i>
+          Faites défiler horizontalement pour voir plus
+      </div>
+
+      <div class="table-container">
+          <table class="modern-table">
+              <thead class="table-header">
+                  <tr>
+                      <th>{{ currentViewMode === 'souscriptions' ? 'Souscription' : 'Demande' }}</th>
+                      <th>Terrain</th>
+                      <th>Prix Total</th>
+                      <th>{{ currentViewMode === 'souscriptions' ? 'Montant Payé' : 'Date Demande' }}</th>
+                      <th>{{ currentViewMode === 'souscriptions' ? 'Reste à Payer' : 'Origine' }}</th>
+                      <th>Date Début</th>
+                      <th>{{ currentViewMode === 'souscriptions' ? 'Prochain Paiement' : 'Date Création' }}</th>
+                      <th>Statut</th>
+                      <th>Actions</th>
+                  </tr>
+              </thead>
+              <tbody id="tableBody">
+                  <tr class="table-row" *ngFor="let subscription of paginatedData; trackBy: trackByFn">
+                      <td class="table-cell">
+                          <div class="subscription-id">{{ subscription.id }}</div>
+                      </td>
+                      <td class="table-cell">
+                          <div class="terrain-info">
+                              <div class="terrain-icon">
+                                  <i class="fas fa-map"></i>
+                              </div>
+                              <div class="terrain-details">
+                                  <h4>{{ subscription.terrain }}</h4>
+                                  <div class="terrain-surface">{{ subscription.surface }}m²</div>
+                              </div>
+                          </div>
+                      </td>
+                      <td class="table-cell">
+                          <div class="price-display">{{ formatAmount(subscription.prixTotal) }}</div>
+                          <div class="progress-bar">
+                              <div class="progress-fill" [style.width.%]="subscription.progression"></div>
+                          </div>
+                      </td>
+                      <td class="table-cell">
+                          <div *ngIf="currentViewMode === 'souscriptions'" class="amount-paid">{{ formatAmount(subscription.montantPaye) }}</div>
+                          <div *ngIf="currentViewMode === 'demandes'" class="date-display">{{ formatDate(subscription.dateDemande || '') }}</div>
+                      </td>
+                      <td class="table-cell">
+                          <div *ngIf="currentViewMode === 'souscriptions'" class="amount-remaining">{{ formatAmount(subscription.resteAPayer) }}</div>
+                          <div *ngIf="currentViewMode === 'demandes'" class="origine-badge">
+                              <i class="fas" [ngClass]="subscription.origine === 'utilisateur' ? 'fa-user' : 'fa-user-shield'"></i>
+                              {{ subscription.origine === 'utilisateur' ? 'Utilisateur' : 'Admin' }}
+                          </div>
+                      </td>
+                      <td class="table-cell">
+                          <div class="date-display">{{ formatDate(subscription.dateDebut) }}</div>
+                      </td>
+                      <td class="table-cell">
+                          <div *ngIf="currentViewMode === 'souscriptions'" class="next-payment">
+                              <i class="fas fa-calendar-alt"></i>
+                              {{ formatDate(subscription.prochainPaiement) }}
+                          </div>
+                          <div *ngIf="currentViewMode === 'demandes'" class="date-display">
+                              <i class="fas fa-clock"></i>
+                              {{ formatDate(subscription.dateCreation || '') }}
+                          </div>
+                      </td>
+                      <td class="table-cell">
+                          <div class="status-badge" [ngClass]="getStatusClass(subscription.statut)">
+                              <i class="fas" [ngClass]="getStatusIcon(subscription.statut)"></i>
+                              {{ getStatusLabel(subscription.statut) }}
+                          </div>
+                      </td>
+                      <td class="table-cell">
+                          <div class="action-buttons">
+                              <button *ngIf="currentViewMode === 'souscriptions'" class="action-btn btn-view" nz-button [nzType]="'primary'" (click)="showModal(subscription)" title="Voir plus">
+                                  <i class="fas fa-eye"></i>
+                                  <span class="btn-text">Voir</span>
+                              </button>
+                              <button *ngIf="currentViewMode === 'demandes'" class="action-btn btn-info" nz-button [nzType]="'default'" (click)="showDemandeInfo(subscription)" title="Détails de la demande">
+                                  <i class="fas fa-info-circle"></i>
+                                  <span class="btn-text">Détails</span>
+                              </button>
+                          </div>
+                      </td>
+                  </tr>
+                  <!-- Ligne de chargement -->
+                  <tr *ngIf="loading">
+                      <td colspan="9" class="loading-cell">
+                          <div class="loading-content">
+                              <i class="fas fa-spinner loading-spinner"></i>
+                              <span class="loading-text">
+                                  {{ currentViewMode === 'souscriptions' ? 'Chargement des souscriptions...' : 'Chargement des demandes...' }}
+                              </span>
+                          </div>
+                      </td>
+                  </tr>
+                  <!-- Ligne vide si aucune donnée -->
+                  <tr *ngIf="!loading && paginatedData.length === 0">
+                      <td colspan="9" class="no-results">
+                          <i class="fas fa-search"></i>
+                          <h3>{{ currentViewMode === 'souscriptions' ? 'Aucune souscription trouvée' : 'Aucune demande trouvée' }}</h3>
+                          <p>Essayez de modifier vos critères de recherche</p>
+                      </td>
+                  </tr>
+              </tbody>
+          </table>
+      </div>
+
+      <!-- Pagination ng-zorro CORRIGÉE -->
+      <div class="pagination-container">
+          <nz-pagination
+              [nzTotal]="totalItems"
+              [nzPageSize]="itemsPerPage"
+              [nzPageIndex]="currentPage"
+              [nzShowSizeChanger]="true"
+              [nzShowQuickJumper]="true"
+              [nzShowTotal]="totalTemplate"
+              [nzPageSizeOptions]="[10, 20, 50, 100]"
+              (nzPageIndexChange)="onPageChange($event)"
+              (nzPageSizeChange)="onPageSizeChange($event)">
+          </nz-pagination>
+
+          <ng-template #totalTemplate let-total let-range="range">
+          </ng-template>
+      </div>
+  </div>
 </div>
-  
+
 <!-- Modal Paiements avec en-tête bleue -->
 <!-- ✅ Template HTML corrigé pour le modal des paiements -->
 <nz-modal 
@@ -240,106 +242,106 @@ nzCentered
 nzClassName="compact-modal">
 
 <ng-container *nzModalContent>
-  <div class="modal-content-compact">
-    <!-- ✅ Section informations souscription compacte -->
-    <div class="subscription-info-compact" *ngIf="selectedSubscriptionInfo">
-      <div class="subscription-header-compact">
-        <div class="subscription-title-compact">
-          <i class="fas fa-map-marked-alt"></i>
-          {{ selectedSubscriptionId }}
-        </div>
-        <nz-tag [nzColor]="getStatusColor(selectedSubscriptionInfo.statut)" class="status-tag-compact">
-          {{ getStatusLabel(selectedSubscriptionInfo.statut) }}
-        </nz-tag>
+<div class="modal-content-compact">
+  <!-- ✅ Section informations souscription compacte -->
+  <div class="subscription-info-compact" *ngIf="selectedSubscriptionInfo">
+    <div class="subscription-header-compact">
+      <div class="subscription-title-compact">
+        <i class="fas fa-map-marked-alt"></i>
+        {{ selectedSubscriptionId }}
       </div>
-      
-      <div class="terrain-details-compact">
-        <div class="terrain-row">
-          <span class="label-compact">Terrain:</span>
-          <span class="value-compact">{{ selectedSubscriptionInfo.terrain }}</span>
-        </div>
-        <div class="terrain-row">
-          <span class="label-compact">Surface:</span>
-          <span class="value-compact">{{ selectedSubscriptionInfo.surface }} m²</span>
-        </div>
-        <div class="terrain-row">
-          <span class="label-compact">Progression:</span>
-          <span class="value-compact">{{ selectedSubscriptionInfo.progression }}%</span>
-        </div>
+      <nz-tag [nzColor]="getStatusColor(selectedSubscriptionInfo.statut)" class="status-tag-compact">
+        {{ getStatusLabel(selectedSubscriptionInfo.statut) }}
+      </nz-tag>
+    </div>
+    
+    <div class="terrain-details-compact">
+      <div class="terrain-row">
+        <span class="label-compact">Terrain:</span>
+        <span class="value-compact">{{ selectedSubscriptionInfo.terrain }}</span>
       </div>
-
-      <div class="amounts-summary-compact">
-        <div class="amount-item-compact">
-          <span class="amount-label">Payé:</span>
-          <span class="amount-value paid">{{ formatAmount(selectedSubscriptionInfo.montantPaye) }}</span>
-        </div>
-        <div class="amount-item-compact">
-          <span class="amount-label">Reste:</span>
-          <span class="amount-value remaining">{{ formatAmount(selectedSubscriptionInfo.resteAPayer) }}</span>
-        </div>
+      <div class="terrain-row">
+        <span class="label-compact">Surface:</span>
+        <span class="value-compact">{{ selectedSubscriptionInfo.surface }} m²</span>
+      </div>
+      <div class="terrain-row">
+        <span class="label-compact">Progression:</span>
+        <span class="value-compact">{{ selectedSubscriptionInfo.progression }}%</span>
       </div>
     </div>
 
-    <!-- ✅ Section historique des paiements compacte -->
-    <div class="payments-section-compact">
-      <div class="payments-header-compact">
-        <div class="payments-title-compact">
-          <i class="fas fa-history"></i>
-          Derniers paiements
-        </div>
-        <div class="payments-count-compact" *ngIf="lastFivePayments.length > 0">
-          {{ lastFivePayments.length }}
-        </div>
+    <div class="amounts-summary-compact">
+      <div class="amount-item-compact">
+        <span class="amount-label">Payé:</span>
+        <span class="amount-value paid">{{ formatAmount(selectedSubscriptionInfo.montantPaye) }}</span>
       </div>
-
-      <!-- ✅ Liste des paiements compacte -->
-      <div class="payments-list-compact" *ngIf="lastFivePayments.length > 0">
-        <div class="payment-item-compact" *ngFor="let payment of lastFivePayments; trackBy: trackByPayment">
-          <div class="payment-main-compact">
-            <div class="payment-date-compact">
-              <i class="fas fa-calendar-alt"></i>
-              {{ payment.date }}
-            </div>
-            <div class="payment-amount-compact">
-              {{ formatAmount(payment.amount) }}
-            </div>
-          </div>
-          
-          <div class="payment-details-compact" *ngIf="payment.numero_mensualite || payment.mode_paiement">
-            <span class="detail-compact" *ngIf="payment.numero_mensualite">
-              Mensualité #{{ payment.numero_mensualite }}
-            </span>
-            <span class="detail-compact" *ngIf="payment.mode_paiement">
-              {{ formatPaymentMode(payment.mode_paiement) }}
-            </span>
-            <nz-tag 
-              *ngIf="payment.statut_versement"
-              [nzColor]="getPaymentStatusColor(payment.statut_versement)"
-              class="status-tag-small">
-              {{ formatPaymentStatus(payment.statut_versement) }}
-            </nz-tag>
-          </div>
-        </div>
+      <div class="amount-item-compact">
+        <span class="amount-label">Reste:</span>
+        <span class="amount-value remaining">{{ formatAmount(selectedSubscriptionInfo.resteAPayer) }}</span>
       </div>
-
-      <!-- ✅ Message compact quand aucun paiement -->
-      <div class="no-payments-compact" *ngIf="lastFivePayments.length === 0">
-        <i class="fas fa-info-circle"></i>
-        <span>Aucun paiement effectué</span>
-      </div>
-    </div>
-
-    <!-- ✅ Actions du modal compactes -->
-    <div class="modal-actions-compact">
-      <button nz-button nzType="default" class="btn-compact cancel-btn-compact" (click)="handleCancel()">
-        <i class="fas fa-times"></i>
-        Fermer
-      </button>
-      <button nz-button nzType="primary" class="btn-compact details-btn-compact" (click)="handleOk()">
-        <i class="fas fa-eye"></i>
-        Détails
-      </button>
     </div>
   </div>
+
+  <!-- ✅ Section historique des paiements compacte -->
+  <div class="payments-section-compact">
+    <div class="payments-header-compact">
+      <div class="payments-title-compact">
+        <i class="fas fa-history"></i>
+        Derniers paiements
+      </div>
+      <div class="payments-count-compact" *ngIf="lastFivePayments.length > 0">
+        {{ lastFivePayments.length }}
+      </div>
+    </div>
+
+    <!-- ✅ Liste des paiements compacte -->
+    <div class="payments-list-compact" *ngIf="lastFivePayments.length > 0">
+      <div class="payment-item-compact" *ngFor="let payment of lastFivePayments; trackBy: trackByPayment">
+        <div class="payment-main-compact">
+          <div class="payment-date-compact">
+            <i class="fas fa-calendar-alt"></i>
+            {{ payment.date }}
+          </div>
+          <div class="payment-amount-compact">
+            {{ formatAmount(payment.amount) }}
+          </div>
+        </div>
+        
+        <div class="payment-details-compact" *ngIf="payment.numero_mensualite || payment.mode_paiement">
+          <span class="detail-compact" *ngIf="payment.numero_mensualite">
+            Mensualité #{{ payment.numero_mensualite }}
+          </span>
+          <span class="detail-compact" *ngIf="payment.mode_paiement">
+            {{ formatPaymentMode(payment.mode_paiement) }}
+          </span>
+          <nz-tag 
+            *ngIf="payment.statut_versement"
+            [nzColor]="getPaymentStatusColor(payment.statut_versement)"
+            class="status-tag-small">
+            {{ formatPaymentStatus(payment.statut_versement) }}
+          </nz-tag>
+        </div>
+      </div>
+    </div>
+
+    <!-- ✅ Message compact quand aucun paiement -->
+    <div class="no-payments-compact" *ngIf="lastFivePayments.length === 0">
+      <i class="fas fa-info-circle"></i>
+      <span>Aucun paiement effectué</span>
+    </div>
+  </div>
+
+  <!-- ✅ Actions du modal compactes -->
+  <div class="modal-actions-compact">
+    <button nz-button nzType="default" class="btn-compact cancel-btn-compact" (click)="handleCancel()">
+      <i class="fas fa-times"></i>
+      Fermer
+    </button>
+    <button nz-button nzType="primary" class="btn-compact details-btn-compact" (click)="handleOk()">
+      <i class="fas fa-eye"></i>
+      Détails
+    </button>
+  </div>
+</div>
 </ng-container>
 </nz-modal>

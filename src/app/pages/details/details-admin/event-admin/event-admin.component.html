@@ -1,161 +1,253 @@
-<!-- event-admin.component.html - Version avec pagination et nouveau bouton -->
+<!-- event-admin.component.html - Version avec pagination et AJOUT DES MODALS -->
 <section class="content">
-    <div class="container-fluid">
-      <!-- Header avec bouton d'ajout -->
-      <div class="header-section">
-        <h6 class="evenements-title">
-          <i class="fas fa-map-marked-alt"></i>
-          Suivi du Projet & Avancement des Terrains
-        </h6>
-        <button 
-          nz-button 
-          nzType="primary" 
-          nzSize="large"
-          class="add-event-btn"
-          (click)="navigateToCreateEvent()">
-          <i nz-icon nzType="plus"></i>
-          Ajouter un nouvel événement
-        </button>
-      </div>
-  
-      <!-- Loading indicator -->
-      <div *ngIf="loading" class="text-center p-4">
-        <i class="fas fa-spinner fa-spin"></i> Chargement des événements...
-      </div>
-  
-      <!-- Section Mes Souscriptions -->
-      <div class="souscription-section" *ngIf="!loading">
-        <div class="section-header">
-          <div class="section-title">
-            <i class="fas fa-user-check"></i> Mes Souscriptions
-          </div>
-          <div class="section-subtitle">Suivi personnalisé de vos terrains</div>
+  <div class="container-fluid">
+    <!-- Header avec bouton d'ajout -->
+    <div class="header-section">
+      <h6 class="evenements-title">
+        <i class="fas fa-map-marked-alt"></i>
+        Suivi du Projet & Avancement des Terrains
+      </h6>
+      <button 
+        nz-button 
+        nzType="primary" 
+        nzSize="large"
+        class="add-event-btn"
+        (click)="navigateToCreateEvent()">
+        <i nz-icon nzType="plus"></i>
+        Ajouter un nouvel événement
+      </button>
+    </div>
+
+    <!-- Loading indicator -->
+    <div *ngIf="loading" class="text-center p-4">
+      <i class="fas fa-spinner fa-spin"></i> Chargement des événements...
+    </div>
+
+    <!-- Section Mes Souscriptions -->
+    <div class="souscription-section" *ngIf="!loading">
+      <div class="section-header">
+        <div class="section-title">
+          <i class="fas fa-user-check"></i> Mes Souscriptions
         </div>
-  
-        <div class="timeline" *ngIf="evenementsSouscription.length > 0">
-          <!-- Label de date pour les souscriptions -->
-          <div class="time-label blue">
-            <span>{{ getDateRangeLabel(evenementsSouscription) }} - Mes Projets</span>
-          </div>
-  
-          <!-- Boucle sur les événements de souscription paginés -->
-          <div *ngFor="let event of getPaginatedEvents(); let i = index">
-            <i class="fas" 
-               [ngClass]="getEventIcon(event.type_evenement)" 
-               [class]="getEventColor(event.type_evenement, getEventProgress(event))"
-               [style.background-color]="event.type_evenement.couleur_affichage"></i>
-            
-            <div class="timeline-item">
-              <span class="time">
-                <i class="fas fa-clock"></i> 
-                <span class="status-badge" [ngClass]="getStatusClass(getEventStatus(event))" [style.color]="getStatusColor(getEventStatus(event))">
-                  {{ getEventStatus(event) }}
-                </span>
+        <div class="section-subtitle">Suivi personnalisé de vos terrains</div>
+      </div>
+
+      <div class="timeline" *ngIf="evenementsSouscription.length > 0">
+        <!-- Label de date pour les souscriptions -->
+        <div class="time-label blue">
+          <span>{{ getDateRangeLabel(evenementsSouscription) }} - Mes Projets</span>
+        </div>
+
+        <!-- Boucle sur les événements de souscription paginés -->
+        <div *ngFor="let event of getPaginatedEvents(); let i = index">
+          <i class="fas" 
+             [ngClass]="getEventIcon(event.type_evenement)" 
+             [class]="getEventColor(event.type_evenement, getEventProgress(event))"
+             [style.background-color]="event.type_evenement.couleur_affichage"></i>
+          
+          <div class="timeline-item">
+            <span class="time">
+              <i class="fas fa-clock"></i> 
+              <span class="status-badge" [ngClass]="getStatusClass(getEventStatus(event))" [style.color]="getStatusColor(getEventStatus(event))">
+                {{ getEventStatus(event) }}
               </span>
+            </span>
+            
+            <h3 class="timeline-header">
+              <a href="#" (click)="onEventClick(event)">{{ event.titre }}</a>
+              <span *ngIf="event.lieu"> - {{ event.lieu }}</span>
+            </h3>
+
+            <div class="timeline-body">
+              {{ event.description }}
               
-              <h3 class="timeline-header">
-                <a href="#" (click)="onEventClick(event)">{{ event.titre }}</a>
-                <span *ngIf="event.lieu"> - {{ event.lieu }}</span>
-              </h3>
-  
-              <div class="timeline-body">
-                {{ event.description }}
-                
-                <!-- Affichage des images au centre si disponibles -->
-                <div class="event-images" *ngIf="getEventPhotos(event).length > 0">
-                  <img *ngFor="let photo of getEventPhotos(event)" 
-                       [src]="photo" 
+              <!-- Affichage des images au centre si disponibles -->
+              <div class="event-images" *ngIf="getEventPhotos(event).length > 0">
+                <img *ngFor="let photo of getEventPhotos(event)" 
+                     [src]="photo" 
+                     [alt]="event.titre"
+                     (click)="openPhotoModal(photo)"
+                     (error)="onImageError($event)"
+                     class="event-photo">
+              </div>
+
+              <!-- AJOUTS POUR DOCUMENTS SUPPLÉMENTAIRES -->
+              <!-- Images supplémentaires via nouvelle méthode -->
+              <div class="event-images-new" *ngIf="getEventImages(event).length > 0">
+                <h6><i class="fas fa-images"></i> Images ({{ getEventImages(event).length }})</h6>
+                <div class="images-grid">
+                  <img *ngFor="let image of getEventImages(event)" 
+                       [src]="getDocumentUrl(image)" 
                        [alt]="event.titre"
-                       (click)="openPhotoModal(photo)"
+                       (click)="openImageModal(getDocumentUrl(image), event.titre)"
+                       (error)="onImageError($event)"
                        class="event-photo">
                 </div>
               </div>
-  
-              <div class="evenement-info">
-                <span class="tag" [ngClass]="getTypeClass(event.type_evenement.libelle_type_evenement)">
-                  {{ event.type_evenement.libelle_type_evenement }}
-                </span>
-                <span class="tag etape" *ngIf="event.etape_actuelle">{{ event.etape_actuelle }}</span>
-                <span class="tag">{{ event.lieu }}</span>
-                <span class="tag status-tag" [ngClass]="getStatusClass(getEventStatus(event))" [style.background-color]="getStatusColor(getEventStatus(event))">
-                  {{ getEventStatus(event) }}
-                </span>
-              </div>
-  
-              <div class="evenement-dates">
-                <strong>Date début :</strong> {{ event.date_debut_evenement | date:'dd/MM/yyyy HH:mm' }}
-                <span *ngIf="event.date_debut_evenement !== event.date_fin_evenement">
-                  <br><strong>Date fin :</strong> {{ event.date_fin_evenement | date:'dd/MM/yyyy HH:mm' }}
-                </span>
-              </div>
-  
-              <!-- Info terrain si disponible -->
-              <div class="terrain-info" *ngIf="event.souscription && event.souscription.terrain">
-                <strong>Terrain:</strong> {{ event.souscription.terrain.libelle }}
-                ({{ event.souscription.terrain.superficie }}m²)
-                - {{ event.souscription.terrain.localisation }}
-              </div>
-  
-              <div class="progress-section">
-                <div class="progress-label">
-                  {{ getProgressLabel(event.type_evenement.libelle_type_evenement) }}
-                </div>
-                <div class="progress-bar">
-                  <div class="progress-fill" 
-                       [style.width.%]="getEventProgress(event)"
-                       [style.background]="getProgressGradient(event)"></div>
-                </div>
-                <div class="progress-text">
-                  <span class="progress-percentage" [style.color]="getStatusColor(getEventStatus(event))">
-                    {{ getEventProgress(event) === 100 ? 'Terminé avec succès ✓' : getEventProgress(event) + '% - ' + getEventStatus(event) }}
-                  </span>
+
+              <!-- Documents PDF -->
+              <div class="event-pdfs" *ngIf="getEventPdfs(event).length > 0">
+                <h6><i class="fas fa-file-pdf"></i> Documents PDF ({{ getEventPdfs(event).length }})</h6>
+                <div class="pdfs-list">
+                  <div *ngFor="let pdf of getEventPdfs(event)" class="pdf-item">
+                    <button 
+                      nz-button 
+                      nzType="default" 
+                      nzSize="small"
+                      (click)="openPdfModal(getDocumentUrl(pdf), event.titre)">
+                      <i nz-icon nzType="eye"></i>
+                      {{ pdf.nom_original }}
+                    </button>
+                    <button 
+                      nz-button 
+                      nzType="link" 
+                      nzSize="small"
+                      (click)="openPdfInNewTab(getDocumentUrl(pdf))">
+                      <i nz-icon nzType="external-link"></i>
+                      Nouvel onglet
+                    </button>
+                  </div>
                 </div>
               </div>
-  
-              <!-- Coûts si disponibles -->
-              <div class="couts-info" *ngIf="event.cout_estime || event.cout_reel">
-                <div *ngIf="event.cout_estime">
-                  <strong>Coût estimé:</strong> {{ formatCurrency(event.cout_estime) }}
-                </div>
-                <div *ngIf="event.cout_reel">
-                  <strong>Coût réel:</strong> {{ formatCurrency(event.cout_reel) }}
-                </div>
-              </div>
-  
-              <div class="timeline-footer">
-                <a href="#" class="btn btn-secondary ml-2" (click)="voirDocuments(event)" *ngIf="event.documents && event.documents.length > 0">
-                  Documents ({{ event.documents.length }})
-                </a>
+
+              <!-- Message si aucun document -->
+              <div class="no-documents" *ngIf="!hasDocuments(event)">
+                <p><i class="fas fa-info-circle"></i> Aucun document associé à cet événement</p>
               </div>
             </div>
-          </div>
-  
-          <!-- Indicateur de fin -->
-          <div>
-            <i class="fas fa-clock bg-gray"></i>
+
+            <div class="evenement-info">
+              <span class="tag" [ngClass]="getTypeClass(event.type_evenement.libelle_type_evenement)">
+                {{ event.type_evenement.libelle_type_evenement }}
+              </span>
+              <span class="tag etape" *ngIf="event.etape_actuelle">{{ event.etape_actuelle }}</span>
+              <span class="tag">{{ event.lieu }}</span>
+              <span class="tag status-tag" [ngClass]="getStatusClass(getEventStatus(event))" [style.background-color]="getStatusColor(getEventStatus(event))">
+                {{ getEventStatus(event) }}
+              </span>
+            </div>
+
+            <div class="evenement-dates">
+              <strong>Date début :</strong> {{ event.date_debut_evenement | date:'dd/MM/yyyy HH:mm' }}
+              <span *ngIf="event.date_debut_evenement !== event.date_fin_evenement">
+                <br><strong>Date fin :</strong> {{ event.date_fin_evenement | date:'dd/MM/yyyy HH:mm' }}
+              </span>
+            </div>
+
+            <!-- Info terrain si disponible -->
+            <div class="terrain-info" *ngIf="event.souscription && event.souscription.terrain">
+              <strong>Terrain:</strong> {{ event.souscription.terrain.libelle }}
+              ({{ event.souscription.terrain.superficie }}m²)
+              - {{ event.souscription.terrain.localisation }}
+            </div>
+
+            <div class="progress-section">
+              <div class="progress-label">
+                {{ getProgressLabel(event.type_evenement.libelle_type_evenement) }}
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" 
+                     [style.width.%]="getEventProgress(event)"
+                     [style.background]="getProgressGradient(event)"></div>
+              </div>
+              <div class="progress-text">
+                <span class="progress-percentage" [style.color]="getStatusColor(getEventStatus(event))">
+                  {{ getEventProgress(event) === 100 ? 'Terminé avec succès ✓' : getEventProgress(event) + '% - ' + getEventStatus(event) }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Coûts si disponibles -->
+            <div class="couts-info" *ngIf="event.cout_estime || event.cout_reel">
+              <div *ngIf="event.cout_estime">
+                <strong>Coût estimé:</strong> {{ formatCurrency(event.cout_estime) }}
+              </div>
+              <div *ngIf="event.cout_reel">
+                <strong>Coût réel:</strong> {{ formatCurrency(event.cout_reel) }}
+              </div>
+            </div>
+
+            <div class="timeline-footer">
+              <a href="#" class="btn btn-secondary ml-2" (click)="voirDocuments(event)" *ngIf="event.documents && event.documents.length > 0">
+                Documents ({{ event.documents.length }})
+              </a>
+            </div>
           </div>
         </div>
-  
-        <!-- Pagination -->
-        <div class="pagination-container" *ngIf="evenementsSouscription.length > 0">
-          <div class="pagination-info">
-            <!-- Affichage de {{ getPaginationInfo() }} événements -->
-          </div>
-          <nz-pagination 
-            [(nzPageIndex)]="currentPage"
-            [nzTotal]="evenementsSouscription.length"
-            [nzPageSize]="pageSize"
-            [nzShowSizeChanger]="false"
-            [nzShowQuickJumper]="false"
-            [nzSimple]="false"
-            (nzPageIndexChange)="onPageChange($event)">
-          </nz-pagination>
-        </div>
-  
-        <!-- Message si aucun événement de souscription -->
-        <div *ngIf="evenementsSouscription.length === 0 && !loading" class="no-events-message">
-          <p>Aucun événement de souscription trouvé.</p>
+
+        <!-- Indicateur de fin -->
+        <div>
+          <i class="fas fa-clock bg-gray"></i>
         </div>
       </div>
+
+      <!-- Pagination -->
+      <div class="pagination-container" *ngIf="evenementsSouscription.length > 0">
+        <div class="pagination-info">
+          <!-- Affichage de {{ getPaginationInfo() }} événements -->
+        </div>
+        <nz-pagination 
+          [(nzPageIndex)]="currentPage"
+          [nzTotal]="evenementsSouscription.length"
+          [nzPageSize]="pageSize"
+          [nzShowSizeChanger]="false"
+          [nzShowQuickJumper]="false"
+          [nzSimple]="false"
+          (nzPageIndexChange)="onPageChange($event)">
+        </nz-pagination>
+      </div>
+
+      <!-- Message si aucun événement de souscription -->
+      <div *ngIf="evenementsSouscription.length === 0 && !loading" class="no-events-message">
+        <p>Aucun événement de souscription trouvé.</p>
+      </div>
     </div>
-  </section>
+  </div>
+</section>
+
+<!-- AJOUT DES MODALS -->
+
+<!-- Modal pour agrandir les images -->
+<nz-modal
+  [(nzVisible)]="isImageModalVisible"
+  [nzTitle]="selectedImageTitle"
+  [nzFooter]="null"
+  [nzWidth]="800"
+  [nzBodyStyle]="{ padding: '20px', textAlign: 'center' }"
+  (nzOnCancel)="closeImageModal()">
+  <div class="image-modal-content">
+    <img 
+      [src]="selectedImageUrl" 
+      [alt]="selectedImageTitle"
+      (error)="onImageError($event)"
+      style="max-width: 100%; max-height: 70vh; object-fit: contain;">
+  </div>
+</nz-modal>
+
+<!-- Modal pour visualiser les PDFs -->
+<nz-modal
+  [(nzVisible)]="isPdfModalVisible"
+  [nzTitle]="'PDF: ' + selectedPdfTitle"
+  [nzWidth]="900"
+  [nzBodyStyle]="{ padding: '20px', height: '600px' }"
+  (nzOnCancel)="closePdfModal()">
+  <div class="pdf-modal-content" style="height: 100%;">
+    <iframe 
+      [src]="selectedPdfUrl" 
+      style="width: 100%; height: 100%; border: none;"
+      frameborder="0">
+      Votre navigateur ne supporte pas l'affichage des PDFs. 
+      <a [href]="selectedPdfUrl" target="_blank">Cliquez ici pour l'ouvrir</a>
+    </iframe>
+  </div>
+  <div *nzModalFooter>
+    <button nz-button nzType="default" (click)="closePdfModal()">
+      <i nz-icon nzType="close"></i>
+      Fermer
+    </button>
+    <button nz-button nzType="primary" (click)="openPdfInNewTab(selectedPdfUrl)">
+      <i nz-icon nzType="external-link"></i>
+      Ouvrir dans un nouvel onglet
+    </button>
+  </div>
+</nz-modal>

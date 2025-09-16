@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SouscriptionService, ApiSouscription, SouscriptionSingleResponse } from 'src/app/core/services/souscription.service';
+import { SouscriptionSingleResponse, ApiSouscription } from 'src/app/core/models/souscription';
+import { SouscriptionService } from 'src/app/core/services/souscription.service';
 
 // ✅ Réutiliser les interfaces existantes du service
 interface Payment {

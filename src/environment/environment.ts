@@ -1,4 +1,5 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:3000/api' // Modifie cette URL selon ton backend de dev
-}; 
+  apiUrl: 'http://192.168.252.75:8000/api',
+  storageUrl: 'http://192.168.252.75:8000/storage'
+};

@@ -16,7 +16,9 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Terrain, TerrainsService } from 'src/app/core/services/terrains.service';
+import { Terrain } from 'src/app/core/models/souscription';
+import { TerrainsService } from 'src/app/core/services/terrains.service';
+
 
 @Component({
   selector: 'app-terrains',
@@ -113,7 +115,6 @@ export class TerrainsComponent implements OnInit {
       prix_unitaire: [null, [Validators.required, Validators.min(1)]],
       description: ['', [Validators.required, Validators.minLength(10)]],
       statut_terrain: ['disponible', [Validators.required]],
-      coordonnees_gps: ['', [Validators.required, Validators.pattern(/^-?\d+\.?\d*,-?\d+\.?\d*$/)]]
     });
   }
 
@@ -197,7 +198,6 @@ export class TerrainsComponent implements OnInit {
       prix_unitaire: parseFloat(terrain.prix_unitaire.toString()) || 0,
       description: terrain.description,
       statut_terrain: terrain.statut_terrain,
-      coordonnees_gps: terrain.coordonnees_gps
     });
     console.log('Formulaire après patchValue:', this.terrainForm.value);
   }
@@ -245,7 +245,6 @@ export class TerrainsComponent implements OnInit {
       libelle: '',
       localisation: '',
       description: '',
-      coordonnees_gps: ''
     });
   }
 

@@ -1,140 +1,133 @@
 <!-- rewards.component.html --> 
-<div class="rewards-container">   
-  <div class="header">     
-    <h1 class="main-title">       
-      <i class="fas fa-trophy"></i> Mes Récompenses     
-    </h1>     
-    <p class="subtitle">Découvrez toutes vos réalisations et récompenses méritées</p>   
-  </div>    
-
-  <!-- Loading Spinner -->
-  <div *ngIf="loading" class="loading-container">
-    <div class="spinner"></div>
-    <p>Chargement des récompenses...</p>
-  </div>
-
-  <!-- Error Message -->
-  <div *ngIf="error && !loading" class="error-container">
-    <div class="error-message">
-      <i class="icon-error"></i>
-      <span>{{ error }}</span>
+<nz-spin [nzSpinning]="loading" nzTip="Chargement des récompenses...">
+  <div class="rewards-container">   
+    <div class="header">     
+      <h1 class="main-title">       
+        <i class="fas fa-trophy"></i> Mes Récompenses     
+      </h1>     
+      <p class="subtitle">Découvrez toutes vos réalisations et récompenses méritées</p>   
     </div>
-    <button class="retry-btn" (click)="loadRecompenses()">
-      Réessayer
-    </button>
-  </div>
 
-  <!-- Content -->
-  <div *ngIf="!loading && !error">
-    <!-- Stats Bar - Affichage seulement s'il y a des données -->
-    <div class="stats-bar" *ngIf="hasData">     
-      <div class="stat-item">       
-        <span class="stat-number">{{ totalItems }}</span>       
-        <span class="stat-label">Total</span>     
-      </div>     
-      <div class="stat-item">       
-        <span class="stat-number">{{ getRecompensesAttribuees().length }}</span>       
-        <span class="stat-label">Attribuées</span>     
-      </div>     
-      <div class="stat-item">       
-        <span class="stat-number">{{ getRecompensesEnAttente().length }}</span>       
-        <span class="stat-label">En attente</span>     
-      </div>   
-    </div>    
+    <!-- Error Message -->
+    <div *ngIf="error && !loading" class="error-container">
+      <div class="error-message">
+        <i class="icon-error"></i>
+        <span>{{ error }}</span>
+      </div>
+      <button class="retry-btn" (click)="loadRecompenses()">
+        Réessayer
+      </button>
+    </div>
 
-    <!-- Rewards Grid -->
-    <div class="rewards-grid" *ngIf="hasData && paginatedRecompenses.length > 0; else noRewards">     
-      <div        
-        class="reward-card"        
-        *ngFor="let reward of paginatedRecompenses; let i = index"       
-        (mouseenter)="onCardHover($event)"       
-        (mouseleave)="onCardLeave($event)"     
-      >       
-        <div class="reward-icon" [ngClass]="getStatusClass(reward.statut_recompense)">         
-          <i class="fas" [ngClass]="getRewardIcon(reward.type_recompense?.libelle_type_recompense || '')"></i>       
-        </div>              
+    <!-- Content -->
+    <div *ngIf="!loading && !error">
+      <!-- Stats Bar - Affichage seulement s'il y a des données -->
+      <div class="stats-bar" *ngIf="hasData">     
+        <div class="stat-item">       
+          <span class="stat-number">{{ totalItems }}</span>       
+          <span class="stat-label">Total</span>     
+        </div>     
+        <div class="stat-item">       
+          <span class="stat-number">{{ getRecompensesAttribuees().length }}</span>       
+          <span class="stat-label">Attribuées</span>     
+        </div>     
+        <div class="stat-item">       
+          <span class="stat-number">{{ getRecompensesEnAttente().length }}</span>       
+          <span class="stat-label">En attente</span>     
+        </div>   
+      </div>    
 
-        <div class="reward-header">         
-          <h3 class="reward-title">{{ reward.type_recompense?.libelle_type_recompense }}</h3>         
-          <div class="reward-type">Souscription #{{ reward.souscription.id_souscription }}</div>         
-          <p class="reward-description">{{ reward.description }}</p>       
-        </div>        
+      <!-- Rewards Grid -->
+      <div class="rewards-grid" *ngIf="hasData && paginatedRecompenses.length > 0">     
+        <div        
+          class="reward-card"        
+          *ngFor="let reward of paginatedRecompenses; let i = index"       
+          (mouseenter)="onCardHover($event)"       
+          (mouseleave)="onCardLeave($event)"     
+        >       
+          <div class="reward-icon" [ngClass]="getStatusClass(reward.statut_recompense)">         
+            <i class="fas" [ngClass]="getRewardIcon(reward.type_recompense?.libelle_type_recompense || '')"></i>       
+          </div>              
 
-        <div class="reward-details">         
-          <div class="detail-item">           
-            <div class="detail-icon">             
-              <i class="fas fa-bullseye"></i>           
-            </div>           
-            <div class="detail-content">             
-              <div class="detail-label">Motif</div>             
-              <div class="detail-value">{{ reward.motif_recompense }}</div>           
-            </div>         
-          </div>                          
+          <div class="reward-header">         
+            <h3 class="reward-title">{{ reward.type_recompense?.libelle_type_recompense }}</h3>         
+            <div class="reward-type">Souscription #{{ reward.souscription.id_souscription }}</div>         
+            <p class="reward-description">{{ reward.description }}</p>       
+          </div>        
 
-          <div class="detail-item">           
-            <div class="detail-icon">             
-              <i class="fas fa-calendar-alt"></i>           
-            </div>           
-            <div class="detail-content">             
-              <div class="detail-label">Période de mérite</div>             
-              <div class="detail-value">{{ reward.periode_merite }}</div>           
-            </div>         
-          </div>                          
+          <div class="reward-details">         
+            <div class="detail-item">           
+              <div class="detail-icon">             
+                <i class="fas fa-bullseye"></i>           
+              </div>           
+              <div class="detail-content">             
+                <div class="detail-label">Motif</div>             
+                <div class="detail-value">{{ reward.motif_recompense }}</div>           
+              </div>         
+            </div>                          
 
-          <div class="detail-item">           
-            <div class="detail-icon">             
-              <i class="fas fa-calendar-check"></i>           
-            </div>           
-            <div class="detail-content">             
-              <div class="detail-label">Date d'attribution</div>             
-              <div class="detail-value">{{ formatDate(reward.date_attribution) }}</div>           
-            </div>         
-          </div>                          
+            <div class="detail-item">           
+              <div class="detail-icon">             
+                <i class="fas fa-calendar-alt"></i>           
+              </div>           
+              <div class="detail-content">             
+                <div class="detail-label">Période de mérite</div>             
+                <div class="detail-value">{{ reward.periode_merite }}</div>           
+              </div>         
+            </div>                          
 
-          <div class="detail-item" *ngIf="reward.date_attribution_effective">           
-            <div class="detail-icon">             
-              <i class="fas fa-check-circle"></i>           
-            </div>           
-            <div class="detail-content">             
-              <div class="detail-label">Date effective</div>             
-              <div class="detail-value">{{ formatDate(reward.date_attribution_effective) }}</div>           
-            </div>         
+            <div class="detail-item">           
+              <div class="detail-icon">             
+                <i class="fas fa-calendar-check"></i>           
+              </div>           
+              <div class="detail-content">             
+                <div class="detail-label">Date d'attribution</div>             
+                <div class="detail-value">{{ formatDate(reward.date_attribution) }}</div>           
+              </div>         
+            </div>                          
+
+            <div class="detail-item" *ngIf="reward.date_attribution_effective">           
+              <div class="detail-icon">             
+                <i class="fas fa-check-circle"></i>           
+              </div>           
+              <div class="detail-content">             
+                <div class="detail-label">Date effective</div>             
+                <div class="detail-value">{{ formatDate(reward.date_attribution_effective) }}</div>           
+              </div>         
+            </div>       
           </div>       
-        </div>       
 
-        <div class="reward-footer">
-          <div class="status-badge" [ngClass]="getStatusClass(reward.statut_recompense)">
-            {{ getStatusLabel(reward.statut_recompense) }}
+          <div class="reward-footer">
+            <div class="status-badge" [ngClass]="getStatusClass(reward.statut_recompense)">
+              {{ getStatusLabel(reward.statut_recompense) }}
+            </div>
+            <div class="reward-value">{{ formatCurrency(reward.valeur_recompense) }}</div>
           </div>
-          <div class="reward-value">{{ formatCurrency(reward.valeur_recompense) }}</div>
         </div>
       </div>
-    </div>
 
-    <!-- No Rewards Template -->
-    <ng-template #noRewards>
-      <div class="no-rewards">
-        <i class="fas fa-trophy"></i>
-        <h3>Aucune récompense trouvée</h3>
-        <p *ngIf="!error">Continuez vos efforts, de nouvelles récompenses vous attendent !</p>
-        <p *ngIf="error">Impossible de charger les récompenses pour le moment.</p>
-      </div>
-    </ng-template>
+      <!-- Message si aucune récompense trouvée -->
+      <nz-empty 
+        *ngIf="!hasData && !loading && !error"
+        nzNotFoundImage="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
+        nzNotFoundContent="Aucune récompense trouvée">
+      </nz-empty>
 
-    <!-- Pagination Ng-Zorro -->
-    <div *ngIf="hasData && totalItems > pageSize" class="pagination-container">
-      <div class="pagination-info">
-        <!-- <span>{{ totalItems }} récompenses au total - Page {{ currentPage }} sur {{ totalPages }}</span> -->
+      <!-- Pagination Ng-Zorro -->
+      <div *ngIf="hasData && totalItems > pageSize" class="pagination-container">
+        <div class="pagination-info">
+          <!-- <span>{{ totalItems }} récompenses au total - Page {{ currentPage }} sur {{ totalPages }}</span> -->
+        </div>
+        <nz-pagination 
+          [nzPageIndex]="currentPage"
+          [nzTotal]="totalItems"
+          [nzPageSize]="pageSize"
+          [nzShowSizeChanger]="false"
+          [nzShowQuickJumper]="false" 
+          [nzSize]="'small'"
+          (nzPageIndexChange)="onPageChange($event)">
+        </nz-pagination>
       </div>
-      <nz-pagination 
-        [nzPageIndex]="currentPage"
-        [nzTotal]="totalItems"
-        [nzPageSize]="pageSize"
-        [nzShowSizeChanger]="false"
-        [nzShowQuickJumper]="false" 
-        [nzSize]="'small'"
-        (nzPageIndexChange)="onPageChange($event)">
-      </nz-pagination>
     </div>
   </div>
-</div>
+</nz-spin>

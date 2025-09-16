@@ -4,7 +4,10 @@ import { CommonModule } from '@angular/common';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzPaginationModule } from 'ng-zorro-antd/pagination';
-import { ApiDocument, DocumentService } from 'src/app/core/services/documents.service';
+import { ApiDocument } from 'src/app/core/models/documents';
+import { DocumentService } from 'src/app/core/services/documents.service';
+import { NzEmptyModule } from 'ng-zorro-antd/empty';
+
 
 @Component({
   selector: 'app-mes-documents',
@@ -13,7 +16,8 @@ import { ApiDocument, DocumentService } from 'src/app/core/services/documents.se
     CommonModule, 
     NzButtonModule, 
     NzIconModule, 
-    NzPaginationModule
+    NzPaginationModule,
+    NzEmptyModule
   ],
   templateUrl: './document.component.html',
   styleUrls: ['./document.component.css']

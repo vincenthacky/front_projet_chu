@@ -3,39 +3,15 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
+import { TypeRecompenseResponse, TypesRecompensesApiResponse } from '../models/types-recompenses';
+import { environment } from '@/environment';
 
-// Interface pour les types de récompenses
-export interface TypeRecompenseResponse {
-  id_type_recompense: number;
-  libelle_type_recompense: string;
-  description_type: string;
-  valeur_monetaire: string | null;
-  est_monetaire: boolean;
-  conditions_attribution: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface TypesRecompensesApiResponse {
-  success: boolean;
-  status_code: number;
-  message: string;
-  data: TypeRecompenseResponse[];
-  pagination: {
-    total: number;
-    per_page: number;
-    current_page: number;
-    last_page: number;
-    from: number;
-    to: number;
-  };
-}
 
 @Injectable({
   providedIn: 'root'
 })
 export class TypesRecompensesService {
-  private readonly API_BASE_URL = 'http://192.168.252.75:8000/api';
+  private readonly API_BASE_URL = environment.apiUrl;
   private readonly TYPES_RECOMPENSES_ENDPOINT = `${this.API_BASE_URL}/type-recompenses`;
 
   // BehaviorSubject pour maintenir l'état des données

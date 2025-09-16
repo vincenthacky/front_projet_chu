@@ -1,10 +1,10 @@
-// paiement.component.ts - Version corrigée des erreurs
-
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzTagModule } from 'ng-zorro-antd/tag';
-import { PaiementsResponse, ApiPaiement, PayementsService } from 'src/app/core/services/payements.service';
+import { PaiementsResponse, ApiPaiement } from 'src/app/core/models/paiments';
+import { PayementsService } from 'src/app/core/services/payements.service';
+
 
 interface Payment {
   date: string;
@@ -47,24 +47,25 @@ export class PaiementComponent implements OnInit {
   };
   loading = false;
   paiementsData: PaiementsResponse | null = null;
+  userId: number = 1; // Remplacez par l'ID réel de l'utilisateur connecté (ex: récupérez depuis un service d'authentification ou localStorage, par exemple this.userId = parseInt(localStorage.getItem('userId') || '0');)
 
   constructor(
     private paiementsService: PayementsService
   ) {}
 
   ngOnInit(): void {
-    console.log('🚀 Initialisation - Récupération de tous les paiements utilisateur');
+    console.log('🚀 Initialisation - Récupération des paiements pour l\'utilisateur');
     this.loadAllUserPayments();
   }
 
-  // Récupérer tous les paiements de l'utilisateur connecté
+  // Récupérer les paiements de l'utilisateur spécifique
   loadAllUserPayments(): void {
-    console.log('🔍 === CHARGEMENT DE TOUS LES PAIEMENTS UTILISATEUR ===');
+    console.log('🔍 === CHARGEMENT DES PAIEMENTS POUR L\'UTILISATEUR ===');
     
     this.loading = true;
     
-    // Appel API pour récupérer tous les paiements de l'utilisateur
-    this.paiementsService.getMesPaiements({
+    // Appel API pour récupérer les paiements de l'utilisateur spécifique
+    this.paiementsService.getPaiementsForUser({
       per_page: 1000 // Récupérer un maximum de paiements
     }).subscribe({
       next: (result: PaiementsResponse) => {

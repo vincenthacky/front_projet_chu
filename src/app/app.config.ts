@@ -16,9 +16,10 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 
 
 // Import du service d'authentification avec le bon chemin
-import { AuthService } from './core/services/auth.service';
+
 import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { UnicodeDecodeInterceptor } from './interceptors/unicode-decode.interceptor';
+import { AuthService } from './core/services/auth.service';
 
 registerLocaleData(fr);
 

@@ -24,14 +24,10 @@ import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
+import { ApiReclamation, ReclamationFilters, ReclamationResponse, AdminResponseData } from 'src/app/core/models/reclamations';
+import { ReclamationService } from 'src/app/core/services/reclamations.service';
 
-import { 
-  ReclamationService, 
-  ApiReclamation, 
-  ReclamationResponse, 
-  ReclamationFilters,
-  AdminResponseData 
-} from 'src/app/core/services/reclamations.service';
+
 
 @Component({
   selector: 'app-complaints',

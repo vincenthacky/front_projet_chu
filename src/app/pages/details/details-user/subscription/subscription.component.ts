@@ -18,7 +18,9 @@ import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NzModalService } from 'ng-zorro-antd/modal';
-import { ApiSouscription, SouscriptionService } from 'src/app/core/services/souscription.service';
+import { ApiSouscription } from 'src/app/core/models/souscription';
+import { SouscriptionService } from 'src/app/core/services/souscription.service';
+
 
 // Interface Payment améliorée
 interface Payment {
@@ -42,7 +44,7 @@ interface Subscription {
   dateDemande?: string;
   dateCreation?: string;
   origine?: string;
-  statut: 'en-cours' | 'en-retard' | 'termine' | 'en_attente' | 'approuve' | 'rejete';
+  statut: 'active' | 'en-cours' | 'en-retard' | 'termine' | 'suspendu' | 'annule';
   progression: number;
   payments: Payment[];
 }
@@ -327,8 +329,8 @@ export class SubscriptionComponent {
     };
 
     if (this.statusFilter) {
-      apiFilters.statut_souscription = this.statusFilter;
-      console.log('✅ Ajout filtre statut API:', apiFilters.statut_souscription);
+      apiFilters.statut = this.statusFilter;
+      console.log('✅ Ajout filtre statut API:', apiFilters.statut);
     }
 
     if (this.searchTerm) {
@@ -418,7 +420,16 @@ export class SubscriptionComponent {
   private mapApiDataToSubscriptions(apiData: LocalApiSouscription[]): Subscription[] {
     console.log('🗺️ Mapping des données API:', apiData.length, 'éléments');
 
-    return apiData.map((item, index) => {
+    const mapped = [];
+    for (let index = 0; index < apiData.length; index++) {
+      const item = apiData[index];
+
+      // Si statut_souscription est "annulé", n'inclure pas cette souscription
+      if (item.statut_souscription === 'annulé') {
+        console.log(`🚫 Souscription ${item.id_souscription} annulée, ignorée`);
+        continue;
+      }
+
       const prixTotal = item.prix_total_terrain;
       const montantPaye = parseFloat(item.montant_paye);
       const resteAPayer = item.reste_a_payer;
@@ -436,34 +447,40 @@ export class SubscriptionComponent {
 
       const progression = prixTotal > 0 ? Math.round((montantPaye / prixTotal) * 100) : 0;
 
-      let statut: 'en-cours' | 'en-retard' | 'termine' = 'en-cours';
+      // Logique pour le statut
+      let statut: 'active' | 'en-cours' | 'en-retard' | 'termine' | 'suspendu' | 'annule' = 'active';
 
-      console.log(`🔍 Analyse statut pour souscription ${item.id_souscription}:`, {
-        resteAPayer,
-        montantPaye,
-        dateProchain: item.date_prochain,
-        planpaiements: item.planpaiements.length
-      });
-
-      if (resteAPayer <= 0) {
-        statut = 'termine';
-        console.log(`✅ Statut: TERMINÉ (reste_a_payer = ${resteAPayer})`);
-      } else if (item.date_prochain) {
-        const today = new Date();
-        const dateProchain = new Date(item.date_prochain);
-
-        console.log(`📅 Comparaison dates: Aujourd'hui = ${today.toISOString().split('T')[0]} vs Prochain = ${item.date_prochain}`);
-
-        if (dateProchain < today) {
-          statut = 'en-retard';
-          console.log(`⚠️ Statut: EN RETARD (date ${item.date_prochain} dépassée)`);
-        } else {
+      if (item.statut_souscription === 'suspendu') {
+        statut = 'suspendu';
+        console.log(`⚠️ Statut: SUSPENDU (depuis API)`);
+      } else if (item.statut_souscription === 'annulé') {
+        statut = 'annule';
+        console.log(`🚫 Statut: ANNULÉ (depuis API)`);
+      } else {
+        if (resteAPayer === 0) {
+          statut = 'termine';
+          console.log(`✅ Statut: TERMINÉ (reste_a_payer = 0)`);
+        } else if (montantPaye > 0) {
           statut = 'en-cours';
-          console.log(`🔄 Statut: EN COURS`);
+          console.log(`🔄 Statut: EN COURS (montant_paye > 0)`);
+        } else {
+          // montant_paye === 0
+          statut = 'active';
+          console.log(`🔵 Statut: ACTIVE (montant_paye = 0)`);
+
+          // Vérifier si en retard : date_prochain dépassée et aucun paiement
+          if (item.date_prochain) {
+            const today = new Date();
+            const dateProchain = new Date(item.date_prochain);
+
+            console.log(`📅 Comparaison dates: Aujourd'hui = ${today.toISOString().split('T')[0]} vs Prochain = ${item.date_prochain}`);
+
+            if (dateProchain < today) {
+              statut = 'en-retard';
+              console.log(`⚠️ Statut: EN RETARD (date ${item.date_prochain} dépassée et montant_paye = 0)`);
+            }
+          }
         }
-      } else if (montantPaye > 0) {
-        statut = 'en-cours';
-        console.log(`🔄 Statut: EN COURS (montant payé: ${montantPaye}, pas de date_prochain)`);
       }
 
       let prochainPaiement = '';
@@ -491,7 +508,7 @@ export class SubscriptionComponent {
 
       console.log(`💳 Paiements mappés pour souscription ${item.id_souscription}:`, payments);
 
-      const result = {
+      const result: Subscription = {
         id: `SUB${item.id_souscription.toString().padStart(3, '0')}`,
         terrain: item.terrain.libelle,
         surface: item.terrain.superficie,
@@ -513,8 +530,9 @@ export class SubscriptionComponent {
         payments: result.payments
       });
 
-      return result;
-    });
+      mapped.push(result);
+    }
+    return mapped;
   }
 
   private formatDateForPayment(dateString: string): string {
@@ -579,6 +597,8 @@ export class SubscriptionComponent {
     }
     this.selectedSubscriptionId = null;
     this.selectedSubscriptionInfo = null;
+    // Recharger les souscriptions après navigation vers détails (au cas où paiement effectué)
+    this.loadSubscriptions();
   }
 
   handleCancel(): void {
@@ -590,11 +610,12 @@ export class SubscriptionComponent {
 
   getStatusColor(status: string): string {
     switch (status) {
-      case 'en-cours': return 'blue';
-      case 'en-retard': return 'red';
+      case 'active': return 'blue'; // Bleu pour active (montant_paye = 0)
+      case 'en-cours': return 'green'; // Vert pour en cours (montant_paye > 0)
       case 'termine': return 'green';
+      case 'en-retard': return 'red';
       case 'suspendu': return 'orange';
-      case 'annule': return 'default';
+      case 'annule': return 'gray';
       default: return 'default';
     }
   }
@@ -629,7 +650,7 @@ export class SubscriptionComponent {
     const statuses: { [key: string]: string } = {
       'paye_a_temps': 'Payé à temps',
       'paye_en_retard': 'Payé en retard',
-      'paiement_partiel': 'paiement_partiel',
+      'paiement_partiel': 'Paiement partiel',
     };
     return statuses[status?.toLowerCase()] || status || 'Statut inconnu';
   }
@@ -654,9 +675,12 @@ export class SubscriptionComponent {
 
   getStatusIcon(status: string): string {
     switch (status) {
+      case 'active': return 'fa-clock'; // Icône pour active
       case 'en-cours': return 'fa-clock';
       case 'en-retard': return 'fa-exclamation-triangle';
       case 'termine': return 'fa-check-circle';
+      case 'suspendu': return 'fa-pause-circle';
+      case 'annule': return 'fa-times-circle';
       case 'en_attente': return 'fa-hourglass-half';
       case 'approuve': return 'fa-check';
       case 'rejete': return 'fa-times';
@@ -666,9 +690,12 @@ export class SubscriptionComponent {
 
   getStatusLabel(status: string): string {
     switch (status) {
+      case 'active': return 'Active';
       case 'en-cours': return 'En cours';
       case 'en-retard': return 'En retard';
       case 'termine': return 'Terminé';
+      case 'suspendu': return 'Suspendu';
+      case 'annule': return 'Annulé';
       case 'en_attente': return 'En attente';
       case 'approuve': return 'Approuvé';
       case 'rejete': return 'Rejeté';
@@ -799,7 +826,7 @@ export class SubscriptionComponent {
     };
 
     if (this.statusFilter) {
-      forceRefreshFilters.statut_souscription = this.statusFilter;
+      forceRefreshFilters.statut = this.statusFilter;
       console.log('🎯 Maintien du filtre statut:', this.statusFilter);
     }
     if (this.searchTerm) {
@@ -937,5 +964,4 @@ export class SubscriptionComponent {
     a.click();
     window.URL.revokeObjectURL(url);
   }
-
 }

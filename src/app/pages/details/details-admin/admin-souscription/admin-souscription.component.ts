@@ -17,8 +17,9 @@ import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { NzMessageService } from 'ng-zorro-antd/message';
 
 import { Router } from '@angular/router';
-import { ApiSouscription, SouscriptionFilters, SouscriptionService, SouscriptionResponse } from 'src/app/core/services/souscription.service';
 import { PayementsService } from 'src/app/core/services/payements.service';
+import { ApiSouscription, SouscriptionFilters, SouscriptionResponse } from 'src/app/core/models/souscription';
+import { SouscriptionService } from 'src/app/core/services/souscription.service';
 
 
 // Interfaces pour les paiements
@@ -342,7 +343,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * MÉTHODE CORRIGÉE POUR GROUPER LES UTILISATEURS - AVEC PROPRIÉTÉ UTILISATEUR
+   * MÉTHODE CORRIGÉE POUR GROUPER LES UTILISATEURS - AVEC PRIX_TOTAL_TERRAIN
    */
   private groupSouscriptionsByUser(): void {
     console.log('🔥 DÉBUT DU GROUPEMENT - Diagnostic complet');
@@ -368,7 +369,9 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
               email: souscription.admin.email
             }
           : 'AUCUN ADMIN',
-        montant: souscription.montant_total_souscrit
+        // CORRECTION ICI : Afficher les deux montants pour comparaison
+        prix_total_terrain: souscription.prix_total_terrain,
+        montant_total_souscrit: souscription.montant_total_souscrit
       });
     });
 
@@ -434,13 +437,17 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
 
       const user = userMap.get(userId)!;
       user.souscriptions.push(souscription);
-      user.totalAmount += this.souscriptionService.parseAmount(souscription.montant_total_souscrit);
+      
+      // CORRECTION PRINCIPALE : Utiliser prix_total_terrain au lieu de montant_total_souscrit
+      const prixTotalTerrain = souscription.prix_total_terrain || 0;
+      user.totalAmount += prixTotalTerrain;
 
       if (this.isDatePassed(souscription.date_prochain)) {
         user.totalInDelay++;
       }
 
-      console.log(`📊 Utilisateur ${userId} a maintenant ${user.souscriptions.length} souscription(s), total: ${user.totalAmount}`);
+      console.log(`📊 Utilisateur ${userId} a maintenant ${user.souscriptions.length} souscription(s)`);
+      console.log(`💰 Prix total terrain ajouté: ${prixTotalTerrain}, nouveau total: ${user.totalAmount}`);
     });
 
     this.groupedUsers = Array.from(userMap.values());
@@ -455,7 +462,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
         email: user.email,
         initials: user.initials,
         nombreSouscriptions: user.souscriptions.length,
-        montantTotal: user.totalAmount,
+        montantTotal: user.totalAmount, // Maintenant basé sur prix_total_terrain
         enRetard: user.totalInDelay
       });
     });
@@ -518,7 +525,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
       id: apiSouscription.id_souscription.toString(),
       terrain: apiSouscription.terrain?.libelle || 'Terrain non défini',
       surface: apiSouscription.terrain?.superficie || '0m²',
-      prixTotal: this.souscriptionService.parseAmount(apiSouscription.montant_total_souscrit),
+      prixTotal: apiSouscription.prix_total_terrain || 0, // CORRECTION: Utiliser prix_total_terrain
       montantPaye: this.souscriptionService.parseAmount(apiSouscription.montant_paye),
       resteAPayer: apiSouscription.reste_a_payer || 0,
       dateDebut: apiSouscription.date_souscription || new Date().toISOString(),
@@ -539,7 +546,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
     console.log('🎭 Génération de paiements fictifs pour:', souscription.id_souscription);
 
     const montantPaye = this.souscriptionService.parseAmount(souscription.montant_paye);
-    const montantTotal = this.souscriptionService.parseAmount(souscription.montant_total_souscrit);
+    const montantTotal = souscription.prix_total_terrain || 0; // CORRECTION: Utiliser prix_total_terrain
 
     if (montantPaye === 0) {
       return [];
@@ -918,16 +925,20 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Calculer le montant total de toutes les souscriptions
+   * Calculer le montant total de toutes les souscriptions - CORRIGÉ
+   * Utilise maintenant prix_total_terrain au lieu de montant_total_souscrit
    */
   calculateTotalAmount(): number {
     return this.souscriptions.reduce((total, souscription) => {
-      return total + this.souscriptionService.parseAmount(souscription.montant_total_souscrit);
+      // CORRECTION : Utiliser prix_total_terrain au lieu de parseAmount(montant_total_souscrit)
+      const prixTotalTerrain = souscription.prix_total_terrain || 0;
+      return total + prixTotalTerrain;
     }, 0);
   }
 
   /**
-   * Calculer le montant total payé
+   * Calculer le montant total payé - MAINTENU TEL QUEL
+   * Cette méthode reste correcte car elle utilise bien montant_paye
    */
   calculateTotalPaid(): number {
     return this.souscriptions.reduce((total, souscription) => {
@@ -937,7 +948,8 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Calculer le montant total restant
+   * Calculer le montant total restant - MAINTENU TEL QUEL
+   * Cette méthode reste correcte car elle utilise bien reste_a_payer
    */
   calculateTotalRemaining(): number {
     return this.souscriptions.reduce((total, souscription) => {

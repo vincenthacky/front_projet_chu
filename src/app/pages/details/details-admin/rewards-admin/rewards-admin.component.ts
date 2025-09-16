@@ -26,11 +26,14 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzStepsModule } from 'ng-zorro-antd/steps';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
+import { Recompense, ApiPagination, RecompensesFilter } from 'src/app/core/models/recompenses';
+import { TypeRecompenseResponse } from 'src/app/core/models/types-recompenses';
+import { UtilisateurWithSouscriptions, SouscriptionWithPlans } from 'src/app/core/models/utilisateur';
+import { RecompensesService } from 'src/app/core/services/recompenses.service';
+import { TypesRecompensesService } from 'src/app/core/services/types-recompenses.service';
+import { UtilisateursSouscriptionsService } from 'src/app/core/services/utilisateurs-souscriptions.service';
 
-// Services et interfaces
-import { RecompensesService, Recompense, RecompensesFilter, ApiPagination } from '../../../../core/services/recompenses.service';
-import { TypesRecompensesService, TypeRecompenseResponse } from '../../../../core/services/types-recompenses.service';
-import { UtilisateursSouscriptionsService, UtilisateurWithSouscriptions, SouscriptionWithPlans } from '../../../../core/services/utilisateurs-souscriptions.service';
+
 
 @Component({
   selector: 'app-rewards-admin',

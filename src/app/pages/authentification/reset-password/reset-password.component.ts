@@ -7,7 +7,8 @@ import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { AuthService, ResetPasswordResponse } from 'src/app/core/services/auth.service';
+import { ResetPasswordResponse } from 'src/app/core/models/auth';
+import { AuthService } from 'src/app/core/services/auth.service';
 
 @Component({
   selector: 'app-reset-password',

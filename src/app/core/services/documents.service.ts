@@ -1,96 +1,16 @@
 // src/app/core/services/documents.service.ts
+import { environment } from '@/environment';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-
-// Interfaces pour l'API Documents
-export interface ApiDocument {
-  id_document: number;
-  id_souscription: number;
-  id_type_document: number;
-  source_table: string;
-  id_source: number;
-  nom_fichier: string;
-  nom_original: string;
-  chemin_fichier: string;
-  type_mime: string | null;
-  taille_fichier: number;
-  description_document: string;
-  version_document: number;
-  date_telechargement: string;
-  statut_document: string;
-  created_at: string;
-  updated_at: string;
-  souscription: {
-    id_souscription: number;
-    id_utilisateur: number;
-    id_terrain: number;
-    id_admin: number;
-    date_souscription: string;
-    nombre_terrains: number;
-    montant_mensuel: string;
-    nombre_mensualites: number;
-    montant_total_souscrit: string;
-    date_debut_paiement: string;
-    date_fin_prevue: string;
-    statut_souscription: string;
-    groupe_souscription: string;
-    notes_admin: string;
-    created_at: string;
-    updated_at: string;
-  };
-  type_document: {
-    id_type_document: number;
-    libelle_type_document: string;
-    description_type: string | null;
-    extension_autorisee: string;
-    taille_max_mo: number;
-    est_obligatoire: boolean;
-    created_at: string;
-    updated_at: string;
-  };
-}
-
-export interface DocumentResponse {
-  success: boolean;
-  status_code: number;
-  message: string;
-  data: ApiDocument[];
-  pagination: {
-    total: number;
-    per_page: number;
-    current_page: number;
-    last_page: number;
-    from: number;
-    to: number;
-  };
-}
-
-export interface DocumentSingleResponse {
-  success: boolean;
-  status_code: number;
-  message: string;
-  data: ApiDocument;
-}
-
-export interface DocumentFilters {
-  page?: number;
-  per_page?: number;
-  source_table?: string;
-  type_document?: number;
-  souscription_id?: number;
-  statut?: string;
-  date_debut?: string;
-  date_fin?: string;
-  search?: string;
-}
+import { DocumentFilters, DocumentResponse, DocumentSingleResponse } from '../models/documents';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DocumentService {
-  private readonly API_URL = 'http://192.168.252.75:8000/api';
+  private readonly API_URL = environment.apiUrl;
 
   constructor(private http: HttpClient) { }
 
@@ -112,12 +32,11 @@ export class DocumentService {
       if (filters.search) params = params.set('search', filters.search);
     }
 
-    // CORRECTION: Utiliser l'endpoint /documents pour récupérer TOUS les documents
     return this.http.get<DocumentResponse>(`${this.API_URL}/documents`, { params })
       .pipe(
         tap(response => {
-          console.log('🔍 Tous les documents récupérés:', response);
-          console.log('📊 Nombre total de documents:', response.data?.length || 0);
+          console.log('Tous les documents récupérés:', response);
+          console.log('Nombre total de documents:', response.data?.length || 0);
         })
       );
   }
@@ -143,7 +62,7 @@ export class DocumentService {
     return this.http.get<DocumentResponse>(`${this.API_URL}/documents/utilisateur`, { params })
       .pipe(
         tap(response => {
-          console.log('📁 Mes documents récupérés:', response);
+          console.log('Mes documents récupérés:', response);
         })
       );
   }
@@ -197,18 +116,178 @@ export class DocumentService {
     return this.getAllDocuments(searchFilters);
   }
 
-  // Utilitaires existants
+  // MÉTHODE CORRIGÉE PRINCIPALE : Génération de l'URL des documents
+  getDocumentUrl(cheminFichier: string): string {
+    if (!cheminFichier) {
+      console.warn('🔴 Chemin fichier vide ou null');
+      return this.getImagePlaceholder();
+    }
+
+    // Nettoyer le chemin en supprimant les slashes en début/fin
+    let cleanPath = cheminFichier.replace(/^\/+|\/+$/g, '');
+    
+    // S'assurer que le chemin commence par 'documents/' si ce n'est pas déjà le cas
+    if (!cleanPath.startsWith('documents/')) {
+      cleanPath = `documents/${cleanPath}`;
+    }
+    
+    // Construire l'URL complète en remplaçant /api par /storage
+    const baseUrl = this.API_URL.replace('/api', '');
+    const fullUrl = `${baseUrl}/storage/${cleanPath}`;
+    
+    console.log('🔍 URL générée pour document:', {
+      cheminOriginal: cheminFichier,
+      cheminNettoye: cleanPath,
+      urlComplete: fullUrl,
+      baseUrl: baseUrl
+    });
+    
+    return fullUrl;
+  }
+
+  /**
+   * NOUVELLES MÉTHODES UTILITAIRES POUR LES MÉDIAS
+   */
+
+  /**
+   * Vérifie si un fichier est une image basé sur son extension
+   */
+  isImage(nomFichier: string): boolean {
+    if (!nomFichier) return false;
+    
+    const extension = nomFichier.split('.').pop()?.toLowerCase() || '';
+    const isImg = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff', 'ico'].includes(extension);
+    
+    console.log(`📸 Test image - Fichier: ${nomFichier} | Extension: ${extension} | Est image: ${isImg}`);
+    
+    return isImg;
+  }
+
+  /**
+   * Vérifie si un fichier est une vidéo basé sur son extension
+   */
+  isVideo(nomFichier: string): boolean {
+    if (!nomFichier) return false;
+    
+    const extension = nomFichier.split('.').pop()?.toLowerCase() || '';
+    const isVid = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv', 'm4v', '3gp', 'ogv'].includes(extension);
+    
+    console.log(`🎥 Test vidéo - Fichier: ${nomFichier} | Extension: ${extension} | Est vidéo: ${isVid}`);
+    
+    return isVid;
+  }
+
+  /**
+   * Vérifie si un fichier est un audio
+   */
+  isAudio(nomFichier: string): boolean {
+    if (!nomFichier) return false;
+    
+    const extension = nomFichier.split('.').pop()?.toLowerCase() || '';
+    return ['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a', 'wma'].includes(extension);
+  }
+
+  /**
+   * Vérifie si un document est un média (image, vidéo, audio)
+   */
+  isMediaFile(document: any): boolean {
+    if (!document || !document.nom_original) return false;
+    
+    // Vérification par extension
+    const isMediaByExtension = this.isImage(document.nom_original) || 
+                              this.isVideo(document.nom_original) || 
+                              this.isAudio(document.nom_original);
+    
+    // Vérification par type MIME si disponible
+    const isMediaByMime = document.type_mime && (
+      document.type_mime.startsWith('image/') ||
+      document.type_mime.startsWith('video/') ||
+      document.type_mime.startsWith('audio/')
+    );
+    
+    return isMediaByExtension || isMediaByMime;
+  }
+
+  /**
+   * Génère une URL de placeholder pour les images en erreur
+   */
+  getImagePlaceholder(): string {
+    return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5Y2ExYWEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBub24gZGlzcG9uaWJsZTwvdGV4dD4KPC9zdmc+';
+  }
+
+  /**
+   * Filtre les documents pour ne récupérer que les images
+   */
+  filterImages(documents: any[]): any[] {
+    if (!documents || !Array.isArray(documents)) return [];
+    
+    return documents.filter(doc => {
+      const extension = doc.nom_original?.split('.').pop()?.toLowerCase() || '';
+      const isImageByExtension = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(extension);
+      const isImageByMime = doc.type_mime?.startsWith('image/') || false;
+      
+      return isImageByExtension || isImageByMime;
+    });
+  }
+
+  /**
+   * Filtre les documents pour ne récupérer que les vidéos
+   */
+  filterVideos(documents: any[]): any[] {
+    if (!documents || !Array.isArray(documents)) return [];
+    
+    return documents.filter(doc => {
+      const extension = doc.nom_original?.split('.').pop()?.toLowerCase() || '';
+      const isVideoByExtension = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv', 'm4v'].includes(extension);
+      const isVideoByMime = doc.type_mime?.startsWith('video/') || false;
+      
+      return isVideoByExtension || isVideoByMime;
+    });
+  }
+
+  /**
+   * Teste si une URL d'image est accessible
+   */
+  testImageUrl(url: string): Promise<boolean> {
+    console.log('🧪 Test de l\'URL:', url);
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        console.log('✅ URL accessible:', url);
+        resolve(true);
+      };
+      img.onerror = () => {
+        console.log('❌ URL inaccessible:', url);
+        resolve(false);
+      };
+      img.src = url;
+      
+      // Timeout après 5 secondes
+      setTimeout(() => {
+        console.log('⏱️ Timeout pour URL:', url);
+        resolve(false);
+      }, 5000);
+    });
+  }
+
+  // Utilitaires existants améliorés
   formatTailleFichier(taille: number): string {
+    if (!taille || taille === 0) return '0 B';
+    
     if (taille < 1024) {
       return `${taille} B`;
     } else if (taille < 1024 * 1024) {
-      return `${Math.round(taille / 1024)} KB`;
+      return `${(taille / 1024).toFixed(1)} KB`;
+    } else if (taille < 1024 * 1024 * 1024) {
+      return `${(taille / (1024 * 1024)).toFixed(1)} MB`;
     } else {
-      return `${Math.round(taille / (1024 * 1024) * 100) / 100} MB`;
+      return `${(taille / (1024 * 1024 * 1024)).toFixed(1)} GB`;
     }
   }
 
   getFileIcon(nomFichier: string): string {
+    if (!nomFichier) return 'file';
+    
     const extension = nomFichier.split('.').pop()?.toLowerCase();
     
     switch (extension) {
@@ -220,14 +299,39 @@ export class DocumentService {
       case 'xls':
       case 'xlsx':
         return 'file-excel';
+      case 'ppt':
+      case 'pptx':
+        return 'file-powerpoint';
       case 'jpg':
       case 'jpeg':
       case 'png':
       case 'gif':
+      case 'webp':
+      case 'svg':
+      case 'bmp':
         return 'file-image';
+      case 'mp4':
+      case 'avi':
+      case 'mov':
+      case 'wmv':
+      case 'flv':
+      case 'webm':
+      case 'mkv':
+        return 'file-video';
+      case 'mp3':
+      case 'wav':
+      case 'ogg':
+      case 'aac':
+      case 'flac':
+        return 'file-audio';
       case 'zip':
       case 'rar':
+      case '7z':
         return 'file-zip';
+      case 'txt':
+        return 'file-text';
+      case 'csv':
+        return 'file-csv';
       default:
         return 'file';
     }
@@ -240,6 +344,12 @@ export class DocumentService {
       case 'archive':
         return 'badge-secondary';
       case 'supprime':
+        return 'badge-danger';
+      case 'en_cours':
+        return 'badge-warning';
+      case 'valide':
+        return 'badge-success';
+      case 'rejete':
         return 'badge-danger';
       default:
         return 'badge-primary';
@@ -254,25 +364,40 @@ export class DocumentService {
         return 'Archivé';
       case 'supprime':
         return 'Supprimé';
+      case 'en_cours':
+        return 'En cours';
+      case 'valide':
+        return 'Validé';
+      case 'rejete':
+        return 'Rejeté';
       default:
         return statut;
     }
   }
 
   isRecent(dateTelechargement: string): boolean {
+    if (!dateTelechargement) return false;
+    
     const today = new Date();
     const docDate = new Date(dateTelechargement);
     const diffDays = Math.ceil((today.getTime() - docDate.getTime()) / (1000 * 60 * 60 * 24));
     return diffDays <= 7;
   }
 
-  getDocumentUrl(cheminFichier: string): string {
-    // Enlever le préfixe 'documents/' du chemin si présent
-    const cleanPath = cheminFichier.startsWith('documents/') 
-      ? cheminFichier 
-      : `documents/${cheminFichier}`;
-    
-    // Construire l'URL complète avec /storage/
-    return `${this.API_URL.replace('/api', '')}/storage/${cleanPath}`;
+  /**
+   * Debug une URL de document
+   */
+  debugDocumentUrl(document: any): void {
+    console.group(`🔍 Debug Document: ${document.nom_original}`);
+    console.log('Document complet:', document);
+    console.log('Chemin original:', document.chemin_fichier);
+    console.log('URL générée:', this.getDocumentUrl(document.chemin_fichier));
+    console.log('Type détecté:', {
+      isImage: this.isImage(document.nom_original),
+      isVideo: this.isVideo(document.nom_original),
+      isAudio: this.isAudio(document.nom_original)
+    });
+    console.log('Type MIME:', document.type_mime);
+    console.groupEnd();
   }
 }

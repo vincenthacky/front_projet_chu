@@ -12,9 +12,10 @@ import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzStatisticModule } from 'ng-zorro-antd/statistic';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { ApiPaiement, PaiementsFilters, PaiementsResponse } from 'src/app/core/models/paiments';
+import { PayementsService } from 'src/app/core/services/payements.service';
 
-// Services
-import { PayementsService, ApiPaiement, PaiementsResponse, PaiementsFilters } from 'src/app/core/services/payements.service';
+
 
 // Interface pour grouper les paiements par utilisateur
 interface GroupedPaymentsByUser {
