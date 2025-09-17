@@ -1,7 +1,146 @@
 <div class="profile-container">
-    
-    <!-- Card de changement de mot de passe -->
-    <nz-card 
+  <!-- Card principale de profil -->
+  <nz-card nzTitle="Mon Profil" [nzBordered]="false" class="profile-card card-animated">
+    <div nz-row [nzGutter]="{ xs: 12, sm: 16, md: 24, lg: 32 }" class="profile-header">
+      <!-- Section Avatar et Stats -->
+      <div nz-col nzXs="24" nzSm="24" nzMd="8" nzLg="6" class="avatar-section">
+        <nz-upload
+          nzName="avatar"
+          nzListType="picture-card"
+          [nzShowUploadList]="false"
+          [nzBeforeUpload]="beforeUpload"
+          (nzChange)="handleChange($event)"
+          class="profile-upload"
+          aria-label="Photo de profil"
+        >
+          <ng-container *ngIf="avatarUrl; else uploadIcon">
+            <img [src]="avatarUrl" alt="Photo de profil" class="profile-avatar" />
+          </ng-container>
+          <ng-template #uploadIcon>
+            <div class="upload-icon">
+              <span nz-icon nzType="camera" nzTheme="outline"></span>
+              <div class="upload-text">Photo</div>
+            </div>
+          </ng-template>
+        </nz-upload>
+        
+        <!-- Statistiques utilisateur -->
+        <div class="user-stats">
+          <nz-statistic 
+            [nzValue]="userStats.connections" 
+            [nzValueStyle]="{ color: 'white', fontSize: '20px', fontWeight: '600' }">
+          </nz-statistic>
+          <nz-statistic 
+            [nzValue]="userStats.projects" 
+            [nzValueStyle]="{ color: 'white', fontSize: '20px', fontWeight: '600' }">
+          </nz-statistic>
+        </div>
+      </div>
+
+      <!-- Section Affichage des informations -->
+      <div nz-col nzXs="24" nzSm="24" nzMd="16" nzLg="18">
+        <form [formGroup]="userForm" class="profile-form">
+          <!-- Nom et Prénom -->
+          <div nz-row [nzGutter]="{ xs: 12, sm: 16, md: 24 }">
+            <div nz-col nzXs="24" nzSm="12">
+              <nz-form-item>
+                <nz-form-label>Prénom</nz-form-label>
+                <nz-form-control>
+                  <input 
+                    nz-input 
+                    formControlName="firstName" 
+                    placeholder="Votre prénom" 
+                    autocomplete="given-name"
+                    aria-required="true"
+                  />
+                </nz-form-control>
+              </nz-form-item>
+            </div>
+            <div nz-col nzXs="24" nzSm="12">
+              <nz-form-item class="input">
+                <nz-form-label>Nom</nz-form-label>
+                <nz-form-control>
+                  <input 
+                    nz-input 
+                    formControlName="lastName" 
+                    placeholder="Votre nom de famille"
+                    autocomplete="family-name"
+                    aria-required="true"
+                  />
+                </nz-form-control>
+              </nz-form-item>
+            </div>
+          </div>
+
+          <!-- Email et Téléphone -->
+          <div nz-row [nzGutter]="{ xs: 12, sm: 16, md: 24 }">
+            <div nz-col nzXs="24" nzSm="12">
+              <nz-form-item>
+                <nz-form-label>Email</nz-form-label>
+                <nz-form-control>
+                  <input 
+                    nz-input 
+                    formControlName="email" 
+                    placeholder="votre.email@exemple.com"
+                    type="email"
+                    autocomplete="email"
+                    aria-required="true"
+                  />
+                </nz-form-control>
+              </nz-form-item>
+            </div>
+            <div nz-col nzXs="24" nzSm="12">
+              <nz-form-item class="input">
+                <nz-form-label>Téléphone</nz-form-label>
+                <nz-form-control>
+                  <input 
+                    nz-input 
+                    formControlName="phone" 
+                    placeholder="+33 1 23 45 67 89"
+                    type="tel"
+                    autocomplete="tel"
+                  />
+                </nz-form-control>
+              </nz-form-item>
+            </div>
+          </div>
+
+          <!-- Poste et Adresse -->
+          <div nz-row [nzGutter]="{ xs: 12, sm: 16, md: 24 }">
+            <div nz-col nzXs="24" nzSm="12">
+              <nz-form-item>
+                <nz-form-label>Poste</nz-form-label>
+                <nz-form-control>
+                  <input 
+                    nz-input 
+                    formControlName="jobTitle" 
+                    placeholder="Votre fonction"
+                    autocomplete="organization-title"
+                  />
+                </nz-form-control>
+              </nz-form-item>
+            </div>
+            <div nz-col nzXs="24" nzSm="12">
+              <nz-form-item class="input">
+                <nz-form-label>Adresse</nz-form-label>
+                <nz-form-control>
+                  <input 
+                    nz-input 
+                    formControlName="address" 
+                    placeholder="Votre adresse"
+                    autocomplete="street-address"
+                  />
+                </nz-form-control>
+              </nz-form-item>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </nz-card>
+
+  <!-- Card sécurité du compte -->
+  <nz-card 
     nzTitle="Sécurité du compte" 
     [nzBordered]="false" 
     class="password-card card-animated"
@@ -151,38 +290,38 @@
     </form>
   </nz-card>
     
-    <!-- Card informations supplémentaires -->
-    <nz-card 
-  nzTitle="Informations du compte" 
-  [nzBordered]="false" 
-  class="info-card card-animated"
-  *ngIf="showAdditionalInfo"
->
-  <nz-descriptions [nzBordered]="true" [nzColumn]="1" class="vertical-descriptions">
-    <nz-descriptions-item nzTitle="Membre depuis">
-      <nz-tag nzColor="blue">
-        <span nz-icon nzType="calendar" nzTheme="outline"></span>
-        {{ memberSince | date:'dd/MM/yyyy' }}
-      </nz-tag>
-    </nz-descriptions-item>
-    <nz-descriptions-item nzTitle="Dernière connexion">
-      <nz-tag nzColor="green">
-        <span nz-icon nzType="clock-circle" nzTheme="outline"></span>
-        {{ lastConnection | date:'dd/MM/yyyy HH:mm' }}
-      </nz-tag>
-    </nz-descriptions-item>
-    <nz-descriptions-item nzTitle="Statut du compte">
-      <nz-tag [nzColor]="getAccountStatusColor()">
-        <span nz-icon nzType="check-circle" nzTheme="outline"></span>
-        {{ getAccountStatusText() }}
-      </nz-tag>
-    </nz-descriptions-item>
-    <nz-descriptions-item nzTitle="Niveau de sécurité">
-      <nz-tag [nzColor]="getSecurityLevelColor()">
-        <span nz-icon nzType="safety-certificate" nzTheme="outline"></span>
-        {{ getSecurityLevel() }}
-      </nz-tag>
-    </nz-descriptions-item>
-  </nz-descriptions>
-</nz-card>
-  </div>
+  <!-- Card informations supplémentaires -->
+  <nz-card 
+    nzTitle="Informations du compte" 
+    [nzBordered]="false" 
+    class="info-card card-animated"
+    *ngIf="showAdditionalInfo"
+  >
+    <nz-descriptions [nzBordered]="true" [nzColumn]="1" class="vertical-descriptions">
+      <nz-descriptions-item nzTitle="Membre depuis">
+        <nz-tag nzColor="blue">
+          <span nz-icon nzType="calendar" nzTheme="outline"></span>
+          {{ memberSince | date:'dd/MM/yyyy' }}
+        </nz-tag>
+      </nz-descriptions-item>
+      <nz-descriptions-item nzTitle="Dernière connexion">
+        <nz-tag nzColor="green">
+          <span nz-icon nzType="clock-circle" nzTheme="outline"></span>
+          {{ lastConnection | date:'dd/MM/yyyy HH:mm' }}
+        </nz-tag>
+      </nz-descriptions-item>
+      <nz-descriptions-item nzTitle="Statut du compte">
+        <nz-tag [nzColor]="getAccountStatusColor()">
+          <span nz-icon nzType="check-circle" nzTheme="outline"></span>
+          {{ getAccountStatusText() }}
+        </nz-tag>
+      </nz-descriptions-item>
+      <nz-descriptions-item nzTitle="Niveau de sécurité">
+        <nz-tag [nzColor]="getSecurityLevelColor()">
+          <span nz-icon nzType="safety-certificate" nzTheme="outline"></span>
+          {{ getSecurityLevel() }}
+        </nz-tag>
+      </nz-descriptions-item>
+    </nz-descriptions>
+  </nz-card>
+</div>

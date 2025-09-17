@@ -44,7 +44,7 @@ interface Subscription {
   dateDemande?: string;
   dateCreation?: string;
   origine?: string;
-  statut: 'active' | 'en-cours' | 'en-retard' | 'termine' | 'suspendu' | 'annule';
+  statut: 'active' | 'en-cours' | 'en-retard' | 'termine' | 'suspendu' | 'annule' | 'resilie' | 'en_attente' | 'rejete';
   progression: number;
   payments: Payment[];
 }
@@ -448,40 +448,7 @@ export class SubscriptionComponent {
       const progression = prixTotal > 0 ? Math.round((montantPaye / prixTotal) * 100) : 0;
 
       // Logique pour le statut
-      let statut: 'active' | 'en-cours' | 'en-retard' | 'termine' | 'suspendu' | 'annule' = 'active';
-
-      if (item.statut_souscription === 'suspendu') {
-        statut = 'suspendu';
-        console.log(`⚠️ Statut: SUSPENDU (depuis API)`);
-      } else if (item.statut_souscription === 'annulé') {
-        statut = 'annule';
-        console.log(`🚫 Statut: ANNULÉ (depuis API)`);
-      } else {
-        if (resteAPayer === 0) {
-          statut = 'termine';
-          console.log(`✅ Statut: TERMINÉ (reste_a_payer = 0)`);
-        } else if (montantPaye > 0) {
-          statut = 'en-cours';
-          console.log(`🔄 Statut: EN COURS (montant_paye > 0)`);
-        } else {
-          // montant_paye === 0
-          statut = 'active';
-          console.log(`🔵 Statut: ACTIVE (montant_paye = 0)`);
-
-          // Vérifier si en retard : date_prochain dépassée et aucun paiement
-          if (item.date_prochain) {
-            const today = new Date();
-            const dateProchain = new Date(item.date_prochain);
-
-            console.log(`📅 Comparaison dates: Aujourd'hui = ${today.toISOString().split('T')[0]} vs Prochain = ${item.date_prochain}`);
-
-            if (dateProchain < today) {
-              statut = 'en-retard';
-              console.log(`⚠️ Statut: EN RETARD (date ${item.date_prochain} dépassée et montant_paye = 0)`);
-            }
-          }
-        }
-      }
+      let statut = item.statut_souscription;
 
       let prochainPaiement = '';
       if (item.date_prochain) {
@@ -517,7 +484,7 @@ export class SubscriptionComponent {
         resteAPayer: resteAPayer,
         dateDebut: item.date_souscription,
         prochainPaiement: prochainPaiement,
-        statut: statut,
+        statut: statut as any,
         progression: progression,
         payments: payments
       };
@@ -610,12 +577,17 @@ export class SubscriptionComponent {
 
   getStatusColor(status: string): string {
     switch (status) {
-      case 'active': return 'blue'; // Bleu pour active (montant_paye = 0)
-      case 'en-cours': return 'green'; // Vert pour en cours (montant_paye > 0)
+      case 'active': return 'blue';
+      case 'en-cours': return 'green';
       case 'termine': return 'green';
+      case 'terminer': return 'green'; // Ajout pour 'terminer' (variante possible)
       case 'en-retard': return 'red';
       case 'suspendu': return 'orange';
+      case 'supendu': return 'orange'; // Ajout pour 'supendu' (faute de frappe possible pour suspendu)
       case 'annule': return 'gray';
+      case 'resilier': return 'gray'; // Ajout pour 'resilier'
+      case 'en_attente': return 'cyan'; // Ajout pour 'en_attente' (bleu clair)
+      case 'rejete': return 'red'; // Ajout pour 'rejete'
       default: return 'default';
     }
   }
@@ -675,15 +647,17 @@ export class SubscriptionComponent {
 
   getStatusIcon(status: string): string {
     switch (status) {
-      case 'active': return 'fa-clock'; // Icône pour active
+      case 'active': return 'fa-clock';
       case 'en-cours': return 'fa-clock';
       case 'en-retard': return 'fa-exclamation-triangle';
       case 'termine': return 'fa-check-circle';
+      case 'terminer': return 'fa-check-circle'; // Ajout
       case 'suspendu': return 'fa-pause-circle';
+      case 'supendu': return 'fa-pause-circle'; // Ajout
       case 'annule': return 'fa-times-circle';
+      case 'resilier': return 'fa-times-circle'; // Ajout
       case 'en_attente': return 'fa-hourglass-half';
-      case 'approuve': return 'fa-check';
-      case 'rejete': return 'fa-times';
+      case 'rejete': return 'fa-times'; // Ajout pour rejete
       default: return 'fa-clock';
     }
   }
@@ -694,10 +668,12 @@ export class SubscriptionComponent {
       case 'en-cours': return 'En cours';
       case 'en-retard': return 'En retard';
       case 'termine': return 'Terminé';
+      case 'terminer': return 'Terminé'; // Ajout
       case 'suspendu': return 'Suspendu';
+      case 'supendu': return 'Suspendu'; // Ajout
       case 'annule': return 'Annulé';
+      case 'resilier': return 'Résilié'; // Ajout
       case 'en_attente': return 'En attente';
-      case 'approuve': return 'Approuvé';
       case 'rejete': return 'Rejeté';
       default: return 'Inconnu';
     }
