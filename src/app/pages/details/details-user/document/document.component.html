@@ -5,22 +5,24 @@
     <div class="document-info">
       <strong>{{ doc.nom_original }}</strong>
       <small>Publié le {{ doc.date_telechargement | date:'dd MMM yyyy' }}</small>
-      <small>{{doc.description_document}}</small>
-      <small>{{doc.type_document.libelle_type_document}}</small>
+      <div class="document-details" style="display: flex; gap: 10px;">
+        <span> <strong>desciption :</strong> {{ doc.description_document }}</span>
+        <span><strong>libéllé :</strong>  {{ doc.type_document.libelle_type_document }}</span>
+      </div>
     </div>
     <button nz-button nzType="primary" class="btn" (click)="onConsulter(doc)">
-      <i nz-icon></i> Consulter
+      <i nz-icon nzType="eye"></i> Consulter
     </button>
   </div>
-  
+
   <!-- Message si pas de documents -->
   <div *ngIf="documents.length === 0 && !loading" class="no-documents">
     <nz-empty 
-    nzNotFoundImage="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
-    nzNotFoundContent="Aucun document trouvé">
-  </nz-empty>
+      nzNotFoundImage="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
+      nzNotFoundContent="Aucun document trouvé">
+    </nz-empty>
   </div>
-  
+
   <!-- Loading -->
   <div *ngIf="loading" class="loading">
     <p>Chargement des documents...</p>
@@ -28,7 +30,7 @@
 </div>
 
 <!-- Pagination -->
-<div class="pagination-container" *ngIf="totalDocuments > pageSize " style="margin-top: 20px;">
+<div class="pagination-container" *ngIf="totalDocuments > pageSize" style="margin-top: 20px;">
   <nz-pagination 
     [(nzPageIndex)]="currentPage"
     [nzTotal]="totalDocuments"
