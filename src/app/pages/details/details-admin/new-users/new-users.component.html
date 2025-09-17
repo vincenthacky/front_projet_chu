@@ -261,6 +261,203 @@
             </nz-form-control>
           </nz-form-item>
         </div>
+
+        <!-- Section Documents (optionnels) -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <span nz-icon nzType="file-text" nzTheme="outline"></span>
+            Documents (optionnels)
+          </h3>
+          
+          <div nz-row [nzGutter]="16">
+            <div nz-col nzXs="24" nzSm="12" nzMd="12">
+              <nz-form-item>
+                <nz-form-label>CNI</nz-form-label>
+                <nz-form-control>
+                  <nz-upload
+                    nzAction=""
+                    [nzBeforeUpload]="beforeUploadCni"
+                    nzAccept="image/*,.pdf"
+                    [nzShowUploadList]="false"
+                  >
+                    <button nz-button nzType="default" type="button" [disabled]="hasFile('cni')">
+                      <span nz-icon nzType="upload"></span>
+                      {{ hasFile('cni') ? getFileName('cni') : 'Choisir fichier CNI' }}
+                    </button>
+                  </nz-upload>
+                  <button 
+                    *ngIf="hasFile('cni')" 
+                    nz-button 
+                    nzType="text" 
+                    nzDanger 
+                    nzSize="small"
+                    type="button"
+                    (click)="removeFile('cni')"
+                    style="margin-left: 8px;"
+                  >
+                    <span nz-icon nzType="delete"></span>
+                  </button>
+                  
+                  <!-- Aperçu du fichier CNI -->
+                  <div *ngIf="cniPreview" class="file-preview-container">
+                    <div class="file-preview-card">
+                      <div *ngIf="cniPreview !== 'pdf'" class="image-preview">
+                        <img [src]="cniPreview" alt="Aperçu CNI" />
+                      </div>
+                      <div *ngIf="cniPreview === 'pdf'" class="pdf-preview">
+                        <span nz-icon nzType="file-pdf" nzTheme="twotone" nzTwotoneColor="#ff4d4f"></span>
+                        <span>{{ getFileName('cni') }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </nz-form-control>
+              </nz-form-item>
+            </div>
+            
+            <div nz-col nzXs="24" nzSm="12" nzMd="12">
+              <nz-form-item>
+                <nz-form-label>Carte professionnelle</nz-form-label>
+                <nz-form-control>
+                  <nz-upload
+                    nzAction=""
+                    [nzBeforeUpload]="beforeUploadCartePro"
+                    nzAccept="image/*,.pdf"
+                    [nzShowUploadList]="false"
+                  >
+                    <button nz-button nzType="default" type="button" [disabled]="hasFile('carte_professionnel')">
+                      <span nz-icon nzType="upload"></span>
+                      {{ hasFile('carte_professionnel') ? getFileName('carte_professionnel') : 'Choisir carte pro' }}
+                    </button>
+                  </nz-upload>
+                  <button 
+                    *ngIf="hasFile('carte_professionnel')" 
+                    nz-button 
+                    nzType="text" 
+                    nzDanger 
+                    nzSize="small"
+                    type="button"
+                    (click)="removeFile('carte_professionnel')"
+                    style="margin-left: 8px;"
+                  >
+                    <span nz-icon nzType="delete"></span>
+                  </button>
+                  
+                  <!-- Aperçu du fichier Carte Pro -->
+                  <div *ngIf="carteProPreview" class="file-preview-container">
+                    <div class="file-preview-card">
+                      <div *ngIf="carteProPreview !== 'pdf'" class="image-preview">
+                        <img [src]="carteProPreview" alt="Aperçu Carte Pro" />
+                      </div>
+                      <div *ngIf="carteProPreview === 'pdf'" class="pdf-preview">
+                        <span nz-icon nzType="file-pdf" nzTheme="twotone" nzTwotoneColor="#ff4d4f"></span>
+                        <span>{{ getFileName('carte_professionnel') }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </nz-form-control>
+              </nz-form-item>
+            </div>
+          </div>
+
+          <div nz-row [nzGutter]="16">
+            <div nz-col nzXs="24" nzSm="12" nzMd="12">
+              <nz-form-item>
+                <nz-form-label>Fiche de souscription</nz-form-label>
+                <nz-form-control>
+                  <nz-upload
+                    nzAction=""
+                    [nzBeforeUpload]="beforeUploadFicheSouscription"
+                    nzAccept="image/*,.pdf"
+                    [nzShowUploadList]="false"
+                  >
+                    <button nz-button nzType="default" type="button" [disabled]="hasFile('fiche_souscription')">
+                      <span nz-icon nzType="upload"></span>
+                      {{ hasFile('fiche_souscription') ? getFileName('fiche_souscription') : 'Choisir fiche souscription' }}
+                    </button>
+                  </nz-upload>
+                  <button 
+                    *ngIf="hasFile('fiche_souscription')" 
+                    nz-button 
+                    nzType="text" 
+                    nzDanger 
+                    nzSize="small"
+                    type="button"
+                    (click)="removeFile('fiche_souscription')"
+                    style="margin-left: 8px;"
+                  >
+                    <span nz-icon nzType="delete"></span>
+                  </button>
+                  
+                  <!-- Aperçu du fichier Fiche Souscription -->
+                  <div *ngIf="ficheSouscriptionPreview" class="file-preview-container">
+                    <div class="file-preview-card">
+                      <div *ngIf="ficheSouscriptionPreview !== 'pdf'" class="image-preview">
+                        <img [src]="ficheSouscriptionPreview" alt="Aperçu Fiche Souscription" />
+                      </div>
+                      <div *ngIf="ficheSouscriptionPreview === 'pdf'" class="pdf-preview">
+                        <span nz-icon nzType="file-pdf" nzTheme="twotone" nzTwotoneColor="#ff4d4f"></span>
+                        <span>{{ getFileName('fiche_souscription') }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </nz-form-control>
+              </nz-form-item>
+            </div>
+            
+            <div nz-col nzXs="24" nzSm="12" nzMd="12">
+              <nz-form-item>
+                <nz-form-label>Photo de profil</nz-form-label>
+                <nz-form-control>
+                  <nz-upload
+                    nzAction=""
+                    [nzBeforeUpload]="beforeUploadPhotoProfil"
+                    nzAccept="image/*"
+                    [nzShowUploadList]="false"
+                  >
+                    <button nz-button nzType="default" type="button" [disabled]="hasFile('photo_profil')">
+                      <span nz-icon nzType="upload"></span>
+                      {{ hasFile('photo_profil') ? getFileName('photo_profil') : 'Choisir photo profil' }}
+                    </button>
+                  </nz-upload>
+                  <button 
+                    *ngIf="hasFile('photo_profil')" 
+                    nz-button 
+                    nzType="text" 
+                    nzDanger 
+                    nzSize="small"
+                    type="button"
+                    (click)="removeFile('photo_profil')"
+                    style="margin-left: 8px;"
+                  >
+                    <span nz-icon nzType="delete"></span>
+                  </button>
+                  
+                  <!-- Aperçu du fichier Photo Profil -->
+                  <div *ngIf="photoProfilPreview" class="file-preview-container">
+                    <div class="file-preview-card">
+                      <div *ngIf="photoProfilPreview !== 'pdf'" class="image-preview">
+                        <img [src]="photoProfilPreview" alt="Aperçu Photo Profil" />
+                      </div>
+                      <div *ngIf="photoProfilPreview === 'pdf'" class="pdf-preview">
+                        <span nz-icon nzType="file-pdf" nzTheme="twotone" nzTwotoneColor="#ff4d4f"></span>
+                        <span>{{ getFileName('photo_profil') }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </nz-form-control>
+              </nz-form-item>
+            </div>
+          </div>
+
+          <div class="documents-info">
+            <nz-alert
+              nzType="info"
+              nzMessage="Information sur les documents"
+              nzDescription="Tous les documents sont facultatifs. Formats acceptés : Images (JPG, PNG, GIF) et PDF. Taille maximale : 5MB par fichier. Les images seront automatiquement compressées pour optimiser l'envoi."
+              nzShowIcon
+            ></nz-alert>
+          </div>
+        </div>
   
         <!-- Aperçu des données utilisateur -->
         <div class="user-preview" *ngIf="createUserForm.valid">

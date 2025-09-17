@@ -14,8 +14,10 @@ import { NzGridModule } from 'ng-zorro-antd/grid';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzProgressModule } from 'ng-zorro-antd/progress';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
+import { NzUploadModule } from 'ng-zorro-antd/upload';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
+import { NzUploadFile } from 'ng-zorro-antd/upload';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged, of, map, catchError, Observable } from 'rxjs';
 import { AuthService } from 'src/app/core/services/auth.service';
 
@@ -35,7 +37,8 @@ import { AuthService } from 'src/app/core/services/auth.service';
     NzGridModule,
     NzSpaceModule,
     NzProgressModule,
-    NzAlertModule
+    NzAlertModule,
+    NzUploadModule
   ],
   templateUrl: './new-users.component.html',
   styleUrl: './new-users.component.css'
@@ -46,6 +49,18 @@ export class NewUsersComponent implements OnInit, OnDestroy {
   passwordVisible = false;
   confirmPasswordVisible = false;
   private destroy$ = new Subject<void>();
+
+  // Variables pour les fichiers
+  cniFile: File | null = null;
+  carteProFile: File | null = null;
+  ficheSouscriptionFile: File | null = null;
+  photoProfilFile: File | null = null;
+
+  // Variables pour les aperçus des fichiers
+  cniPreview: string | null = null;
+  carteProPreview: string | null = null;
+  ficheSouscriptionPreview: string | null = null;
+  photoProfilPreview: string | null = null;
 
   // Options de statut
   statusOptions = [
@@ -105,7 +120,11 @@ private emailUniqueValidator = (control: AbstractControl): Observable<Validation
       statut_utilisateur: ['actif', Validators.required],
       mot_de_passe: ['', [Validators.required, Validators.minLength(8), this.passwordStrengthValidator.bind(this)]],
       confirmer_mot_de_passe: ['', [Validators.required]],
-      est_administrateur: [false]
+      est_administrateur: [false],
+      cni: [''],
+      carte_professionnel: [''],
+      fiche_souscription: [''],
+      photo_profil: ['']
     }, {
       validators: this.passwordMatchValidator
     });
@@ -166,12 +185,56 @@ private emailUniqueValidator = (control: AbstractControl): Observable<Validation
     if (this.createUserForm.valid) {
       this.isSubmitting = true;
   
-      const formData = { ...this.createUserForm.value };
-      delete formData.confirmer_mot_de_passe;
+      const formDataObj = new FormData();
+      
+      // Ajouter les données du formulaire
+      const userData = { ...this.createUserForm.value };
+      delete userData.confirmer_mot_de_passe;
+      delete userData.cni;
+      delete userData.carte_professionnel;
+      delete userData.fiche_souscription;
+      delete userData.photo_profil;
+      
+      // Ajouter chaque champ individuellement au FormData
+      Object.keys(userData).forEach(key => {
+        if (userData[key] !== null && userData[key] !== undefined) {
+          formDataObj.append(key, userData[key]);
+        }
+      });
+      
+      // Ajouter les fichiers s'ils existent
+      if (this.cniFile) {
+        formDataObj.append('cni', this.cniFile);
+      }
+      if (this.carteProFile) {
+        formDataObj.append('carte_professionnel', this.carteProFile);
+      }
+      if (this.ficheSouscriptionFile) {
+        formDataObj.append('fiche_souscription', this.ficheSouscriptionFile);
+      }
+      if (this.photoProfilFile) {
+        formDataObj.append('photo_profil', this.photoProfilFile);
+      }
   
-      console.log('📝 Données à envoyer pour création:', formData);
+      console.log('📝 Données à envoyer pour création:', userData);
+      console.log('📎 Fichiers à envoyer:', {
+        cni: this.cniFile?.name,
+        carte_professionnel: this.carteProFile?.name,
+        fiche_souscription: this.ficheSouscriptionFile?.name,
+        photo_profil: this.photoProfilFile?.name
+      });
+      
+      // Debug: afficher le contenu du FormData
+      console.log('📦 Contenu FormData:');
+      console.log('  Champs utilisateur:', Object.keys(userData));
+      console.log('  Fichiers ajoutés:', {
+        cni: this.cniFile ? `${this.cniFile.name} (${(this.cniFile.size / 1024).toFixed(1)}KB)` : 'Aucun',
+        carte_professionnel: this.carteProFile ? `${this.carteProFile.name} (${(this.carteProFile.size / 1024).toFixed(1)}KB)` : 'Aucun',
+        fiche_souscription: this.ficheSouscriptionFile ? `${this.ficheSouscriptionFile.name} (${(this.ficheSouscriptionFile.size / 1024).toFixed(1)}KB)` : 'Aucun',
+        photo_profil: this.photoProfilFile ? `${this.photoProfilFile.name} (${(this.photoProfilFile.size / 1024).toFixed(1)}KB)` : 'Aucun'
+      });
   
-      this.authService.createUser(formData).pipe(
+      this.authService.createUserWithFiles(formDataObj).pipe(
         takeUntil(this.destroy$)
       ).subscribe({
         next: (response) => {
@@ -204,18 +267,37 @@ private emailUniqueValidator = (control: AbstractControl): Observable<Validation
           console.error('❌ Erreur création utilisateur:', error);
           this.isSubmitting = false;
   
-          // Vérifier spécifiquement l'erreur d'email dupliqué
-          const errorMessage = error.error?.message || '';
-  
-          if (errorMessage.includes('Duplicate entry') && errorMessage.includes('email')) {
-            this.createUserForm.get('email')?.setErrors({ emailTaken: true });
-            this.message.error('Cette adresse email est déjà utilisée par un autre utilisateur');
+          // Gestion des différents types d'erreurs
+          if (error.status === 413) {
+            this.message.error('Les fichiers sont trop volumineux pour le serveur');
             this.notification.error(
-              'Email déjà utilisé',
-              'Veuillez choisir une autre adresse email pour créer ce compte.'
+              'Fichiers trop volumineux',
+              'Veuillez réduire la taille de vos fichiers ou en sélectionner de plus petits.'
             );
+          } else if (error.status === 422) {
+            // Erreurs de validation
+            const errors = error.error?.errors || {};
+            if (errors.mot_de_passe) {
+              this.message.error('Erreur de validation: ' + errors.mot_de_passe[0]);
+            } else if (errors.email) {
+              this.message.error('Erreur email: ' + errors.email[0]);
+            } else {
+              this.message.error('Erreur de validation des données');
+            }
           } else {
-            this.message.error('Erreur lors de la création de l\'utilisateur: ' + (error.error?.message || 'Email déjà utilisé'));
+            // Vérifier spécifiquement l'erreur d'email dupliqué
+            const errorMessage = error.error?.message || '';
+            
+            if (errorMessage.includes('Duplicate entry') && errorMessage.includes('email')) {
+              this.createUserForm.get('email')?.setErrors({ emailTaken: true });
+              this.message.error('Cette adresse email est déjà utilisée par un autre utilisateur');
+              this.notification.error(
+                'Email déjà utilisé',
+                'Veuillez choisir une autre adresse email pour créer ce compte.'
+              );
+            } else {
+              this.message.error('Erreur lors de la création de l\'utilisateur: ' + (error.error?.message || 'Erreur serveur'));
+            }
           }
         }
       });
@@ -459,6 +541,285 @@ private emailUniqueValidator = (control: AbstractControl): Observable<Validation
         this.saveDraft();
       }
     });
+  }
+
+  // Méthodes pour gérer les fichiers
+  beforeUploadCni = (file: NzUploadFile): boolean => {
+    console.log('🔄 beforeUploadCni appelé avec:', file);
+    const actualFile = file.originFileObj || (file as any as File);
+    if (actualFile) {
+      if (this.validateFileSize(actualFile, 'CNI')) {
+        this.onCniChange(actualFile);
+      }
+    } else {
+      console.error('❌ Aucun fichier trouvé pour CNI');
+    }
+    return false;
+  };
+
+  beforeUploadCartePro = (file: NzUploadFile): boolean => {
+    console.log('🔄 beforeUploadCartePro appelé avec:', file);
+    const actualFile = file.originFileObj || (file as any as File);
+    if (actualFile) {
+      if (this.validateFileSize(actualFile, 'Carte Pro')) {
+        this.onCarteProChange(actualFile);
+      }
+    } else {
+      console.error('❌ Aucun fichier trouvé pour Carte Pro');
+    }
+    return false;
+  };
+
+  beforeUploadFicheSouscription = (file: NzUploadFile): boolean => {
+    console.log('🔄 beforeUploadFicheSouscription appelé avec:', file);
+    const actualFile = file.originFileObj || (file as any as File);
+    if (actualFile) {
+      if (this.validateFileSize(actualFile, 'Fiche Souscription')) {
+        this.onFicheSouscriptionChange(actualFile);
+      }
+    } else {
+      console.error('❌ Aucun fichier trouvé pour Fiche Souscription');
+    }
+    return false;
+  };
+
+  beforeUploadPhotoProfil = (file: NzUploadFile): boolean => {
+    console.log('🔄 beforeUploadPhotoProfil appelé avec:', file);
+    const actualFile = file.originFileObj || (file as any as File);
+    if (actualFile) {
+      if (this.validateFileSize(actualFile, 'Photo Profil')) {
+        this.onPhotoProfilChange(actualFile);
+      }
+    } else {
+      console.error('❌ Aucun fichier trouvé pour Photo Profil');
+    }
+    return false;
+  };
+
+  // Validation de la taille du fichier
+  validateFileSize(file: File, fileType: string): boolean {
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      this.message.error(`Le fichier ${fileType} est trop volumineux. Taille maximale: 5MB`);
+      this.notification.error(
+        'Fichier trop volumineux',
+        `Le fichier ${fileType} (${(file.size / 1024 / 1024).toFixed(1)}MB) dépasse la limite de 5MB.`
+      );
+      return false;
+    }
+    return true;
+  }
+
+  // Compression d'image
+  async compressImage(file: File): Promise<File> {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d')!;
+      const img = new Image();
+      
+      img.onload = () => {
+        // Calculer les nouvelles dimensions (max 1920x1080)
+        let { width, height } = img;
+        const maxWidth = 1920;
+        const maxHeight = 1080;
+        
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width *= ratio;
+          height *= ratio;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Dessiner l'image redimensionnée
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Convertir en blob avec qualité réduite
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const compressedFile = new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now()
+            });
+            console.log(`📉 Compression: ${(file.size / 1024 / 1024).toFixed(1)}MB → ${(compressedFile.size / 1024 / 1024).toFixed(1)}MB`);
+            resolve(compressedFile);
+          } else {
+            resolve(file);
+          }
+        }, 'image/jpeg', 0.8); // Qualité 80%
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
+  async onCniChange(file: File): Promise<void> {
+    let finalFile = file;
+    
+    // Compresser si c'est une image
+    if (file.type.startsWith('image/')) {
+      finalFile = await this.compressImage(file);
+    }
+    
+    this.cniFile = finalFile;
+    this.createUserForm.patchValue({ cni: finalFile.name });
+    this.createFilePreview(finalFile, 'cni');
+  }
+
+  async onCarteProChange(file: File): Promise<void> {
+    let finalFile = file;
+    
+    if (file.type.startsWith('image/')) {
+      finalFile = await this.compressImage(file);
+    }
+    
+    this.carteProFile = finalFile;
+    this.createUserForm.patchValue({ carte_professionnel: finalFile.name });
+    this.createFilePreview(finalFile, 'carte_professionnel');
+  }
+
+  async onFicheSouscriptionChange(file: File): Promise<void> {
+    let finalFile = file;
+    
+    if (file.type.startsWith('image/')) {
+      finalFile = await this.compressImage(file);
+    }
+    
+    this.ficheSouscriptionFile = finalFile;
+    this.createUserForm.patchValue({ fiche_souscription: finalFile.name });
+    this.createFilePreview(finalFile, 'fiche_souscription');
+  }
+
+  async onPhotoProfilChange(file: File): Promise<void> {
+    let finalFile = file;
+    
+    if (file.type.startsWith('image/')) {
+      finalFile = await this.compressImage(file);
+    }
+    
+    this.photoProfilFile = finalFile;
+    this.createUserForm.patchValue({ photo_profil: finalFile.name });
+    this.createFilePreview(finalFile, 'photo_profil');
+  }
+
+  // Créer un aperçu du fichier
+  createFilePreview(file: File, fileType: string): void {
+    console.log('📷 Création aperçu pour:', fileType, 'Type de fichier:', file.type);
+    
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        console.log('📷 Aperçu créé pour:', fileType, 'URL:', result ? 'OK' : 'ERREUR');
+        
+        switch (fileType) {
+          case 'cni':
+            this.cniPreview = result;
+            break;
+          case 'carte_professionnel':
+            this.carteProPreview = result;
+            break;
+          case 'fiche_souscription':
+            this.ficheSouscriptionPreview = result;
+            break;
+          case 'photo_profil':
+            this.photoProfilPreview = result;
+            break;
+        }
+        
+        // Forcer la détection de changement
+        setTimeout(() => {
+          console.log('📷 État aperçu après création:', {
+            cni: !!this.cniPreview,
+            cartePro: !!this.carteProPreview,
+            fiche: !!this.ficheSouscriptionPreview,
+            photo: !!this.photoProfilPreview
+          });
+        }, 100);
+      };
+      
+      reader.onerror = (error) => {
+        console.error('❌ Erreur lecture fichier:', error);
+      };
+      
+      reader.readAsDataURL(file);
+    } else {
+      console.log('📄 Fichier PDF détecté pour:', fileType);
+      // Pour les fichiers PDF, on affiche une icône
+      switch (fileType) {
+        case 'cni':
+          this.cniPreview = 'pdf';
+          break;
+        case 'carte_professionnel':
+          this.carteProPreview = 'pdf';
+          break;
+        case 'fiche_souscription':
+          this.ficheSouscriptionPreview = 'pdf';
+          break;
+        case 'photo_profil':
+          this.photoProfilPreview = 'pdf';
+          break;
+      }
+    }
+  }
+
+  // Méthode pour supprimer un fichier
+  removeFile(fileType: string): void {
+    switch (fileType) {
+      case 'cni':
+        this.cniFile = null;
+        this.cniPreview = null;
+        this.createUserForm.patchValue({ cni: '' });
+        break;
+      case 'carte_professionnel':
+        this.carteProFile = null;
+        this.carteProPreview = null;
+        this.createUserForm.patchValue({ carte_professionnel: '' });
+        break;
+      case 'fiche_souscription':
+        this.ficheSouscriptionFile = null;
+        this.ficheSouscriptionPreview = null;
+        this.createUserForm.patchValue({ fiche_souscription: '' });
+        break;
+      case 'photo_profil':
+        this.photoProfilFile = null;
+        this.photoProfilPreview = null;
+        this.createUserForm.patchValue({ photo_profil: '' });
+        break;
+    }
+  }
+
+  // Vérifier si un fichier est sélectionné
+  hasFile(fileType: string): boolean {
+    switch (fileType) {
+      case 'cni':
+        return !!this.cniFile;
+      case 'carte_professionnel':
+        return !!this.carteProFile;
+      case 'fiche_souscription':
+        return !!this.ficheSouscriptionFile;
+      case 'photo_profil':
+        return !!this.photoProfilFile;
+      default:
+        return false;
+    }
+  }
+
+  // Obtenir le nom du fichier
+  getFileName(fileType: string): string {
+    switch (fileType) {
+      case 'cni':
+        return this.cniFile?.name || '';
+      case 'carte_professionnel':
+        return this.carteProFile?.name || '';
+      case 'fiche_souscription':
+        return this.ficheSouscriptionFile?.name || '';
+      case 'photo_profil':
+        return this.photoProfilFile?.name || '';
+      default:
+        return '';
+    }
   }
 
 }
