@@ -5,6 +5,8 @@
     <div class="document-info">
       <strong>{{ doc.nom_original }}</strong>
       <small>Publié le {{ doc.date_telechargement | date:'dd MMM yyyy' }}</small>
+      <small>{{doc.description_document}}</small>
+      <small>{{doc.type_document.libelle_type_document}}</small>
     </div>
     <button nz-button nzType="primary" class="btn" (click)="onConsulter(doc)">
       <i nz-icon></i> Consulter
