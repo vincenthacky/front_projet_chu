@@ -741,6 +741,40 @@ export class AuthService {
     );
   }
 
+  createUserWithFiles(formData: FormData): Observable<UserUpdateResponse> {
+    const token = this.getToken();
+    if (!token) {
+      console.error('❌ Aucun token d\'authentification trouvé');
+      return throwError(() => new Error('Utilisateur non authentifié'));
+    }
+  
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+  
+    console.log('🔄 Création d\'un nouvel utilisateur avec fichiers:', {
+      url: `${this.API_URL}/utilisateurs`
+    });
+  
+    return this.http.post<UserUpdateResponse>(`${this.API_URL}/utilisateurs`, formData, { headers }).pipe(
+      tap(response => {
+        console.log('📨 Réponse brute création utilisateur avec fichiers:', response);
+      }),
+      map(response => {
+        const decoded = this.decodeUnicodeInObject(response) as UserUpdateResponse;
+        console.log('📨 Réponse décodée création utilisateur avec fichiers:', decoded);
+        return decoded;
+      }),
+      catchError(error => {
+        console.error('❌ Erreur création utilisateur avec fichiers:', error);
+        if (error.error) {
+          error.error = this.decodeUnicodeInObject(error.error);
+        }
+        return throwError(() => new Error(error.error?.message || 'Erreur serveur'));
+      })
+    );
+  }
+
   checkEmailExists(email: string): Observable<boolean> {
     const token = this.getToken();
     if (!token) {
