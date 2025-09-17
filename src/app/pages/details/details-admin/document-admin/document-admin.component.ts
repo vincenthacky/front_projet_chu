@@ -8,6 +8,7 @@ import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
+import { NzModalModule } from 'ng-zorro-antd/modal';
 import { ApiDocument } from 'src/app/core/models/documents';
 import { DocumentService } from 'src/app/core/services/documents.service';
 
@@ -24,7 +25,8 @@ import { DocumentService } from 'src/app/core/services/documents.service';
     NzEmptyModule,
     NzCardModule,
     NzTagModule,
-    NzToolTipModule
+    NzToolTipModule,
+    NzModalModule
   ],
   templateUrl: './document-admin.component.html',
   styleUrl: './document-admin.component.css'
@@ -39,7 +41,12 @@ export class DocumentAdminComponent implements OnInit {
   pageSize: number = 10; // Augmenté à 10 documents par page
   totalDocuments: number = 0;
 
-  constructor(private documentService: DocumentService) { }
+  // Propriétés pour le modal
+  isModalVisible = false;
+  selectedDocument: ApiDocument | null = null;
+  documentUrl = '';
+
+  constructor(public documentService: DocumentService) { }
 
   ngOnInit(): void {
     this.chargerTousLesDocuments();
@@ -107,30 +114,13 @@ export class DocumentAdminComponent implements OnInit {
   }
 
   /**
-   * Ouvre/visualise le document sélectionné
+   * Ouvre le modal pour visualiser le document
    */
   onConsulter(document: ApiDocument): void {
-    console.log('👁️ Consultation du document:', document.nom_original);
-    
-    // Construire l'URL complète du document
-    const baseUrl = this.documentService.getDocumentUrl(document.chemin_fichier);
-    
-    // Déterminer l'extension du fichier
-    const extension = document.nom_original.split('.').pop()?.toLowerCase();
-    
-    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(extension || '')) {
-      // Ouvrir l'image dans un nouvel onglet
-      window.open(baseUrl, '_blank');
-    } else if (extension === 'pdf') {
-      // Ouvrir le PDF dans un nouvel onglet
-      window.open(baseUrl, '_blank');
-    } else if (['txt', 'html', 'xml', 'json'].includes(extension || '')) {
-      // Ouvrir les fichiers texte dans un nouvel onglet
-      window.open(baseUrl, '_blank');
-    } else {
-      // Pour les autres types de fichiers, proposer le téléchargement
-      this.telechargerDocument(document);
-    }
+    console.log('Consultation du document:', document);
+    this.selectedDocument = document;
+    this.documentUrl = this.documentService.getDocumentUrl(document.chemin_fichier);
+    this.isModalVisible = true;
   }
 
   /**
@@ -171,8 +161,32 @@ export class DocumentAdminComponent implements OnInit {
   /**
    * Retourne l'icône appropriée pour le type de fichier
    */
-  getFileIcon(document: ApiDocument): string {
-    return this.documentService.getFileIcon(document.nom_original);
+  getFileIcon(fileName: string): string {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    
+    switch (extension) {
+      case 'pdf':
+        return 'file-pdf';
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+      case 'webp':
+        return 'file-image';
+      case 'mp4':
+      case 'avi':
+      case 'mov':
+      case 'wmv':
+        return 'video-camera';
+      case 'doc':
+      case 'docx':
+        return 'file-word';
+      case 'xls':
+      case 'xlsx':
+        return 'file-excel';
+      default:
+        return 'file';
+    }
   }
 
   /**
@@ -244,5 +258,98 @@ export class DocumentAdminComponent implements OnInit {
   retry(): void {
     this.error = null;
     this.chargerTousLesDocuments();
+  }
+
+  /**
+   * Détermine si le fichier est une image
+   */
+  isImage(fileName: string): boolean {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension || '');
+  }
+
+  /**
+   * Obtient la couleur du tag selon le type de document
+   */
+  getDocumentTypeColor(typeDocument: string): string {
+    switch (typeDocument) {
+      case 'CNI':
+        return 'blue';
+      case 'Photo de Profil':
+        return 'green';
+      case 'Carte Professionnelle':
+        return 'orange';
+      case 'Fiche de Souscription':
+        return 'purple';
+      default:
+        return 'default';
+    }
+  }
+
+  /**
+   * Gère les erreurs de chargement d'images
+   */
+  onImageError(event: Event): void {
+    const target = event.target as HTMLImageElement;
+    target.src = 'assets/images/image-error.png';
+  }
+
+  /**
+   * Ouvre le document pour visualisation
+   */
+  ouvrirDocument(doc: ApiDocument): void {
+    this.onConsulter(doc);
+  }
+
+  /**
+   * Génère la description de la carte
+   */
+  getCardDescription(doc: ApiDocument): string {
+    return `${this.getTypeDocument(doc)} • ${this.formatDate(doc.date_telechargement)}`;
+  }
+
+  /**
+   * Formate la taille du fichier
+   */
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  }
+
+  /**
+   * Ferme le modal
+   */
+  closeModal(): void {
+    this.isModalVisible = false;
+    this.selectedDocument = null;
+    this.documentUrl = '';
+  }
+
+  /**
+   * Détermine si le fichier est un PDF
+   */
+  isPdf(fileName: string): boolean {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    return extension === 'pdf';
+  }
+
+  /**
+   * Détermine si le fichier est une vidéo
+   */
+  isVideo(fileName: string): boolean {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    return ['mp4', 'avi', 'mov', 'wmv', 'webm'].includes(extension || '');
+  }
+
+  /**
+   * Ouvre le document dans un nouvel onglet
+   */
+  openInNewTab(): void {
+    if (this.documentUrl) {
+      window.open(this.documentUrl, '_blank');
+    }
   }
 }
