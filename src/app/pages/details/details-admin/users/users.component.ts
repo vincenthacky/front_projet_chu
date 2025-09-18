@@ -19,12 +19,43 @@ import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
+import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
+import { NzUploadModule } from 'ng-zorro-antd/upload';
+import { NzUploadFile } from 'ng-zorro-antd/upload';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { Subject, Observable, of, debounceTime, distinctUntilChanged, takeUntil, tap, catchError } from 'rxjs';
 import { User } from 'src/app/core/models/auth';
 import { AuthService } from 'src/app/core/services/auth.service';
+import { environment } from '@/environment';
 
+// Interface pour les documents
+interface DocumentData {
+  id_document: number;
+  id_souscription: number | null;
+  id_type_document: number;
+  source_table: string;
+  id_source: number;
+  nom_fichier: string;
+  nom_original: string;
+  chemin_fichier: string;
+  type_mime: string | null;
+  taille_fichier: number;
+  description_document: string;
+  version_document: number;
+  date_telechargement: string;
+  statut_document: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Interface pour les documents utilisateur
+interface UserDocuments {
+  carte_professionnelle?: DocumentData;
+  cni?: DocumentData;
+  photo_profil?: DocumentData;
+  fiche_souscription?: DocumentData;
+}
 
 @Component({
   selector: 'app-users',
@@ -50,7 +81,9 @@ import { AuthService } from 'src/app/core/services/auth.service';
     NzCheckboxModule,
     NzRadioModule,
     NzDividerModule,
-    NzAlertModule
+    NzAlertModule,
+    NzDescriptionsModule,
+    NzUploadModule
   ],
   templateUrl: './users.component.html',
   styleUrls: ['./users.component.css']
@@ -82,6 +115,16 @@ export class UsersComponent implements OnInit, OnDestroy {
   selectedUserForStatus: User | null = null;
   newStatus: 'actif' | 'suspendu' | 'inactif' = 'actif';
   isStatusLoading = false;
+
+  // Documents de l'utilisateur en cours de modification
+  editUserDocuments: UserDocuments | null = null;
+
+  // Modal pour l'affichage des documents
+  isDocumentModalVisible = false;
+  selectedDocument: DocumentData | null = null;
+
+  // Fichiers en cours d'upload pour l'édition
+  editUploadFiles: { [key: string]: File } = {};
 
   // Options de statut
   statusOptions = [
@@ -269,6 +312,7 @@ export class UsersComponent implements OnInit, OnDestroy {
         console.log('👤 Profil utilisateur récupéré:', response);
         this.editingUser = response.data;
         this.populateEditForm(response.data);
+        this.loadUserDocuments(response.data);
         this.isEditModalVisible = true;
         this.isEditLoading = false;  // Arrêter le loading après succès
       },
@@ -524,5 +568,239 @@ export class UsersComponent implements OnInit, OnDestroy {
 
   trackByUserId(index: number, user: User): number {
     return user.id_utilisateur;
+  }
+
+  // Méthodes pour la gestion des documents
+
+  private loadUserDocuments(userData: any): void {
+    this.editUserDocuments = {
+      carte_professionnelle: userData.carte_professionnelle || null,
+      cni: userData.cni || null,
+      photo_profil: userData.photo_profil || null,
+      fiche_souscription: userData.fiche_souscription || null
+    };
+    console.log('📋 Documents utilisateur chargés:', this.editUserDocuments);
+  }
+
+  // Getters pour accéder en sécurité aux documents
+  get carteProf(): DocumentData | null {
+    return this.editUserDocuments?.carte_professionnelle || null;
+  }
+
+  get cniDoc(): DocumentData | null {
+    return this.editUserDocuments?.cni || null;
+  }
+
+  get photoProfilDoc(): DocumentData | null {
+    return this.editUserDocuments?.photo_profil || null;
+  }
+
+  get ficheSouscriptionDoc(): DocumentData | null {
+    return this.editUserDocuments?.fiche_souscription || null;
+  }
+
+  viewDocument(document: DocumentData): void {
+    this.selectedDocument = document;
+    this.isDocumentModalVisible = true;
+  }
+
+  closeDocumentModal(): void {
+    this.isDocumentModalVisible = false;
+    this.selectedDocument = null;
+  }
+
+  getDocumentUrl(document: DocumentData | null): string {
+    if (!document || !document.chemin_fichier) return '';
+    const imagePath = document.chemin_fichier.replace(/\\/g, '/');
+    return `${environment.storageUrl}/${imagePath}`;
+  }
+
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  onImageError(event: Event): void {
+    const target = event.target as HTMLImageElement;
+    if (target && target.nextElementSibling) {
+      target.style.display = 'none';
+      (target.nextElementSibling as HTMLElement).style.display = 'block';
+    }
+  }
+
+  // Méthodes pour l'upload des documents dans l'édition
+
+  beforeUploadEditCni = (file: NzUploadFile): boolean => {
+    console.log('🔄 beforeUploadEditCni appelé avec:', file);
+    const actualFile = file.originFileObj || (file as any as File);
+    if (actualFile) {
+      if (this.validateFileSize(actualFile, 'CNI')) {
+        this.onEditFileChange(actualFile, 'cni');
+      }
+    } else {
+      console.error('❌ Aucun fichier trouvé pour CNI');
+    }
+    return false;
+  };
+
+  beforeUploadEditCartePro = (file: NzUploadFile): boolean => {
+    console.log('🔄 beforeUploadEditCartePro appelé avec:', file);
+    const actualFile = file.originFileObj || (file as any as File);
+    if (actualFile) {
+      if (this.validateFileSize(actualFile, 'Carte Professionnelle')) {
+        this.onEditFileChange(actualFile, 'carte_professionnelle');
+      }
+    } else {
+      console.error('❌ Aucun fichier trouvé pour Carte Pro');
+    }
+    return false;
+  };
+
+  beforeUploadEditPhotoProfil = (file: NzUploadFile): boolean => {
+    console.log('🔄 beforeUploadEditPhotoProfil appelé avec:', file);
+    const actualFile = file.originFileObj || (file as any as File);
+    if (actualFile) {
+      if (this.validateFileSize(actualFile, 'Photo de Profil')) {
+        this.onEditFileChange(actualFile, 'photo_profil');
+      }
+    } else {
+      console.error('❌ Aucun fichier trouvé pour Photo Profil');
+    }
+    return false;
+  };
+
+  beforeUploadEditFicheSouscription = (file: NzUploadFile): boolean => {
+    console.log('🔄 beforeUploadEditFicheSouscription appelé avec:', file);
+    const actualFile = file.originFileObj || (file as any as File);
+    if (actualFile) {
+      if (this.validateFileSize(actualFile, 'Fiche de Souscription')) {
+        this.onEditFileChange(actualFile, 'fiche_souscription');
+      }
+    } else {
+      console.error('❌ Aucun fichier trouvé pour Fiche Souscription');
+    }
+    return false;
+  };
+
+  private validateFileSize(file: File, fileType: string): boolean {
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      this.message.error(`Le fichier ${fileType} est trop volumineux. Taille maximale: 5MB`);
+      this.notification.error(
+        'Fichier trop volumineux',
+        `Le fichier ${fileType} (${(file.size / 1024 / 1024).toFixed(1)}MB) dépasse la limite de 5MB.`
+      );
+      return false;
+    }
+    return true;
+  }
+
+  private onEditFileChange(file: File, documentType: string): void {
+    console.log(`📎 Fichier ${documentType} sélectionné:`, file.name);
+    
+    // Stocker le fichier pour l'envoi lors de la soumission
+    this.editUploadFiles[documentType] = file;
+    
+    this.message.success(`Fichier ${documentType} sélectionné: ${file.name}`);
+    this.notification.success(
+      'Fichier sélectionné',
+      `Le fichier ${documentType} sera mis à jour lors de l'enregistrement des modifications.`
+    );
+  }
+
+  // Modification de submitEdit pour inclure l'upload des documents
+  submitEditWithDocuments(): void {
+    if (this.editForm.valid && this.editingUser) {
+      this.isEditLoading = true;
+      
+      // D'abord mettre à jour les informations de base de l'utilisateur
+      const formData = this.editForm.value;
+      console.log('📝 Données à modifier:', formData);
+
+      this.authService.updateUserProfile(this.editingUser.id_utilisateur, formData).pipe(
+        takeUntil(this.destroy$)
+      ).subscribe({
+        next: (response: any) => {
+          console.log('✅ Utilisateur modifié avec succès:', response);
+          
+          // Si il y a des fichiers à uploader, les traiter maintenant
+          if (Object.keys(this.editUploadFiles).length > 0) {
+            this.uploadDocuments(response);
+          } else {
+            this.handleSuccessfulUpdate(response);
+          }
+        },
+        error: (error: any) => {
+          console.error('❌ Erreur modification utilisateur:', error);
+          this.handleUpdateError(error);
+        }
+      });
+    } else {
+      this.handleInvalidForm();
+    }
+  }
+
+  private uploadDocuments(userResponse: any): void {
+    console.log('📎 Upload des documents...');
+    
+    // Pour l'instant, on affiche juste un message indiquant que les documents ont été sélectionnés
+    // L'implémentation complète nécessiterait une nouvelle méthode dans AuthService
+    const documentCount = Object.keys(this.editUploadFiles).length;
+    this.message.info(`${documentCount} document(s) sélectionné(s). Fonctionnalité d'upload en cours de développement.`);
+    
+    this.handleSuccessfulUpdate(userResponse);
+  }
+
+  private handleSuccessfulUpdate(response: any): void {
+    this.message.success('Utilisateur modifié avec succès');
+    this.notification.success(
+      'Modification réussie',
+      `Le profil de ${response.data.prenom} ${response.data.nom} a été mis à jour.`
+    );
+    
+    this.isEditLoading = false;
+    this.closeEditModalWithCleanup();
+    this.loadUsers();
+  }
+
+  private handleUpdateError(error: any): void {
+    if (error.error && error.error.message) {
+      this.message.error(error.error.message);
+    } else {
+      this.message.error('Erreur lors de la modification de l\'utilisateur');
+    }
+    
+    this.isEditLoading = false;
+  }
+
+  private handleInvalidForm(): void {
+    console.log('❌ Formulaire invalide');
+    
+    Object.keys(this.editForm.controls).forEach(key => {
+      const control = this.editForm.get(key);
+      if (control && control.errors) {
+        console.log(`❌ Erreur ${key}:`, control.errors);
+      }
+    });
+    
+    this.message.warning('Veuillez remplir tous les champs obligatoires');
+    
+    Object.keys(this.editForm.controls).forEach(key => {
+      this.editForm.get(key)?.markAsTouched();
+    });
+  }
+
+  // Modification de closeEditModal pour nettoyer les fichiers
+  closeEditModalWithCleanup(): void {
+    this.isEditModalVisible = false;
+    this.editingUser = null;
+    this.editUserDocuments = null;
+    this.editUploadFiles = {};
+    this.isEditLoading = false;
+    this.editForm.reset();
+    console.log('🚪 Modal fermée avec nettoyage des documents');
   }
 }
