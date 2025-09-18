@@ -445,10 +445,10 @@ export class EvenementsComponent implements OnInit {
 
   sortEventsByDate(): void {
     this.evenementsSouscription.sort((a, b) => 
-      new Date(b.date_debut_evenement).getTime() - new Date(a.date_debut_evenement).getTime()
+      new Date(a.date_debut_evenement).getTime() - new Date(b.date_debut_evenement).getTime()
     );
     this.evenementsGlobaux.sort((a, b) => 
-      new Date(b.date_debut_evenement).getTime() - new Date(a.date_debut_evenement).getTime()
+      new Date(a.date_debut_evenement).getTime() - new Date(b.date_debut_evenement).getTime()
     );
   }
 
