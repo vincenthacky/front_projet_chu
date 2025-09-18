@@ -811,15 +811,31 @@ export class UsersComponent implements OnInit, OnDestroy {
     const documentCount = Object.keys(this.editUploadFiles).length;
     const documentsMessage = documentCount > 0 ? ` et ${documentCount} document(s)` : '';
     
+    console.log('✅ Mise à jour réussie, fermeture du modal et actualisation du tableau');
+    
+    // Utiliser les informations de l'utilisateur en cours d'édition
+    const prenom = this.editingUser?.prenom || 'L\'utilisateur';
+    const nom = this.editingUser?.nom || '';
+    const fullName = nom ? `${prenom} ${nom}` : prenom;
+    
+    // Messages de succès d'abord
     this.message.success(`Utilisateur${documentsMessage} modifié${documentCount > 0 ? 's' : ''} avec succès`);
     this.notification.success(
       'Modification réussie',
-      `Le profil de ${response.data.prenom} ${response.data.nom}${documentsMessage} a été mis à jour.`
+      `Le profil de ${fullName}${documentsMessage} a été mis à jour.`
     );
     
+    // Arrêter le loading
     this.isEditLoading = false;
-    this.closeEditModalWithCleanup();
-    this.loadUsers();
+    
+    // Fermer le modal avec un petit délai pour une meilleure UX
+    setTimeout(() => {
+      this.closeEditModalWithCleanup();
+      
+      // Actualiser la liste des utilisateurs après fermeture du modal
+      this.loadUsers();
+      console.log('🔄 Tableau des utilisateurs actualisé après modification');
+    }, 100);
   }
 
   private handleUpdateError(error: any): void {
