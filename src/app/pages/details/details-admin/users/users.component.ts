@@ -22,6 +22,7 @@ import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { NzUploadModule } from 'ng-zorro-antd/upload';
 import { NzUploadFile } from 'ng-zorro-antd/upload';
+import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { Subject, Observable, of, debounceTime, distinctUntilChanged, takeUntil, tap, catchError } from 'rxjs';
@@ -83,7 +84,8 @@ interface UserDocuments {
     NzDividerModule,
     NzAlertModule,
     NzDescriptionsModule,
-    NzUploadModule
+    NzUploadModule,
+    NzAvatarModule
   ],
   templateUrl: './users.component.html',
   styleUrls: ['./users.component.css']
@@ -126,6 +128,9 @@ export class UsersComponent implements OnInit, OnDestroy {
   // Fichiers en cours d'upload pour l'édition
   editUploadFiles: { [key: string]: File } = {};
 
+  // Aperçu de la nouvelle photo de profil
+  editPhotoProfilPreview: string | null = null;
+
   // Options de statut
   statusOptions = [
     { label: 'Actif', value: 'actif' },
@@ -136,7 +141,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   // Options de type d'utilisateur (CORRIGÉ : valeur en minuscule pour matcher le backend)
   userTypeOptions = [
     { label: 'Utilisateur', value: 'user' },
-    { label: 'Super Admin', value: 'superadmin' }  
+    { label: 'Super Admin', value: 'superAdmin' }  
   ];
 
   constructor(
@@ -504,7 +509,7 @@ export class UsersComponent implements OnInit, OnDestroy {
 
   getUserTypeLabel(type: string): string {
     switch (type?.toLowerCase()) {
-      case 'superadmin':
+      case 'superAdmin':
         return 'Super Admin';
       case 'user':
         return 'Utilisateur';
@@ -515,7 +520,7 @@ export class UsersComponent implements OnInit, OnDestroy {
 
   getUserTypeColor(type: string): string {
     switch (type?.toLowerCase()) {
-      case 'superadmin':
+      case 'superAdmin':
         return 'purple';
       case 'user':
         return 'cyan';
@@ -525,7 +530,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   isAdmin(user: User): boolean {
-    return user.est_administrateur || user.type.toLowerCase() === 'superadmin';
+    return user.est_administrateur || user.type.toLowerCase() === 'superAdmin';
   }
 
   getAdminLabel(user: User): string {
@@ -568,6 +573,38 @@ export class UsersComponent implements OnInit, OnDestroy {
 
   trackByUserId(index: number, user: User): number {
     return user.id_utilisateur;
+  }
+
+  // Méthode pour obtenir l'URL de la photo de profil d'un utilisateur
+  getUserPhotoUrl(user: User): string | undefined {
+    if (user.photo_profil && user.photo_profil.chemin_fichier) {
+      const imagePath = user.photo_profil.chemin_fichier.replace(/\\/g, '/');
+      return `${environment.storageUrl}/${imagePath}`;
+    }
+    return undefined;
+  }
+
+  // Méthode pour afficher la photo de profil dans un modal
+  viewUserPhoto(user: User): void {
+    if (user.photo_profil) {
+      // Convertir le type pour correspondre à DocumentData
+      const document: DocumentData = {
+        ...user.photo_profil,
+        id_souscription: user.photo_profil.id_souscription ?? null,
+        type_mime: user.photo_profil.type_mime ?? null
+      };
+      this.selectedDocument = document;
+      this.isDocumentModalVisible = true;
+    }
+  }
+
+  // Méthode pour obtenir l'URL de la photo actuelle dans le modal d'édition
+  getCurrentPhotoUrl(): string | undefined {
+    if (this.photoProfilDoc && this.photoProfilDoc.chemin_fichier) {
+      const imagePath = this.photoProfilDoc.chemin_fichier.replace(/\\/g, '/');
+      return `${environment.storageUrl}/${imagePath}`;
+    }
+    return undefined;
   }
 
   // Méthodes pour la gestion des documents
@@ -665,6 +702,7 @@ export class UsersComponent implements OnInit, OnDestroy {
     if (actualFile) {
       if (this.validateFileSize(actualFile, 'Photo de Profil')) {
         this.onEditFileChange(actualFile, 'photo_profil');
+        this.generatePhotoPreview(actualFile);
       }
     } else {
       console.error('❌ Aucun fichier trouvé pour Photo Profil');
@@ -711,30 +749,55 @@ export class UsersComponent implements OnInit, OnDestroy {
     );
   }
 
+  // Méthode pour générer l'aperçu de la photo de profil
+  private generatePhotoPreview(file: File): void {
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.editPhotoProfilPreview = e.target.result;
+        console.log('📸 Aperçu de la photo généré');
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
   // Modification de submitEdit pour inclure l'upload des documents
   submitEditWithDocuments(): void {
     if (this.editForm.valid && this.editingUser) {
       this.isEditLoading = true;
       
-      // D'abord mettre à jour les informations de base de l'utilisateur
-      const formData = this.editForm.value;
-      console.log('📝 Données à modifier:', formData);
+      // Créer un FormData avec les données du formulaire et les fichiers
+      const formData = new FormData();
+      
+      // Ajouter les données du formulaire
+      const formValues = this.editForm.value;
+      Object.keys(formValues).forEach(key => {
+        if (formValues[key] !== null && formValues[key] !== undefined) {
+          formData.append(key, formValues[key]);
+        }
+      });
 
-      this.authService.updateUserProfile(this.editingUser.id_utilisateur, formData).pipe(
+      // Ajouter les fichiers s'ils existent
+      Object.keys(this.editUploadFiles).forEach(documentType => {
+        const file = this.editUploadFiles[documentType];
+        if (file) {
+          formData.append(documentType, file);
+          console.log(`📎 Ajout du fichier ${documentType}:`, file.name);
+        }
+      });
+
+      console.log('📝 Envoi des données de modification avec la nouvelle API POST...');
+
+      // Utiliser la nouvelle méthode API POST
+      this.authService.updateUserWithFormData(this.editingUser.id_utilisateur, formData).pipe(
         takeUntil(this.destroy$)
       ).subscribe({
         next: (response: any) => {
-          console.log('✅ Utilisateur modifié avec succès:', response);
-          
-          // Si il y a des fichiers à uploader, les traiter maintenant
-          if (Object.keys(this.editUploadFiles).length > 0) {
-            this.uploadDocuments(response);
-          } else {
-            this.handleSuccessfulUpdate(response);
-          }
+          console.log('✅ Utilisateur modifié avec succès via POST:', response);
+          this.handleSuccessfulUpdate(response);
         },
         error: (error: any) => {
-          console.error('❌ Erreur modification utilisateur:', error);
+          console.error('❌ Erreur modification utilisateur via POST:', error);
           this.handleUpdateError(error);
         }
       });
@@ -743,22 +806,15 @@ export class UsersComponent implements OnInit, OnDestroy {
     }
   }
 
-  private uploadDocuments(userResponse: any): void {
-    console.log('📎 Upload des documents...');
-    
-    // Pour l'instant, on affiche juste un message indiquant que les documents ont été sélectionnés
-    // L'implémentation complète nécessiterait une nouvelle méthode dans AuthService
-    const documentCount = Object.keys(this.editUploadFiles).length;
-    this.message.info(`${documentCount} document(s) sélectionné(s). Fonctionnalité d'upload en cours de développement.`);
-    
-    this.handleSuccessfulUpdate(userResponse);
-  }
 
   private handleSuccessfulUpdate(response: any): void {
-    this.message.success('Utilisateur modifié avec succès');
+    const documentCount = Object.keys(this.editUploadFiles).length;
+    const documentsMessage = documentCount > 0 ? ` et ${documentCount} document(s)` : '';
+    
+    this.message.success(`Utilisateur${documentsMessage} modifié${documentCount > 0 ? 's' : ''} avec succès`);
     this.notification.success(
       'Modification réussie',
-      `Le profil de ${response.data.prenom} ${response.data.nom} a été mis à jour.`
+      `Le profil de ${response.data.prenom} ${response.data.nom}${documentsMessage} a été mis à jour.`
     );
     
     this.isEditLoading = false;
@@ -799,6 +855,7 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.editingUser = null;
     this.editUserDocuments = null;
     this.editUploadFiles = {};
+    this.editPhotoProfilPreview = null;
     this.isEditLoading = false;
     this.editForm.reset();
     console.log('🚪 Modal fermée avec nettoyage des documents');

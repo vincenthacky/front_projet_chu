@@ -86,10 +86,11 @@
         (nzPageSizeChange)="onPageSizeChange($event)"
         nzSize="middle"
         nzBordered
-        [nzScroll]="{ x: '1200px' }"
+        [nzScroll]="{ x: '1280px' }"
       >
         <thead>
           <tr>
+            <th nzWidth="80px">Photo</th>
             <th nzWidth="120px">Nom</th>
             <th nzWidth="120px">Prénom</th>
             <th nzWidth="200px">Email</th>
@@ -106,6 +107,20 @@
         </thead>
         <tbody>
           <tr *ngFor="let user of userTable.data; trackBy: trackByUserId">
+            <td class="text-center">
+              <div class="user-avatar-container">
+                <nz-avatar 
+                  [nzSize]="40" 
+                  [nzSrc]="getUserPhotoUrl(user)"
+                  [nzIcon]="'user'"
+                  [nzShape]="'circle'"
+                  class="user-avatar"
+                  (click)="viewUserPhoto(user)"
+                  [style.cursor]="getUserPhotoUrl(user) ? 'pointer' : 'default'"
+                >
+                </nz-avatar>
+              </div>
+            </td>
             <td>
               <strong>{{ user.nom }}</strong>
             </td>
@@ -492,7 +507,7 @@
                 class="document-card" 
                 nzSize="small"
                 [nzBodyStyle]="{ padding: '12px' }"
-                style="height: 140px; transition: all 0.3s ease;">
+                style="min-height: 200px; transition: all 0.3s ease;">
                 <div class="document-content">
                   <div class="document-header" style="display: flex; justify-content: between; align-items: center; margin-bottom: 8px;">
                     <div class="document-title" style="font-weight: 600; color: #722ed1;">
@@ -523,6 +538,34 @@
                       </nz-upload>
                     </div>
                   </div>
+
+                  <!-- Aperçu de la photo de profil -->
+                  <div class="photo-preview-section" style="margin-bottom: 12px;">
+                    <div class="current-photo" style="text-align: center; margin-bottom: 8px;">
+                      <nz-avatar 
+                        [nzSize]="80" 
+                        [nzSrc]="getCurrentPhotoUrl()"
+                        [nzIcon]="'user'"
+                        [nzShape]="'circle'"
+                        style="border: 3px solid #722ed1; box-shadow: 0 4px 8px rgba(114, 46, 209, 0.2);"
+                      ></nz-avatar>
+                    </div>
+                    <div style="text-align: center; font-size: 11px; color: #666;">
+                      {{ getCurrentPhotoUrl() ? 'Photo actuelle' : 'Aucune photo' }}
+                    </div>
+                  </div>
+
+                  <!-- Aperçu du nouveau fichier sélectionné -->
+                  <div *ngIf="editPhotoProfilPreview" class="new-photo-preview" style="margin-bottom: 12px;">
+                    <div style="text-align: center; margin-bottom: 8px;">
+                      <img [src]="editPhotoProfilPreview" alt="Nouvelle photo" 
+                           style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #52c41a; box-shadow: 0 2px 4px rgba(82, 196, 26, 0.3);" />
+                    </div>
+                    <div style="text-align: center; font-size: 11px; color: #52c41a; font-weight: 500;">
+                      Nouvelle photo sélectionnée
+                    </div>
+                  </div>
+
                   <div *ngIf="photoProfilDoc; else noPhotoProfil" class="document-info">
                     <div class="document-meta" style="font-size: 12px; color: #666;">
                       {{ formatFileSize(photoProfilDoc.taille_fichier) }}
@@ -537,8 +580,8 @@
                     </div>
                   </div>
                   <ng-template #noPhotoProfil>
-                    <div class="document-empty" style="color: #999; font-size: 12px;">
-                      <span nz-icon nzType="file-add" nzTheme="outline" style="font-size: 20px; color: #d9d9d9; display: block; margin-bottom: 4px;"></span>
+                    <div class="document-empty" style="color: #999; font-size: 12px; text-align: center;">
+                      <span nz-icon nzType="file-add" nzTheme="outline" style="font-size: 16px; color: #d9d9d9; display: block; margin-bottom: 4px;"></span>
                       Non fournie
                     </div>
                   </ng-template>

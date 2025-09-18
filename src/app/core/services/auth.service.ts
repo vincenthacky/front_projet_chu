@@ -678,6 +678,54 @@ export class AuthService {
     );
   }
 
+  // Nouvelle méthode pour utiliser l'API POST utilisateurs/{id}/update
+  updateUserWithFormData(userId: number, formData: FormData): Observable<UserUpdateResponse> {
+    const token = this.getToken();
+    if (!token) {
+      console.error('❌ Aucun token d\'authentification trouvé');
+      return throwError(() => new Error('Utilisateur non authentifié'));
+    }
+
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+      // Note: On ne met pas Content-Type pour FormData, le navigateur le gère automatiquement
+    });
+
+    console.log('🔄 Mise à jour du profil utilisateur avec FormData:', {
+      userId,
+      url: `${this.API_URL}/utilisateurs/${userId}/update`
+    });
+
+    return this.http.post<UserUpdateResponse>(`${this.API_URL}/utilisateurs/${userId}/update`, formData, { headers }).pipe(
+      tap(response => {
+        console.log('📨 Réponse brute mise à jour profil (POST):', response);
+      }),
+      map(response => {
+        const decoded = this.decodeUnicodeInObject(response) as UserUpdateResponse;
+        console.log('📨 Réponse décodée mise à jour profil (POST):', decoded);
+        return decoded;
+      }),
+      tap(decodedResponse => {
+        if (decodedResponse.success && decodedResponse.data && this.isBrowser) {
+          const currentUser = this.getCurrentUser();
+          if (currentUser) {
+            const updatedUser = { ...currentUser, ...decodedResponse.data };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            this.currentUserSubject.next(updatedUser);
+            console.log('👤 Données utilisateur mises à jour localement (POST):', updatedUser);
+          }
+        }
+      }),
+      catchError(error => {
+        console.error('❌ Erreur mise à jour profil utilisateur (POST):', error);
+        if (error.error) {
+          error.error = this.decodeUnicodeInObject(error.error);
+        }
+        return throwError(() => new Error(error.error?.message || 'Erreur serveur'));
+      })
+    );
+  }
+
   getAllUsers(): Observable<User[]> {
     const token = this.getToken();
     if (!token) {
