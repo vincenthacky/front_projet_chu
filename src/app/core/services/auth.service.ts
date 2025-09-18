@@ -5,10 +5,14 @@ import { BehaviorSubject, Observable, tap, catchError, throwError, map, of } fro
 import { isPlatformBrowser } from '@angular/common';
 import { environment } from '@/environment';
 import { User, LoginResponse, LogoutResponse, ForgotPasswordResponse, ResetPasswordResponse, UserProfileResponse, UserUpdateResponse, UsersResponse } from '../models/auth';
+
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
+  updateCurrentUser(data: User) {
+    throw new Error('Method not implemented.');
+  }
   private readonly API_URL = environment.apiUrl;
   private http = inject(HttpClient);
   private router = inject(Router);
@@ -224,10 +228,10 @@ export class AuthService {
     if (!this.isBrowser) return;
     
     const decodedUser = this.decodeUnicodeInObject(user) as User;
+    console.log('📝 Stockage utilisateur décodé:', decodedUser);
     
     const expiryTime = new Date().getTime() + (24 * 60 * 60 * 1000);
     
-    console.log('📝 Stockage utilisateur décodé:', decodedUser);
     console.log('⏰ Expiration token prévue à:', new Date(expiryTime));
     
     localStorage.setItem('user', JSON.stringify(decodedUser));
@@ -247,6 +251,8 @@ export class AuthService {
     const token = localStorage.getItem('token');
     const expiry = localStorage.getItem('authExpiry');
 
+    console.log('🔍 Vérification statut authentification:', { user: !!user, token: !!token, expiry: !!expiry });
+
     if (user && token && expiry) {
       const now = new Date().getTime();
       const expiryTime = parseInt(expiry, 10);
@@ -255,11 +261,10 @@ export class AuthService {
         try {
           let userData: User = JSON.parse(user);
           userData = this.decodeUnicodeInObject(userData) as User;
-          
+          console.log('✅ Session valide - Utilisateur connecté (décodé):', userData);
           this.currentUserSubject.next(userData);
           this.isAuthenticatedSubject.next(true);
           this.startInactivityDetection();
-          console.log('✅ Session valide - Utilisateur connecté (décodé):', userData);
         } catch (error) {
           console.error('❌ Erreur lors du parsing des données utilisateur:', error);
           this.forceLogout();
@@ -703,7 +708,6 @@ export class AuthService {
       })
     );
   }
-
 
   createUser(userData: any): Observable<UserUpdateResponse> {
     const token = this.getToken();

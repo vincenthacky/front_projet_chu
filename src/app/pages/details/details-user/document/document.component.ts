@@ -1,4 +1,3 @@
-
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -19,9 +18,9 @@ import { DocumentService } from 'src/app/core/services/documents.service';
   selector: 'app-mes-documents',
   standalone: true,
   imports: [
-    CommonModule, 
-    NzButtonModule, 
-    NzIconModule, 
+    CommonModule,
+    NzButtonModule,
+    NzIconModule,
     NzPaginationModule,
     NzEmptyModule,
     NzCardModule,
@@ -37,10 +36,10 @@ import { DocumentService } from 'src/app/core/services/documents.service';
 export class DocumentComponent implements OnInit {
   documents: ApiDocument[] = [];
   loading: boolean = false;
-  
+
   // Propriétés pour la pagination
   currentPage: number = 1;
-  pageSize: number = 5; // 5 documents par page
+  pageSize: number = 5;
   totalDocuments: number = 0;
 
   // Propriétés pour le modal
@@ -59,10 +58,10 @@ export class DocumentComponent implements OnInit {
    */
   chargerMesDocuments(): void {
     this.loading = true;
-    
-    this.documentService.getMesDocuments({ 
-      page: this.currentPage, 
-      per_page: this.pageSize 
+
+    this.documentService.getMesDocuments({
+      page: this.currentPage,
+      per_page: this.pageSize
     }).subscribe({
       next: (response: any) => {
         if (response.success) {

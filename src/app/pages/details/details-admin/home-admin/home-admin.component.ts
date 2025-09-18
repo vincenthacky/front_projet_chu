@@ -476,7 +476,7 @@ export class HomeAdminComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   goToDocuments() {
-    this.router.navigate(['/dashboard/admin/details/new-document-admin']);
+    this.router.navigate(['/dashboard/admin/details/documents-admin']);
   }
 
   goToNewReclamations() {

@@ -7,7 +7,7 @@
     [nzTrigger]="null">
     <div class="sidebar-logo">
       <a href="#" target="_blank">
-        <nz-avatar class="header-avatar" nzIcon="user" nzSrc="//zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png"></nz-avatar>
+        <nz-avatar class="header-avatar" nzIcon="user" [nzSrc]="profilePhoto" (error)="onImageError($event)"></nz-avatar>
         <span class="header-username" nz-tooltip [nzTooltipTitle]="userName">{{ userName }}</span>
       </a>
     </div>
@@ -45,16 +45,16 @@
         <span>Paramètre</span>
       </li>
       <li 
-      nz-menu-item 
-      (click)="showLogoutConfirm()" 
-      nz-tooltip 
-      [nzTooltipTitle]="'Déconnexion'" 
-      nzTooltipPlacement="right"
-    >
-      <span nz-icon nzType="logout"></span>
-      <span>Déconnexion</span>
-    </li>
-         </ul>
+        nz-menu-item 
+        (click)="showLogoutConfirm()" 
+        nz-tooltip 
+        [nzTooltipTitle]="'Déconnexion'" 
+        nzTooltipPlacement="right"
+      >
+        <span nz-icon nzType="logout"></span>
+        <span>Déconnexion</span>
+      </li>
+    </ul>
   </nz-sider>
   <nz-layout class="main-layout">
     <nz-header>

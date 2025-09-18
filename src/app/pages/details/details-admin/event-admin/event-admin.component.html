@@ -111,9 +111,11 @@
               </div>
 
               <!-- Message si aucun document -->
-              <div class="no-documents" *ngIf="!hasDocuments(event)">
-                <p><i class="fas fa-info-circle"></i> Aucun document associé à cet événement</p>
-              </div>
+              <div *ngIf="!hasDocuments(event)" 
+                       class="no-documents-message" style="background: #ffebee; padding: 10px; border: 1px solid #ffcdd2; border-radius: 5px; margin: 10px 0;">
+                    <i class="fas fa-info-circle"></i>
+                    Aucun document associé à cet événement
+                  </div>
             </div>
 
             <div class="evenement-info">
@@ -168,9 +170,9 @@
             </div>
 
             <div class="timeline-footer">
-              <a href="#" class="btn btn-secondary ml-2" (click)="voirDocuments(event)" *ngIf="event.documents && event.documents.length > 0">
+              <p *ngIf="event.documents && event.documents.length > 0">
                 Documents ({{ event.documents.length }})
-              </a>
+              </p>
             </div>
           </div>
         </div>

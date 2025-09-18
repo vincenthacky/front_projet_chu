@@ -1,5 +1,3 @@
-/* evenements.component.css - Version complète responsive avec médias et statuts dynamiques */
-
 :host {
   display: block;
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
@@ -225,14 +223,24 @@
 .time {
   float: right;
   font-size: clamp(0.6rem, 1.3vw, 0.75rem);
-  color: #6b7280;
-  font-weight: 600;
   padding: clamp(8px, 2vw, 15px) clamp(10px, 2.5vw, 18px) 0 0;
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 1vw, 6px);
 
   i {
-    margin-right: clamp(2px, 0.5vw, 4px);
     color: #3b82f6;
   }
+}
+
+.time .status-text {
+  display: inline-block;
+  padding: clamp(3px, 0.8vw, 5px) clamp(6px, 1.5vw, 10px);
+  border-radius: clamp(8px, 2vw, 12px);
+  font-size: clamp(0.6rem, 1.2vw, 0.75rem);
+  font-weight: 700;
+  border: 2px solid;
+  white-space: nowrap;
 }
 
 .timeline-body {
@@ -831,6 +839,19 @@
     min-width: 36px !important;
     height: 36px !important;
   }
+
+  .time {
+    float: none;
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 0;
+    margin-top: 3px;
+  }
+
+  .time .status-text {
+    font-size: clamp(0.55rem, 1.1vw, 0.7rem);
+    padding: clamp(2px, 0.5vw, 4px) clamp(5px, 1.2vw, 8px);
+  }
 }
 
 @media (max-width: 480px) {
@@ -858,10 +879,12 @@
   }
 
   .time {
-    float: none;
-    display: block;
-    padding-top: 0;
-    margin-top: 3px;
+    justify-content: flex-end;
+  }
+
+  .time .status-text {
+    font-size: clamp(0.5rem, 1vw, 0.65rem);
+    padding: clamp(2px, 0.5vw, 3px) clamp(4px, 1vw, 6px);
   }
 
   .evenement-info {

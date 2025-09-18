@@ -1,3 +1,4 @@
+
 // src/app/core/services/souscription.service.ts
 import { environment } from '@/environment';
 import { HttpClient, HttpParams } from '@angular/common/http';
@@ -364,21 +365,25 @@ calculateSouscriptionStatus(souscription: ApiSouscription): string {
    * Obtient le statut avec couleur pour l'affichage
    */
   getStatusWithColor(souscription: ApiSouscription): {status: string, color: string, label: string} {
-    const status = this.calculateSouscriptionStatus(souscription);
+    const status = souscription.statut_souscription || this.calculateSouscriptionStatus(souscription);
     
     switch(status) {
-      case 'termine':
-        return { status, color: 'success', label: 'Terminé' };
-      case 'en_retard':
-        return { status, color: 'danger', label: 'En retard' };
+      case 'active': return { status, color: 'blue', label: 'Active' }; 
+      case 'suspendu': return { status, color: 'orange', label: 'Suspendu' }; 
+      case 'supendu': return { status, color: 'orange', label: 'Suspendu' }; 
+      case 'terminer': return { status, color: 'green', label: 'Terminé' }; 
+      case 'termine': return { status, color: 'green', label: 'Terminé' };
+      case 'resilier': return { status, color: 'gray', label: 'Résilié' }; 
+      case 'en_attente': return { status, color: 'cyan', label: 'En attente' }; 
+      case 'rejete': return { status, color: 'red', label: 'Rejeté' }; 
       case 'en_cours':
         return { status, color: 'primary', label: 'En cours' };
-      case 'suspendu':
-        return { status, color: 'warning', label: 'Suspendu' };
+      case 'en_retard':
+        return { status, color: 'danger', label: 'En retard' };
       case 'annule':
         return { status, color: 'secondary', label: 'Annulé' };
       default:
-        return { status, color: 'info', label: 'En attente' };
+        return { status, color: 'info', label: 'Active' };
     }
   }
 
@@ -432,3 +437,4 @@ getMesDemandesSouscriptions(filters?: SouscriptionFilters): Observable<Souscript
     );
 }
 }
+

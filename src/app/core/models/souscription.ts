@@ -116,9 +116,9 @@ export interface SouscriptionFilters {
   date_fin?: string;
   terrain_id?: number;
   search?: string;
-  superficie?: number; // Superficie en m², optionnel
-  all_users?: boolean; // Pour récupérer toutes les souscriptions (vue admin)
-  admin_view?: boolean; // Pour la vue administrateur
+  superficie?: number; 
+  all_users?: boolean; 
+  admin_view?: boolean; 
 }
 
 export interface SouscriptionStats {
