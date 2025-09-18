@@ -44,36 +44,11 @@ interface Subscription {
   dateDemande?: string;
   dateCreation?: string;
   origine?: string;
-  statut: 'active' | 'en-cours' | 'en-retard' | 'termine' | 'suspendu' | 'annule' | 'resilie' | 'en_attente' | 'rejete';
+  statut: 'active' | 'suspendue' | 'terminee' | 'resillee' | 'en_attente' | 'rejete' | 'en_cour';
   progression: number;
   payments: Payment[];
 }
 
-// Interface locale pour les données API
-interface LocalApiSouscription {
-  id_souscription: number;
-  montant_total_souscrit: string;
-  montant_paye: string;
-  reste_a_payer: number;
-  date_souscription: string;
-  date_prochain: string | null;
-  statut_souscription: string;
-  prix_total_terrain: number;
-  terrain: {
-    libelle: string;
-    superficie: string;
-  };
-  planpaiements: Array<{
-    id_plan_paiement: number;
-    numero_mensualite: number;
-    date_paiement_effectif: string;
-    montant_paye: string;
-    mode_paiement: string;
-    reference_paiement: string | null;
-    est_paye: boolean;
-    statut_versement: string;
-  }>;
-}
 
 @Component({
   selector: 'app-subscription',
@@ -226,7 +201,7 @@ export class SubscriptionComponent {
       per_page: 1000
     }).subscribe({
       next: (response) => {
-        const allData = response.data as LocalApiSouscription[];
+        const allData = response.data as ApiSouscription[];
         const allSubscriptions = this.mapApiDataToSubscriptions(allData);
 
         this.globalStats = {
@@ -254,7 +229,7 @@ export class SubscriptionComponent {
     };
 
     if (this.statusFilter) {
-      apiFilters.statut_souscription = this.statusFilter;
+      apiFilters.statut_dynamique = this.statusFilter;
     }
 
     if (this.searchTerm) {
@@ -295,7 +270,7 @@ export class SubscriptionComponent {
       dateDemande: demande.date_souscription,
       dateCreation: demande.created_at,
       origine: demande.origine || 'utilisateur',
-      statut: demande.statut_souscription as any,
+      statut: demande.statut_dynamique as any,
       progression: 0, // Pas de progression pour les demandes
       payments: []
     };
@@ -348,7 +323,7 @@ export class SubscriptionComponent {
     this.souscriptionService.getMesSouscriptions(apiFilters).subscribe({
       next: (response) => {
         console.log('📥 Réponse brute API:', response);
-        const localData = response.data as LocalApiSouscription[];
+        const localData = response.data as ApiSouscription[];
         console.log('📋 Données extraites:', localData.length, 'éléments');
 
         let mappedSubscriptions = this.mapApiDataToSubscriptions(localData);
@@ -417,16 +392,16 @@ export class SubscriptionComponent {
   }
 
   // CORRECTION : Suppression du filtre est_paye pour inclure tous les paiements
-  private mapApiDataToSubscriptions(apiData: LocalApiSouscription[]): Subscription[] {
+  private mapApiDataToSubscriptions(apiData: ApiSouscription[]): Subscription[] {
     console.log('🗺️ Mapping des données API:', apiData.length, 'éléments');
 
     const mapped = [];
     for (let index = 0; index < apiData.length; index++) {
       const item = apiData[index];
 
-      // Si statut_souscription est "annulé", n'inclure pas cette souscription
-      if (item.statut_souscription === 'annulé') {
-        console.log(`🚫 Souscription ${item.id_souscription} annulée, ignorée`);
+      // Si le statut est "rejete", ne pas inclure cette souscription  
+      if (item.statut_dynamique === 'rejete') {
+        console.log(`🚫 Souscription ${item.id_souscription} rejetée, ignorée`);
         continue;
       }
 
@@ -448,7 +423,7 @@ export class SubscriptionComponent {
       const progression = prixTotal > 0 ? Math.round((montantPaye / prixTotal) * 100) : 0;
 
       // Logique pour le statut
-      let statut = item.statut_souscription;
+      let statut = item.statut_dynamique;
 
       let prochainPaiement = '';
       if (item.date_prochain) {
@@ -578,16 +553,12 @@ export class SubscriptionComponent {
   getStatusColor(status: string): string {
     switch (status) {
       case 'active': return 'blue';
-      case 'en-cours': return 'green';
-      case 'termine': return 'green';
-      case 'terminer': return 'green'; // Ajout pour 'terminer' (variante possible)
-      case 'en-retard': return 'red';
-      case 'suspendu': return 'orange';
-      case 'supendu': return 'orange'; // Ajout pour 'supendu' (faute de frappe possible pour suspendu)
-      case 'annule': return 'gray';
-      case 'resilier': return 'gray'; // Ajout pour 'resilier'
-      case 'en_attente': return 'cyan'; // Ajout pour 'en_attente' (bleu clair)
-      case 'rejete': return 'red'; // Ajout pour 'rejete'
+      case 'en_cour': return 'green';
+      case 'terminee': return 'green';
+      case 'suspendue': return 'orange';
+      case 'resillee': return 'gray';
+      case 'en_attente': return 'cyan';
+      case 'rejete': return 'red';
       default: return 'default';
     }
   }
@@ -648,16 +619,12 @@ export class SubscriptionComponent {
   getStatusIcon(status: string): string {
     switch (status) {
       case 'active': return 'fa-clock';
-      case 'en-cours': return 'fa-clock';
-      case 'en-retard': return 'fa-exclamation-triangle';
-      case 'termine': return 'fa-check-circle';
-      case 'terminer': return 'fa-check-circle'; // Ajout
-      case 'suspendu': return 'fa-pause-circle';
-      case 'supendu': return 'fa-pause-circle'; // Ajout
-      case 'annule': return 'fa-times-circle';
-      case 'resilier': return 'fa-times-circle'; // Ajout
+      case 'en_cour': return 'fa-clock';
+      case 'terminee': return 'fa-check-circle';
+      case 'suspendue': return 'fa-pause-circle';
+      case 'resillee': return 'fa-times-circle';
       case 'en_attente': return 'fa-hourglass-half';
-      case 'rejete': return 'fa-times'; // Ajout pour rejete
+      case 'rejete': return 'fa-times';
       default: return 'fa-clock';
     }
   }
@@ -665,16 +632,12 @@ export class SubscriptionComponent {
   getStatusLabel(status: string): string {
     switch (status) {
       case 'active': return 'Active';
-      case 'en-cours': return 'En cours';
-      case 'en-retard': return 'En retard';
-      case 'termine': return 'Terminé';
-      case 'terminer': return 'Terminé'; // Ajout
-      case 'suspendu': return 'Suspendu';
-      case 'supendu': return 'Suspendu'; // Ajout
-      case 'annule': return 'Annulé';
-      case 'resilier': return 'Résilié'; // Ajout
+      case 'en_cour': return 'En cours';
+      case 'terminee': return 'Terminée';
+      case 'suspendue': return 'Suspendue';
+      case 'resillee': return 'Résiliée';
       case 'en_attente': return 'En attente';
-      case 'rejete': return 'Rejeté';
+      case 'rejete': return 'Rejetée';
       default: return 'Inconnu';
     }
   }
@@ -817,7 +780,7 @@ export class SubscriptionComponent {
     this.souscriptionService.getMesSouscriptions(forceRefreshFilters).subscribe({
       next: (response) => {
         console.log('✅ Données fraîches reçues de l\'API:', response);
-        const localData = response.data as LocalApiSouscription[];
+        const localData = response.data as ApiSouscription[];
         let mappedSubscriptions = this.mapApiDataToSubscriptions(localData);
         mappedSubscriptions = this.applyClientSideFilters(mappedSubscriptions);
 

@@ -123,7 +123,6 @@
           <th nzWidth="150px">Type</th>
           <th nzWidth="250px">Description & Motif</th>
           <th nzWidth="120px">Période</th>
-          <th nzWidth="120px">Valeur</th>
           <th nzWidth="120px">Date attribution</th>
           <th nzWidth="100px">Statut</th>
           <th nzWidth="200px">Commentaire admin</th>
@@ -170,13 +169,6 @@
           <td>
             <div class="periode-info">
               {{ recompense.periode_merite }}
-            </div>
-          </td>
-          
-          <!-- Valeur -->
-          <td>
-            <div class="valeur-info">
-              <strong>{{ formatCurrency(recompense.valeur_recompense) }}</strong>
             </div>
           </td>
           
@@ -387,9 +379,6 @@
         <h5>Récompense</h5>
         <div class="detail-row">
           <strong>Type:</strong> {{ selectedRecompense.type_recompense?.libelle_type_recompense || 'N/A' }}
-        </div>
-        <div class="detail-row">
-          <strong>Valeur:</strong> {{ formatCurrency(selectedRecompense.valeur_recompense) }}
         </div>
         <div class="detail-row">
           <strong>Période de mérite:</strong> {{ selectedRecompense.periode_merite }}
@@ -651,23 +640,6 @@
             </nz-form-item>
           </div>
           
-          <div nz-col nzSpan="8">
-            <nz-form-item>
-              <nz-form-label nzRequired>Valeur de la récompense</nz-form-label>
-              <nz-form-control>
-                <nz-input-number 
-                  formControlName="valeur_recompense"
-                  [nzMin]="0"
-                  [nzStep]="1000"
-                  nzPlaceHolder="0"
-                  style="width: 100%">
-                </nz-input-number>
-                <div *ngIf="addRewardForm.get('valeur_recompense')?.invalid && addRewardForm.get('valeur_recompense')?.touched" class="error-text">
-                  La valeur est requise
-                </div>
-              </nz-form-control>
-            </nz-form-item>
-          </div>
           
           <div nz-col nzSpan="8">
             <nz-form-item>

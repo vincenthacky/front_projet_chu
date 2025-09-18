@@ -134,6 +134,129 @@
               </nz-form-item>
             </div>
           </div>
+
+          <!-- Section Documents -->
+          <div class="documents-section" style="margin-top: 24px;">
+            <h4 style="margin-bottom: 16px; color: #434343; font-weight: 600;">
+              <span nz-icon nzType="file-text" style="margin-right: 8px;"></span>
+              Documents
+            </h4>
+            <div nz-row [nzGutter]="16">
+              <!-- Carte Professionnelle -->
+              <div nz-col nzXs="24" nzSm="8" nzMd="6">
+                <nz-card 
+                  *ngIf="carteProf" 
+                  class="document-card" 
+                  nzSize="small"
+                  [nzBodyStyle]="{ padding: '12px' }"
+                  (click)="openDocumentModal(carteProf)"
+                  style="cursor: pointer; height: 120px; transition: all 0.3s ease;">
+                  <div class="document-content">
+                    <div class="document-icon">
+                      <span nz-icon nzType="idcard" nzTheme="outline" style="font-size: 24px; color: #1890ff;"></span>
+                    </div>
+                    <div class="document-info">
+                      <div class="document-title">Carte Professionnelle</div>
+                      <div class="document-meta">{{ formatFileSize(carteProf.taille_fichier) }}</div>
+                      <div class="document-date">{{ formatDate(carteProf.date_telechargement) }}</div>
+                    </div>
+                  </div>
+                </nz-card>
+                <nz-card 
+                  *ngIf="!carteProf" 
+                  class="document-card document-empty" 
+                  nzSize="small"
+                  [nzBodyStyle]="{ padding: '12px' }"
+                  style="height: 120px; border-style: dashed; opacity: 0.6;">
+                  <div class="document-content">
+                    <div class="document-icon">
+                      <span nz-icon nzType="file-add" nzTheme="outline" style="font-size: 24px; color: #d9d9d9;"></span>
+                    </div>
+                    <div class="document-info">
+                      <div class="document-title" style="color: #999;">Carte Professionnelle</div>
+                      <div class="document-meta" style="color: #ccc;">Non fournie</div>
+                    </div>
+                  </div>
+                </nz-card>
+              </div>
+
+              <!-- CNI -->
+              <div nz-col nzXs="24" nzSm="8" nzMd="6">
+                <nz-card 
+                  *ngIf="cni" 
+                  class="document-card" 
+                  nzSize="small"
+                  [nzBodyStyle]="{ padding: '12px' }"
+                  (click)="openDocumentModal(cni)"
+                  style="cursor: pointer; height: 120px; transition: all 0.3s ease;">
+                  <div class="document-content">
+                    <div class="document-icon">
+                      <span nz-icon nzType="credit-card" nzTheme="outline" style="font-size: 24px; color: #52c41a;"></span>
+                    </div>
+                    <div class="document-info">
+                      <div class="document-title">CNI</div>
+                      <div class="document-meta">{{ formatFileSize(cni.taille_fichier) }}</div>
+                      <div class="document-date">{{ formatDate(cni.date_telechargement) }}</div>
+                    </div>
+                  </div>
+                </nz-card>
+                <nz-card 
+                  *ngIf="!cni" 
+                  class="document-card document-empty" 
+                  nzSize="small"
+                  [nzBodyStyle]="{ padding: '12px' }"
+                  style="height: 120px; border-style: dashed; opacity: 0.6;">
+                  <div class="document-content">
+                    <div class="document-icon">
+                      <span nz-icon nzType="file-add" nzTheme="outline" style="font-size: 24px; color: #d9d9d9;"></span>
+                    </div>
+                    <div class="document-info">
+                      <div class="document-title" style="color: #999;">CNI</div>
+                      <div class="document-meta" style="color: #ccc;">Non fournie</div>
+                    </div>
+                  </div>
+                </nz-card>
+              </div>
+
+              <!-- Fiche de Souscription -->
+              <div nz-col nzXs="24" nzSm="8" nzMd="6">
+                <nz-card 
+                  *ngIf="ficheSouscription" 
+                  class="document-card" 
+                  nzSize="small"
+                  [nzBodyStyle]="{ padding: '12px' }"
+                  (click)="openDocumentModal(ficheSouscription)"
+                  style="cursor: pointer; height: 120px; transition: all 0.3s ease;">
+                  <div class="document-content">
+                    <div class="document-icon">
+                      <span nz-icon nzType="file-text" nzTheme="outline" style="font-size: 24px; color: #faad14;"></span>
+                    </div>
+                    <div class="document-info">
+                      <div class="document-title">Fiche Souscription</div>
+                      <div class="document-meta">{{ formatFileSize(ficheSouscription.taille_fichier) }}</div>
+                      <div class="document-date">{{ formatDate(ficheSouscription.date_telechargement) }}</div>
+                    </div>
+                  </div>
+                </nz-card>
+                <nz-card 
+                  *ngIf="!ficheSouscription" 
+                  class="document-card document-empty" 
+                  nzSize="small"
+                  [nzBodyStyle]="{ padding: '12px' }"
+                  style="height: 120px; border-style: dashed; opacity: 0.6;">
+                  <div class="document-content">
+                    <div class="document-icon">
+                      <span nz-icon nzType="file-add" nzTheme="outline" style="font-size: 24px; color: #d9d9d9;"></span>
+                    </div>
+                    <div class="document-info">
+                      <div class="document-title" style="color: #999;">Fiche Souscription</div>
+                      <div class="document-meta" style="color: #ccc;">Non fournie</div>
+                    </div>
+                  </div>
+                </nz-card>
+              </div>
+            </div>
+          </div>
         </form>
       </div>
     </div>
@@ -325,3 +448,57 @@
     </nz-descriptions>
   </nz-card>
 </div>
+
+<!-- Modal pour l'affichage des documents -->
+<nz-modal
+  [(nzVisible)]="isDocumentModalVisible"
+  [nzTitle]="selectedDocument ? selectedDocument.description_document : 'Document'"
+  [nzWidth]="800"
+  [nzFooter]="null"
+  (nzOnCancel)="closeDocumentModal()">
+  
+  <div *nzModalContent>
+    <div *ngIf="selectedDocument" class="document-modal-content">
+      <!-- Informations du document -->
+      <div class="document-details" style="margin-bottom: 20px;">
+        <nz-descriptions [nzBordered]="true" [nzColumn]="2" nzSize="small">
+          <nz-descriptions-item nzTitle="Nom du fichier">
+            {{ selectedDocument.nom_original }}
+          </nz-descriptions-item>
+          <nz-descriptions-item nzTitle="Taille">
+            {{ formatFileSize(selectedDocument.taille_fichier) }}
+          </nz-descriptions-item>
+          <nz-descriptions-item nzTitle="Date d'upload">
+            {{ formatDate(selectedDocument.date_telechargement) }}
+          </nz-descriptions-item>
+          <nz-descriptions-item nzTitle="Version">
+            v{{ selectedDocument.version_document }}
+          </nz-descriptions-item>
+          <nz-descriptions-item nzTitle="Statut" nzSpan="2">
+            <nz-tag [nzColor]="selectedDocument.statut_document === 'actif' ? 'green' : 'orange'">
+              {{ selectedDocument.statut_document }}
+            </nz-tag>
+          </nz-descriptions-item>
+        </nz-descriptions>
+      </div>
+
+      <!-- Aperçu du document -->
+      <div class="document-preview" style="text-align: center;">
+        <div class="preview-container" style="max-height: 500px; overflow-y: auto; border: 1px solid #d9d9d9; border-radius: 6px; padding: 16px;">
+          <img 
+            [src]="getDocumentUrl(selectedDocument)" 
+            [alt]="selectedDocument.nom_original"
+            style="max-width: 100%; height: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 4px;"
+            (error)="onImageError($event)"
+          />
+          <div style="display: none; padding: 40px; color: #999; text-align: center;">
+            <span nz-icon nzType="file-image" nzTheme="outline" style="font-size: 48px; margin-bottom: 16px;"></span>
+            <p>Aperçu non disponible</p>
+            <p style="font-size: 12px;">{{ selectedDocument.nom_original }}</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</nz-modal>

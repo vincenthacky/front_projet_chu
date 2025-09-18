@@ -16,8 +16,29 @@ import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { NzProgressModule } from 'ng-zorro-antd/progress';
+import { NzModalModule } from 'ng-zorro-antd/modal';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { environment } from '@/environment';
+
+// Interface pour les documents
+interface DocumentData {
+  id_document: number;
+  id_souscription: number | null;
+  id_type_document: number;
+  source_table: string;
+  id_source: number;
+  nom_fichier: string;
+  nom_original: string;
+  chemin_fichier: string;
+  type_mime: string | null;
+  taille_fichier: number;
+  description_document: string;
+  version_document: number;
+  date_telechargement: string;
+  statut_document: string;
+  created_at: string;
+  updated_at: string;
+}
 
 // Interface pour les statistiques utilisateur
 interface UserStats {
@@ -55,7 +76,8 @@ function passwordMatchValidator(control: AbstractControl): { [key: string]: any 
     NzAlertModule,
     NzTagModule,
     NzDescriptionsModule,
-    NzProgressModule
+    NzProgressModule,
+    NzModalModule
   ],
   templateUrl: './parameter.component.html',
   styleUrl: './parameter.component.css'
@@ -93,6 +115,16 @@ export class ParameterComponent implements OnInit {
   accountStatus?: string;
   passwordLastUpdated?: Date;
   hasStrongPassword = false;
+
+  // Variables pour les documents
+  carteProf: DocumentData | null = null;
+  cni: DocumentData | null = null;
+  ficheSouscription: DocumentData | null = null;
+  photoProfile: DocumentData | null = null;
+  
+  // Modal pour l'affichage des documents
+  isDocumentModalVisible = false;
+  selectedDocument: DocumentData | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -156,10 +188,16 @@ export class ParameterComponent implements OnInit {
       address: userData.service || ''
     });
     
+    // Gestion des documents
+    this.photoProfile = userData.photo_profil;
+    this.carteProf = userData.carte_professionnelle;
+    this.cni = userData.cni;
+    this.ficheSouscription = userData.fiche_souscription;
+    
     // Définition de l'URL de l'avatar à partir de photo_profil
-    if (userData.photo_profil && userData.photo_profil.chemin_fichier) {
-      const imagePath = userData.photo_profil.chemin_fichier.replace(/\\/g, '/'); // Remplacer les backslashes par des slashes
-      this.avatarUrl = `${environment.apiUrl}/storage/${imagePath}`; // Ajout du préfixe /storage/ pour Laravel
+    if (this.photoProfile && this.photoProfile.chemin_fichier) {
+      const imagePath = this.photoProfile.chemin_fichier.replace(/\\/g, '/'); // Remplacer les backslashes par des slashes
+      this.avatarUrl = `${environment.storageUrl}/${imagePath}`; // Ajout du préfixe /storage/ pour Laravel
       console.log('🖼️ Avatar URL set:', this.avatarUrl);
     } else {
       // Image par défaut si aucune photo de profil
@@ -546,5 +584,55 @@ export class ParameterComponent implements OnInit {
     if (strength >= 40) return 'strength-medium';
     if (strength >= 20) return 'strength-weak';
     return 'strength-very-weak';
+  }
+
+  // Méthodes pour la gestion des documents
+  openDocumentModal(document: DocumentData): void {
+    this.selectedDocument = document;
+    this.isDocumentModalVisible = true;
+  }
+
+  closeDocumentModal(): void {
+    this.isDocumentModalVisible = false;
+    this.selectedDocument = null;
+  }
+
+  getDocumentUrl(document: DocumentData | null): string {
+    if (!document || !document.chemin_fichier) return '';
+    const imagePath = document.chemin_fichier.replace(/\\/g, '/');
+    return `${environment.storageUrl}/${imagePath}`;
+  }
+
+  getDocumentTypeLabel(documentType: 'carte_professionnelle' | 'cni' | 'fiche_souscription'): string {
+    switch (documentType) {
+      case 'carte_professionnelle':
+        return 'Carte Professionnelle';
+      case 'cni':
+        return 'Carte Nationale d\'Identité';
+      case 'fiche_souscription':
+        return 'Fiche de Souscription';
+      default:
+        return '';
+    }
+  }
+
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  formatDate(dateString: string): string {
+    return new Date(dateString).toLocaleDateString('fr-FR');
+  }
+
+  onImageError(event: Event): void {
+    const target = event.target as HTMLImageElement;
+    if (target && target.nextElementSibling) {
+      target.style.display = 'none';
+      (target.nextElementSibling as HTMLElement).style.display = 'block';
+    }
   }
 }

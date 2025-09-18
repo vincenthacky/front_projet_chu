@@ -520,51 +520,74 @@
 
 .status-badge {
   font-size: 0.7rem !important;
-  padding: 4px 8px !important;
+  padding: 6px 12px !important;
   border-radius: 8px !important;
-  line-height: 1.1 !important;
+  line-height: 1.2 !important;
   display: inline-flex !important;
   align-items: center !important;
-  gap: 3px !important;
+  gap: 4px !important;
+  font-weight: 600 !important;
+  border: 1px solid transparent !important;
+  transition: all 0.2s ease !important;
   
-  &.status-en-cours {
-    background: #d1fae5 !important;
-    color: #059669 !important;
-    border: 1px solid #059669 !important;
+  /* Statut Active */
+  &.status-active {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe) !important;
+    color: #1e40af !important;
+    border: 1px solid #3b82f6 !important;
   }
   
-  &.status-en-retard {
-    background: #fef3c7 !important;
-    color: #d97706 !important;
-    border: 1px solid #f59e0b !important;
+  /* Statut En cours */
+  &.status-en-cour {
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0) !important;
+    color: #047857 !important;
+    border: 1px solid #10b981 !important;
   }
   
-  &.status-termine {
-    background: #dcfce7 !important;
-    color: #16a34a !important;
+  /* Statut Terminée */
+  &.status-terminee {
+    background: linear-gradient(135deg, #dcfce7, #bbf7d0) !important;
+    color: #15803d !important;
     border: 1px solid #22c55e !important;
   }
 
+  /* Statut Suspendue */
+  &.status-suspendue {
+    background: linear-gradient(135deg, #fed7aa, #fdba74) !important;
+    color: #c2410c !important;
+    border: 1px solid #f97316 !important;
+  }
+
+  /* Statut Résiliée */
+  &.status-resillee {
+    background: linear-gradient(135deg, #f3f4f6, #e5e7eb) !important;
+    color: #374151 !important;
+    border: 1px solid #6b7280 !important;
+  }
+
+  /* Statut En attente */
   &.status-en-attente {
-    background: #fef3c7 !important;
-    color: #d97706 !important;
+    background: linear-gradient(135deg, #fef3c7, #fde68a) !important;
+    color: #92400e !important;
     border: 1px solid #f59e0b !important;
   }
 
-  &.status-approuve {
-    background: #dbeafe !important;
-    color: #1d4ed8 !important;
-    border: 1px solid #3b82f6 !important;
-  }
-
+  /* Statut Rejetée */
   &.status-rejete {
-    background: #fee2e2 !important;
+    background: linear-gradient(135deg, #fee2e2, #fecaca) !important;
     color: #dc2626 !important;
     border: 1px solid #ef4444 !important;
   }
   
   i {
     font-size: 0.8em !important;
+    margin-right: 2px !important;
+  }
+
+  /* Hover effect */
+  &:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
   }
 }
 
@@ -1596,7 +1619,7 @@
   
   .status-badge {
     font-size: 0.6rem !important;
-    padding: 2px 6px !important;
+    padding: 4px 8px !important;
   }
   
   .next-payment {
@@ -2048,7 +2071,7 @@
   
   .status-badge {
     font-size: 0.8rem !important;
-    padding: 6px 10px !important;
+    padding: 8px 12px !important;
   }
   
   .next-payment {
