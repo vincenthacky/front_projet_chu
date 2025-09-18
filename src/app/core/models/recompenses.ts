@@ -56,7 +56,6 @@ export interface TypeRecompense {
     description: string;
     motif_recompense: string;
     periode_merite: string;
-    valeur_recompense: string;
     statut_recompense: 'due' | 'attribuee' | 'annulee';
     date_attribution: string;
     date_attribution_effective: string | null;

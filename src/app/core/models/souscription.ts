@@ -12,6 +12,7 @@ export interface ApiSouscription {
   date_debut_paiement: string;
   date_fin_prevue: string;
   statut_souscription: string;
+  statut_dynamique: string;
   notes_admin: string;
   created_at: string;
   updated_at: string;

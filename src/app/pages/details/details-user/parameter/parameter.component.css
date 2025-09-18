@@ -879,3 +879,210 @@
 .input{
   margin-left: 15px;
 }
+
+/* ===== STYLES POUR LES DOCUMENTS ===== */
+
+/* Section documents */
+.documents-section {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: var(--border-radius-small);
+  backdrop-filter: blur(5px);
+}
+
+.documents-section h4 {
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-primary);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+/* Cards de documents */
+.document-card {
+  height: 120px !important;
+  transition: var(--transition);
+  border-radius: var(--border-radius-small) !important;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.document-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+.document-card.document-empty {
+  cursor: default;
+  border-style: dashed !important;
+  border-color: #d9d9d9 !important;
+  opacity: 0.6;
+}
+
+.document-card.document-empty:hover {
+  transform: none;
+  box-shadow: var(--shadow-light) !important;
+}
+
+.document-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  gap: var(--spacing-xs);
+}
+
+.document-icon {
+  margin-bottom: var(--spacing-xs);
+}
+
+.document-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.document-title {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.document-meta {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.document-date {
+  font-size: 10px;
+  color: var(--text-light);
+}
+
+/* Modal de document */
+.document-modal-content {
+  padding: var(--spacing-sm);
+}
+
+.document-details {
+  margin-bottom: var(--spacing-md);
+}
+
+.document-preview {
+  text-align: center;
+  margin: var(--spacing-md) 0;
+}
+
+.preview-container {
+  max-height: 500px;
+  overflow-y: auto;
+  border: 1px solid #d9d9d9;
+  border-radius: var(--border-radius-small);
+  padding: var(--spacing-sm);
+  background: #fafafa;
+}
+
+.preview-container img {
+  max-width: 100%;
+  height: auto;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-radius: var(--border-radius-small);
+  background: white;
+}
+
+.document-actions {
+  margin-top: var(--spacing-md);
+  text-align: center;
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: center;
+}
+
+/* Responsive pour les documents */
+@media (max-width: 767px) {
+  .documents-section {
+    padding: var(--spacing-sm);
+  }
+  
+  .document-card {
+    height: 100px !important;
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .document-content {
+    gap: 4px;
+  }
+  
+  .document-title {
+    font-size: 12px;
+  }
+  
+  .document-meta {
+    font-size: 10px;
+  }
+  
+  .document-date {
+    font-size: 9px;
+  }
+  
+  .document-actions {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  .document-actions .ant-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .documents-section h4 {
+    font-size: 14px;
+  }
+  
+  .document-card {
+    height: 90px !important;
+  }
+  
+  .document-title {
+    font-size: 11px;
+    line-height: 1.1;
+  }
+  
+  .document-meta,
+  .document-date {
+    font-size: 9px;
+  }
+}
+
+/* Styles spécifiques pour les icônes de documents */
+.document-card .anticon-idcard {
+  color: #1890ff;
+}
+
+.document-card .anticon-credit-card {
+  color: #52c41a;
+}
+
+.document-card .anticon-file-text {
+  color: #faad14;
+}
+
+.document-card .anticon-file-add {
+  color: #d9d9d9;
+}
+
+/* Animation d'apparition pour les cards de documents */
+.document-card {
+  animation: slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.document-card:nth-child(1) { animation-delay: 0.1s; }
+.document-card:nth-child(2) { animation-delay: 0.2s; }
+.document-card:nth-child(3) { animation-delay: 0.3s; }

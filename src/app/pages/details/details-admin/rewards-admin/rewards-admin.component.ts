@@ -131,7 +131,6 @@ export class RewardsAdminComponent implements OnInit, OnDestroy {
       description: ['', [Validators.required, Validators.minLength(10)]],
       motif_recompense: ['', [Validators.required, Validators.minLength(5)]],
       periode_merite: ['', [Validators.required]],
-      valeur_recompense: [0, [Validators.required, Validators.min(0)]],
       statut_recompense: ['due', [Validators.required]],
       date_attribution: [new Date(), [Validators.required]],
       date_attribution_effective: [null],
@@ -364,7 +363,6 @@ export class RewardsAdminComponent implements OnInit, OnDestroy {
     this.addRewardForm.patchValue({
       statut_recompense: 'due',
       date_attribution: new Date(),
-      valeur_recompense: 0
     });
     
     this.selectedUtilisateur = null;
@@ -424,7 +422,7 @@ export class RewardsAdminComponent implements OnInit, OnDestroy {
       case 2:
         return this.addRewardForm.get('id_type_recompense')?.valid || false;
       case 3:
-        const requiredFields = ['description', 'motif_recompense', 'periode_merite', 'valeur_recompense', 'statut_recompense', 'date_attribution'];
+        const requiredFields = ['description', 'motif_recompense', 'periode_merite', 'statut_recompense', 'date_attribution'];
         return requiredFields.every(field => this.addRewardForm.get(field)?.valid);
       default:
         return false;
@@ -451,12 +449,6 @@ export class RewardsAdminComponent implements OnInit, OnDestroy {
   onTypeRecompenseChange(typeId: number) {
     this.selectedTypeRecompense = this.typesRecompenses.find(t => t.id_type_recompense === typeId) || null;
     
-    // Si le type a une valeur monétaire prédéfinie, l'utiliser
-    if (this.selectedTypeRecompense?.valeur_monetaire) {
-      this.addRewardForm.patchValue({
-        valeur_recompense: parseFloat(this.selectedTypeRecompense.valeur_monetaire)
-      });
-    }
   }
 
   // ===== AFFICHAGE DES DONNÉES =====
@@ -487,7 +479,6 @@ export class RewardsAdminComponent implements OnInit, OnDestroy {
       description: formData.description,
       motif_recompense: formData.motif_recompense,
       periode_merite: formData.periode_merite,
-      valeur_recompense: formData.valeur_recompense,
       statut_recompense: formData.statut_recompense,
       date_attribution: this.formatDateForApi(formData.date_attribution),
       date_attribution_effective: formData.date_attribution_effective ? this.formatDateForApi(formData.date_attribution_effective) : null,

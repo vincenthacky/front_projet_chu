@@ -17,6 +17,7 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { NzProgressModule } from 'ng-zorro-antd/progress';
 import { AuthService } from 'src/app/core/services/auth.service';
+import { environment } from '@/environment';
 
 
 // Import du service d'authentification
@@ -79,6 +80,7 @@ export class ProfileAdminComponent implements OnInit{
  
  // Variables pour le profil utilisateur
  avatarUrl?: string;
+ photoProfile: any = null;
  userStats: UserStats = {
    connections: 0,
    projects: 0
@@ -158,6 +160,23 @@ export class ProfileAdminComponent implements OnInit{
      jobTitle: userData.poste || '',
      address: userData.service || '' // Utilisant service comme adresse par défaut
    });
+   
+   // Gestion de la photo de profil
+   this.photoProfile = userData.photo_profil;
+   
+   // Définition de l'URL de l'avatar à partir de photo_profil
+   if (this.photoProfile && this.photoProfile.chemin_fichier) {
+     const imagePath = this.photoProfile.chemin_fichier.replace(/\\/g, '/'); // Remplacer les backslashes par des slashes
+     this.avatarUrl = `${environment.storageUrl}/${imagePath}`;
+     console.log('🖼️ Avatar URL set:', this.avatarUrl);
+   } else {
+     // Image par défaut si aucune photo de profil
+     this.avatarUrl = 'assets/images/default-avatar.png';
+     console.log('🖼️ Default avatar set:', this.avatarUrl);
+   }
+   
+   // Forcer la détection des changements pour garantir l'affichage
+   this.cdr.detectChanges();
    
    // Remplir les informations du compte
    this.populateAccountInfo(userData);
