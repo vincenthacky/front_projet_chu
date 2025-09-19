@@ -250,7 +250,7 @@
           </div>
           <div class="terrain-row">
             <span class="label-compact">Progression:</span>
-            <span class="value-compact">{{ selectedSubscriptionInfo.progression }}%</span>
+            <span class="value-compact">{{ selectedSubscriptionInfo.progression.toFixed(2) }}%</span>
           </div>
         </div>
 
@@ -420,6 +420,26 @@
           </small>
         </div>
 
+        <!-- Référence du paiement -->
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151; font-size: 14px;">
+            <span nz-icon nzType="tag" style="margin-right: 6px; color: #1890ff;"></span>
+            Référence du paiement
+          </label>
+          <input
+            type="text"
+            [(ngModel)]="paymentForm.reference_paiement"
+            name="reference_paiement"
+            placeholder="Entrez la référence (optionnel)"
+            style="width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; transition: border-color 0.2s;"
+            [style.border-color]="paymentForm.reference_paiement ? '#10b981' : '#d1d5db'"
+          />
+          <small style="color: #6b7280; margin-top: 4px; display: block; font-size: 12px;">
+            <span nz-icon nzType="info-circle" style="margin-right: 4px;"></span>
+            Optionnel - Numéro de chèque, référence de virement, etc.
+          </small>
+        </div>
+
         <!-- Date de paiement -->
         <div style="margin-bottom: 20px;">
           <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151; font-size: 14px;">
@@ -433,6 +453,26 @@
             style="width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; transition: border-color 0.2s;"
             [style.border-color]="paymentForm.date_paiement_effectif ? '#10b981' : '#d1d5db'"
           />
+        </div>
+
+        <!-- Commentaire du paiement -->
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151; font-size: 14px;">
+            <span nz-icon nzType="message" style="margin-right: 6px; color: #1890ff;"></span>
+            Commentaire
+          </label>
+          <textarea
+            [(ngModel)]="paymentForm.commentaire_paiement"
+            name="commentaire_paiement"
+            rows="3"
+            placeholder="Ajoutez un commentaire optionnel (ex: notes sur le paiement)"
+            style="width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; resize: vertical; transition: border-color 0.2s;"
+            [style.border-color]="paymentForm.commentaire_paiement ? '#10b981' : '#d1d5db'"
+          ></textarea>
+          <small style="color: #6b7280; margin-top: 4px; display: block; font-size: 12px;">
+            <span nz-icon nzType="info-circle" style="margin-right: 4px;"></span>
+            Optionnel - Pour des notes internes ou supplémentaires.
+          </small>
         </div>
 
         <!-- Récapitulatif -->
@@ -460,11 +500,18 @@
                 {{ paymentForm.montant_paye ? formatCurrency(paymentForm.montant_paye) : '0 FCFA' }}
               </span>
             </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding: 4px 0;" *ngIf="paymentForm.reference_paiement">
+              <span style="color: #6b7280;">Référence :</span>
+              <span style="font-weight: 500; color: #1f2937;">{{ paymentForm.reference_paiement }}</span>
+            </div>
             <div style="display: flex; justify-content: space-between; padding: 8px 0; border-top: 1px solid #e5e7eb;">
               <span style="color: #6b7280; font-weight: 500;">Nouveau solde restant :</span>
               <span style="font-weight: 700; color: #059669; font-size: 15px;">
                 {{ formatCurrency(Math.max(0, getMontantRestant(selectedSouscriptionForPayment) - (paymentForm.montant_paye || 0))) }}
               </span>
+            </div>
+            <div *ngIf="paymentForm.commentaire_paiement" style="margin-top: 12px; padding-top: 8px; border-top: 1px solid #e5e7eb; font-size: 13px; color: #6b7280;">
+              <strong>Commentaire :</strong> {{ paymentForm.commentaire_paiement }}
             </div>
           </div>
         </div>

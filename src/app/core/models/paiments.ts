@@ -10,11 +10,11 @@ export interface ApiPaiement {
   date_paiement_effectif: string;
   montant_paye: string;
   mode_paiement: string;
-  reference_paiement?: string | null;
+  reference_paiement?: string | null;  // Déjà optionnel
   est_paye: boolean;
   penalite_appliquee: string;
   statut_versement: string;
-  commentaire_paiement?: string | null;
+  commentaire_paiement?: string | null;  // Déjà optionnel
   date_saisie?: string | null;
   created_at: string;
   updated_at: string;
@@ -93,7 +93,6 @@ export interface PaiementsFilters {
   search?: string;
 }
 
-
 export interface PaymentCreationResponse {
   success: boolean;
   status_code: number;
@@ -115,4 +114,6 @@ export interface PaymentData {
   mode_paiement: string;
   montant_paye: number;
   date_paiement_effectif: string;
+  reference_paiement?: string;  // Ajouté comme optionnel pour cohérence
+  commentaire_paiement?: string;  // Ajouté comme optionnel pour cohérence
 }

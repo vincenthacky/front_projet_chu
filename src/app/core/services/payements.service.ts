@@ -5,7 +5,6 @@ import { Injectable } from '@angular/core';
 import { PaymentData, PaymentCreationResponse, PaiementsFilters, PaiementsResponse, ApiPaiement } from '../models/paiments';
 import { environment } from '@/environment';
 
-
 @Injectable({
   providedIn: 'root'
 })
@@ -16,15 +15,23 @@ export class PayementsService {
   constructor(private http: HttpClient) {}
 
   /**
-   * Créer un nouveau paiement
+   * Créer un nouveau paiement (corrigé pour inclure les champs optionnels)
    */
   createPaiement(paymentData: PaymentData): Observable<PaymentCreationResponse> {
-    const payload = {
+    const payload: any = {
       id_souscription: paymentData.id_souscription,
       mode_paiement: paymentData.mode_paiement,
       montant_paye: paymentData.montant_paye.toString(), // Convertir en string si l'API attend une string
       date_paiement_effectif: paymentData.date_paiement_effectif
     };
+
+    // Ajout des champs optionnels s'ils sont fournis
+    if (paymentData.reference_paiement && paymentData.reference_paiement.trim() !== '') {
+      payload.reference_paiement = paymentData.reference_paiement;
+    }
+    if (paymentData.commentaire_paiement && paymentData.commentaire_paiement.trim() !== '') {
+      payload.commentaire_paiement = paymentData.commentaire_paiement;
+    }
 
     console.log('📤 Envoi paiement à l\'API:', payload);
     console.log('🔗 URL:', this.apiUrl);
@@ -184,5 +191,4 @@ export class PayementsService {
       penalitesTotales
     };
   }
-  
 }

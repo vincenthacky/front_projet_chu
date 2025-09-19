@@ -148,29 +148,33 @@ export class LoginComponent implements OnInit {
 
         console.error('❌ Erreur complète:', error);
 
-        // Gestion des erreurs selon le status code
-        switch (error.status) {
-          case 401:
-            errorMessage = 'Adresse mail ou mot de passe incorrect';
-            break;
-          case 0:
-            errorMessage = 'Impossible de se connecter au serveur. Vérifiez votre connexion.';
-            break;
-          case 422:
-            errorMessage = 'Données de connexion invalides';
-            break;
-          case 500:
-            errorMessage = 'Erreur du serveur, veuillez réessayer plus tard';
-            break;
-          default:
-            // Le message d'erreur est automatiquement décodé par l'interceptor
-            if (error.error && error.error.message) {
-              errorMessage = error.error.message;
-            } else if (error.error && typeof error.error === 'string') {
-              errorMessage = error.error;
-            } else {
-              errorMessage = error.message || 'Erreur inconnue';
-            }
+        if (error.message === 'Non authorisé') {
+          errorMessage = 'Non authorisé';
+        } else {
+          // Gestion des erreurs selon le status code
+          switch (error.status) {
+            case 401:
+              errorMessage = 'Adresse mail ou mot de passe incorrect';
+              break;
+            case 0:
+              errorMessage = 'Impossible de se connecter au serveur. Vérifiez votre connexion.';
+              break;
+            case 422:
+              errorMessage = 'Données de connexion invalides';
+              break;
+            case 500:
+              errorMessage = 'Erreur du serveur, veuillez réessayer plus tard';
+              break;
+            default:
+              // Le message d'erreur est automatiquement décodé par l'interceptor
+              if (error.error && error.error.message) {
+                errorMessage = error.error.message;
+              } else if (error.error && typeof error.error === 'string') {
+                errorMessage = error.error;
+              } else {
+                errorMessage = error.message || 'Erreur inconnue';
+              }
+          }
         }
 
         this.message.error(errorMessage);

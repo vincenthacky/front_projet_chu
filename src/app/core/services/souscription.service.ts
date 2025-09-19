@@ -1,4 +1,3 @@
-
 // src/app/core/services/souscription.service.ts
 import { environment } from '@/environment';
 import { HttpClient, HttpParams } from '@angular/common/http';
@@ -7,8 +6,6 @@ import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { SouscriptionFilters, SouscriptionResponse, SouscriptionSingleResponse, SouscriptionStats, ApiSouscription, TerrainResponse, Terrain } from '../models/souscription';
 import { PlanPaiement } from '../models/utilisateur';
-//import { PlanPaiement } from './utilisateurs-souscriptions.service';
-
 
 @Injectable({
   providedIn: 'root'
@@ -48,8 +45,7 @@ export class SouscriptionService {
   }
 
   /**
-   * Récupère toutes les souscriptions avec pagination et filtres
-   * Le token est automatiquement ajouté par l'AuthInterceptor
+   * Récupère toutes les demandes de souscriptions avec pagination et filtres
    */
   getAllDemandeSouscriptions(filters?: SouscriptionFilters): Observable<SouscriptionResponse> {
     let params = new HttpParams();
@@ -75,7 +71,6 @@ export class SouscriptionService {
         })
       );
   }
-
 
   /**
    * Récupère les souscriptions de l'utilisateur connecté
@@ -300,14 +295,14 @@ export class SouscriptionService {
     }).format(numAmount);
   }
 
-  // Calcule le pourcentage de completion d'une souscription - CORRIGÉ
+  // ✅ CORRECTION : Calcule le pourcentage de completion d'une souscription
   calculateCompletionPercentage(souscription: ApiSouscription): number {
-    // CORRECTION : Utiliser prix_total_terrain au lieu de montant_total_souscrit
-    const totalAmount = souscription.prix_total_terrain || 0;
-    const paidAmount = this.parseAmount(souscription.montant_paye);
+    // CORRECTION : Utiliser montant_total_souscrit au lieu de prix_total_terrain
+    const totalAmount = parseFloat(souscription.montant_total_souscrit?.toString() || '0');
+    const paidAmount = this.parseAmount(souscription.montant_paye || '0');
     
     if (totalAmount === 0) return 0;
-    return Math.round((paidAmount / totalAmount) * 100);
+    return (paidAmount / totalAmount) * 100;
   }
 
   // Détermine le statut d'urgence d'une échéance
@@ -322,44 +317,47 @@ export class SouscriptionService {
   }
 
   /**
- * Détermine le statut d'une souscription selon la logique métier - CORRIGÉ
- */
-calculateSouscriptionStatus(souscription: ApiSouscription): string {
-  // Protection contre les valeurs manquantes
-  if (!souscription) {
-    return 'en_attente';
-  }
-
-  const resteAPayer = souscription.reste_a_payer || 0;
-  const dateProchain = souscription.date_prochain;
-  const today = new Date();
-  
-  // Si plus rien à payer → Terminé
-  if (resteAPayer === 0) {
-    return 'termine';
-  }
-  
-  // Si date de prochain paiement dépassée → En retard
-  if (dateProchain) {
-    try {
-      const prochainePaiement = new Date(dateProchain);
-      if (prochainePaiement < today) {
-        return 'en_retard';
-      }
-    } catch (error) {
-      console.warn('Date invalide pour date_prochain:', dateProchain);
+   * ✅ CORRECTION : Détermine le statut d'une souscription selon la logique métier
+   */
+  calculateSouscriptionStatus(souscription: ApiSouscription): string {
+    // Protection contre les valeurs manquantes
+    if (!souscription) {
+      return 'en_attente';
     }
+
+    // ✅ CORRECTION : Calculer le reste à payer basé sur montant_total_souscrit
+    const montantTotal = parseFloat(souscription.montant_total_souscrit?.toString() || '0');
+    const montantPaye = this.parseAmount(souscription.montant_paye || '0');
+    const resteAPayer = Math.max(0, montantTotal - montantPaye);
+    
+    const dateProchain = souscription.date_prochain;
+    const today = new Date();
+    
+    // Si plus rien à payer → Terminé
+    if (resteAPayer === 0) {
+      return 'termine';
+    }
+    
+    // Si date de prochain paiement dépassée → En retard
+    if (dateProchain) {
+      try {
+        const prochainePaiement = new Date(dateProchain);
+        if (prochainePaiement < today) {
+          return 'en_retard';
+        }
+      } catch (error) {
+        console.warn('Date invalide pour date_prochain:', dateProchain);
+      }
+    }
+    
+    // Si un paiement a été effectué → En cours
+    if (montantPaye > 0) {
+      return 'en_cours';
+    }
+    
+    // Par défaut, retourne le statut actuel ou 'en_attente'
+    return souscription.statut_souscription || 'en_attente';
   }
-  
-  // Si un paiement a été effectué → En cours
-  const montantPaye = this.parseAmount(souscription.montant_paye || '0');
-  if (montantPaye > 0) {
-    return 'en_cours';
-  }
-  
-  // Par défaut, retourne le statut actuel ou 'en_attente'
-  return souscription.statut_souscription || 'en_attente';
-}
 
   /**
    * Obtient le statut avec couleur pour l'affichage
@@ -387,54 +385,52 @@ calculateSouscriptionStatus(souscription: ApiSouscription): string {
     }
   }
 
-
   // Ajouter cette méthode à SouscriptionService
-getTerrains(): Observable<Terrain[]> {
-  return this.http.get<TerrainResponse>(`${this.API_URL}/terrains`).pipe(
-    map(response => response.data),
-    tap(terrains => console.log('🌍 Terrains récupérés:', terrains))
-  );
-}
-
-/**
- * Créer une demande de souscription
- */
-createDemandeSouscription(demandeData: {
-  id_terrain: number;
-  nombre_terrains: number;
-}): Observable<{success: boolean; message: string; data?: any}> {
-  return this.http.post<{success: boolean; message: string; data?: any}>(
-    `${this.API_URL}/souscriptions/demandes`, 
-    demandeData
-  ).pipe(
-    tap(response => {
-      console.log('📝 Demande de souscription créée:', response);
-    })
-  );
-}
-
-/**
- * Récupère les demandes de souscription de l'utilisateur connecté
- */
-getMesDemandesSouscriptions(filters?: SouscriptionFilters): Observable<SouscriptionResponse> {
-  let params = new HttpParams();
-  
-  if (filters) {
-    if (filters.page) params = params.set('page', filters.page.toString());
-    if (filters.per_page) params = params.set('per_page', filters.per_page.toString());
-    if (filters.statut) params = params.set('statut', filters.statut);
-    if (filters.date_debut) params = params.set('date_debut', filters.date_debut);
-    if (filters.date_fin) params = params.set('date_fin', filters.date_fin);
-    if (filters.superficie) params = params.set('superficie', filters.superficie.toString());
-    if (filters.search) params = params.set('search', filters.search);
+  getTerrains(): Observable<Terrain[]> {
+    return this.http.get<TerrainResponse>(`${this.API_URL}/terrains`).pipe(
+      map(response => response.data),
+      tap(terrains => console.log('🌍 Terrains récupérés:', terrains))
+    );
   }
 
-  return this.http.get<SouscriptionResponse>(`${this.API_URL}/souscriptions/demandes/utilisateur`, { params })
-    .pipe(
+  /**
+   * Créer une demande de souscription
+   */
+  createDemandeSouscription(demandeData: {
+    id_terrain: number;
+    nombre_terrains: number;
+  }): Observable<{success: boolean; message: string; data?: any}> {
+    return this.http.post<{success: boolean; message: string; data?: any}>(
+      `${this.API_URL}/souscriptions/demandes`, 
+      demandeData
+    ).pipe(
       tap(response => {
-        console.log('👤 Mes demandes de souscription récupérées:', response);
+        console.log('📝 Demande de souscription créée:', response);
       })
     );
-}
-}
+  }
 
+  /**
+   * Récupère les demandes de souscription de l'utilisateur connecté
+   */
+  getMesDemandesSouscriptions(filters?: SouscriptionFilters): Observable<SouscriptionResponse> {
+    let params = new HttpParams();
+    
+    if (filters) {
+      if (filters.page) params = params.set('page', filters.page.toString());
+      if (filters.per_page) params = params.set('per_page', filters.per_page.toString());
+      if (filters.statut) params = params.set('statut', filters.statut);
+      if (filters.date_debut) params = params.set('date_debut', filters.date_debut);
+      if (filters.date_fin) params = params.set('date_fin', filters.date_fin);
+      if (filters.superficie) params = params.set('superficie', filters.superficie.toString());
+      if (filters.search) params = params.set('search', filters.search);
+    }
+
+    return this.http.get<SouscriptionResponse>(`${this.API_URL}/souscriptions/demandes/utilisateur`, { params })
+      .pipe(
+        tap(response => {
+          console.log('👤 Mes demandes de souscription récupérées:', response);
+        })
+      );
+  }
+}
