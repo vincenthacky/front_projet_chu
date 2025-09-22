@@ -4,12 +4,14 @@ import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { AuthService } from '../core/services/auth.service';
+import { ModalService } from '../core/services/modal.service';
 
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
   private authService = inject(AuthService);
   private router = inject(Router);
+  private modalService = inject(ModalService);
 
   private readonly EXCLUDED_URLS = [
     '/api/login',
@@ -139,10 +141,14 @@ export class AuthInterceptor implements HttpInterceptor {
     // Réinitialiser l'état utilisateur via AuthService (sans redirection)
     this.authService.resetUserState();
     
-    // Rediriger vers la page de login
+    // Afficher le modal de suspension
+    this.modalService.showAccountSuspendedModal();
+    
+    // Rediriger vers la page de login après 4 secondes
     setTimeout(() => {
+      this.modalService.hideModal();
       this.router.navigate(['/authentification/login']);
       console.log('🔄 INTERCEPTOR: Redirection vers /authentification/login');
-    }, 100);
+    }, 4000);
   }
 }
