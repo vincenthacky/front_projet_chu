@@ -476,7 +476,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Convertir ApiSouscription vers le format Subscription - CORRIGÉ
+   * Convertir ApiSouscription vers le format Subscription - CORRIGÉ POUR TRI DÉCROISSANT
    */
   private convertToSubscriptionFormat(apiSouscription: ApiSouscription): Subscription {
     console.log('🔄 Conversion de ApiSouscription vers Subscription:', apiSouscription);
@@ -497,8 +497,9 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
         break;
     }
 
-    // CORRECTION : Récupérer les vrais paiements depuis l'API avec tri par date décroissante (derniers en premier)
-    const payments: Payment[] = (apiSouscription.planpaiements || [])
+    // CORRECTION : Récupérer et trier les paiements par date décroissante (plus récent en premier)
+    // D'abord, mapper avec les dates originales pour le tri précis
+    const paymentsWithOriginalDate: { date: string; dateFormatted: string; amount: number; numero_mensualite?: number; mode_paiement?: string; reference_paiement?: string | null; statut_versement?: string; }[] = (apiSouscription.planpaiements || [])
       .filter(plan => {
         const montantPaye = this.souscriptionService.parseAmount(plan.montant_paye);
         return montantPaye > 0 && plan.date_paiement_effectif;
@@ -506,28 +507,40 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
       .map(plan => {
         const montantPaye = this.souscriptionService.parseAmount(plan.montant_paye);
         return {
-          date: this.formatDate(plan.date_paiement_effectif) || 'Date non disponible',
+          date: plan.date_paiement_effectif, // Date ISO originale pour tri précis
+          dateFormatted: this.formatDate(plan.date_paiement_effectif), // Date formatée pour affichage
           amount: montantPaye,
           numero_mensualite: plan.numero_mensualite,
           mode_paiement: plan.mode_paiement || 'Non spécifié',
-          reference_paiement: plan.reference_paiement, // CORRECTION : Garder le type original (string | null)
+          reference_paiement: plan.reference_paiement,
           statut_versement: plan.statut_versement || 'validé'
         };
       })
-      // TRI PAR DATE DÉCROISSANTE : Derniers paiements en premier
+      // TRI PAR DATE DÉCROISSANTE : plus récent (date plus grande) en premier
       .sort((a, b) => {
-        const dateA = new Date(a.date === 'Date non disponible' ? '1900-01-01' : a.date);
-        const dateB = new Date(b.date === 'Date non disponible' ? '1900-01-01' : b.date);
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        // Si dateB > dateA, retourne négatif pour placer b avant a (décroissant)
         return dateB.getTime() - dateA.getTime();
       });
 
-    console.log('💳 Paiements réels mappés (derniers en premier):', payments);
+    // Mapper vers le format final avec date formatée (ordre préservé)
+    const payments: Payment[] = paymentsWithOriginalDate.map(payment => ({
+      date: payment.dateFormatted || 'Date non disponible',
+      amount: payment.amount,
+      numero_mensualite: payment.numero_mensualite,
+      mode_paiement: payment.mode_paiement,
+      reference_paiement: payment.reference_paiement,
+      statut_versement: payment.statut_versement
+    }));
+
+    console.log('💳 Paiements triés par date décroissante (plus récent en premier):', payments);
 
     const subscription: Subscription = {
       id: apiSouscription.id_souscription.toString(),
       terrain: apiSouscription.terrain?.libelle || 'Terrain non défini',
       surface: apiSouscription.terrain?.superficie || '0m²',
-      prixTotal: apiSouscription.prix_total_terrain || 0, // CORRECTION: Utiliser prix_total_terrain
+      prixTotal: apiSouscription.prix_total_terrain || 0,
       montantPaye: this.souscriptionService.parseAmount(apiSouscription.montant_paye),
       resteAPayer: apiSouscription.reste_a_payer || 0,
       dateDebut: apiSouscription.date_souscription || new Date().toISOString(),
@@ -537,29 +550,23 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
       payments
     };
 
-    console.log('✅ Subscription convertie:', subscription);
+    console.log('✅ Subscription convertie avec paiements triés:', subscription);
     return subscription;
   }
 
   /**
-   * Afficher le modal de détails - CORRIGÉ
+   * Afficher le modal de détails - CORRIGÉ POUR ORDRE DÉCROISSANT
    */
   showModal(subscription: Subscription): void {
     console.log('🔍 Ouverture modal pour:', subscription.id);
-    console.log('💳 Paiements disponibles (déjà triés par date décroissante):', subscription.payments);
+    console.log('💳 Paiements triés par date décroissante:', subscription.payments);
 
     if (subscription.payments && Array.isArray(subscription.payments)) {
-      // Les paiements sont déjà triés par date décroissante, on prend les 5 premiers (les plus récents)
-      this.lastFivePayments = subscription.payments.slice(0, 5).map(payment => ({
-        date: payment.date,
-        amount: payment.amount,
-        numero_mensualite: payment.numero_mensualite,
-        mode_paiement: payment.mode_paiement,
-        reference_paiement: payment.reference_paiement,
-        statut_versement: payment.statut_versement
-      }));
+      // Les paiements sont déjà triés par date décroissante dans convertToSubscriptionFormat
+      // On prend les 5 premiers (les plus récents)
+      this.lastFivePayments = subscription.payments.slice(0, 5);
 
-      console.log('📋 5 derniers paiements sélectionnés (les plus récents):', this.lastFivePayments);
+      console.log('📋 5 derniers paiements (ordre décroissant - plus récent en premier):', this.lastFivePayments);
     } else {
       this.lastFivePayments = [];
       console.log('⚠️ Aucun paiement trouvé pour cette souscription');
@@ -1100,11 +1107,13 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   formatPaymentStatus(statut: string | undefined): string {
     if (!statut) return 'Non défini';
     switch (statut.toLowerCase()) {
-      case 'valide':
+      case 'validé':
+      case 'valide': // Ajout pour compatibilité sans accent
         return 'Validé';
       case 'en_attente':
         return 'En attente';
-      case 'rejete':
+      case 'rejeté':
+      case 'rejete': // Ajout pour compatibilité sans accent
         return 'Rejeté';
       default:
         return statut;
@@ -1114,11 +1123,13 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   getPaymentStatusColor(statut: string | undefined): string {
     if (!statut) return 'default';
     switch (statut.toLowerCase()) {
-      case 'valide':
+      case 'validé':
+      case 'valide': // Ajout pour compatibilité sans accent
         return 'green';
       case 'en_attente':
         return 'orange';
-      case 'rejete':
+      case 'rejeté':
+      case 'rejete': // Ajout pour compatibilité sans accent
         return 'red';
       default:
         return 'default';
