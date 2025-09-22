@@ -2,323 +2,323 @@
 
 <!-- En-tête de la page -->
 <div class="documents-header">
-    <div class="header-content">
-      <h1 class="page-title">
-        <i nz-icon nzType="file-text" class="title-icon"></i>
-        Gestion des Documents
-      </h1>
-      <p class="page-subtitle">Administrez tous les documents du système</p>
-      
-      <div class="header-actions">
-        <button nz-button nzType="primary" (click)="rafraichir()" [nzLoading]="loading">
-          <i nz-icon nzType="reload"></i>
-          Actualiser
-        </button>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Statistiques rapides -->
-  <div class="stats-section" *ngIf="!loading && !error">
-    <div class="stat-card">
-      <div class="stat-value">{{ totalDocuments }}</div>
-      <div class="stat-label">Total Documents</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value">{{ documents.length }}</div>
-      <div class="stat-label">Documents Affichés</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value">{{ currentPage }}</div>
-      <div class="stat-label">Page Actuelle</div>
-    </div>
-  </div>
-  
-  <!-- Zone de contenu principal -->
-  <div class="main-content">
+  <div class="header-content">
+    <h1 class="page-title">
+      <i nz-icon nzType="file-text" class="title-icon"></i>
+      Gestion des Documents
+    </h1>
+    <p class="page-subtitle">Administrez tous les documents du système</p>
     
-    <!-- État de chargement -->
-    <div class="loading-container" *ngIf="loading">
-      <nz-spin nzSize="large">
-        <div class="loading-content">
-          <div class="loading-icon">
-            <i nz-icon nzType="file-sync" nzSpin></i>
-          </div>
-          <h3>Chargement des documents...</h3>
-          <p>Récupération des données en cours</p>
-        </div>
-      </nz-spin>
+    <div class="header-actions">
+      <button nz-button nzType="primary" (click)="rafraichir()" [nzLoading]="loading">
+        <i nz-icon nzType="reload"></i>
+        Actualiser
+      </button>
     </div>
+  </div>
+</div>
+
+<!-- Statistiques rapides -->
+<div class="stats-section" *ngIf="!loading && !error">
+  <div class="stat-card">
+    <div class="stat-value">{{ totalDocuments }}</div>
+    <div class="stat-label">Total Documents</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">{{ documents.length }}</div>
+    <div class="stat-label">Documents Affichés</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">{{ currentPage }}</div>
+    <div class="stat-label">Page Actuelle</div>
+  </div>
+</div>
+
+<!-- Zone de contenu principal -->
+<div class="main-content">
   
-    <!-- Message d'erreur -->
-    <div class="error-container" *ngIf="error && !loading">
-      <div class="error-content">
-        <div class="error-icon">
-          <i nz-icon nzType="exclamation-circle"></i>
+  <!-- État de chargement -->
+  <div class="loading-container" *ngIf="loading">
+    <nz-spin nzSize="large">
+      <div class="loading-content">
+        <div class="loading-icon">
+          <i nz-icon nzType="file-sync" nzSpin></i>
         </div>
-        <h3>Erreur de chargement</h3>
-        <p>{{ error }}</p>
-        <button nz-button nzType="primary" (click)="retry()">
+        <h3>Chargement des documents...</h3>
+        <p>Récupération des données en cours</p>
+      </div>
+    </nz-spin>
+  </div>
+
+  <!-- Message d'erreur -->
+  <div class="error-container" *ngIf="error && !loading">
+    <div class="error-content">
+      <div class="error-icon">
+        <i nz-icon nzType="exclamation-circle"></i>
+      </div>
+      <h3>Erreur de chargement</h3>
+      <p>{{ error }}</p>
+      <button nz-button nzType="primary" (click)="retry()">
+        <i nz-icon nzType="reload"></i>
+        Réessayer
+      </button>
+    </div>
+  </div>
+
+  <!-- Zone principale sans données - DESIGN AMÉLIORÉ -->
+  <div class="empty-state" *ngIf="!loading && !error && documents.length === 0">
+    <div class="empty-content">
+      <div class="empty-illustration">
+        <div class="empty-icon-container">
+          <i nz-icon nzType="inbox" class="empty-main-icon"></i>
+          <div class="empty-decorative-icons">
+            <i nz-icon nzType="file-text" class="floating-icon icon-1"></i>
+            <i nz-icon nzType="file-pdf" class="floating-icon icon-2"></i>
+            <i nz-icon nzType="file-image" class="floating-icon icon-3"></i>
+          </div>
+        </div>
+      </div>
+      
+      <div class="empty-text">
+        <h2>Aucun document trouvé</h2>
+        <p class="empty-description">
+          Il n'y a actuellement aucun document dans le système. 
+          Les documents apparaîtront ici une fois qu'ils seront téléchargés par les utilisateurs.
+        </p>
+      </div>
+      
+      <div class="empty-actions">
+        <button nz-button nzType="primary" nzSize="large" (click)="rafraichir()">
           <i nz-icon nzType="reload"></i>
-          Réessayer
+          Actualiser la liste
+        </button>
+        <button nz-button nzType="default" nzSize="large">
+          <i nz-icon nzType="question-circle"></i>
+          Aide
         </button>
       </div>
-    </div>
-  
-    <!-- Zone principale sans données - DESIGN AMÉLIORÉ -->
-    <div class="empty-state" *ngIf="!loading && !error && documents.length === 0">
-      <div class="empty-content">
-        <div class="empty-illustration">
-          <div class="empty-icon-container">
-            <i nz-icon nzType="inbox" class="empty-main-icon"></i>
-            <div class="empty-decorative-icons">
-              <i nz-icon nzType="file-text" class="floating-icon icon-1"></i>
-              <i nz-icon nzType="file-pdf" class="floating-icon icon-2"></i>
-              <i nz-icon nzType="file-image" class="floating-icon icon-3"></i>
-            </div>
-          </div>
-        </div>
-        
-        <div class="empty-text">
-          <h2>Aucun document trouvé</h2>
-          <p class="empty-description">
-            Il n'y a actuellement aucun document dans le système. 
-            Les documents apparaîtront ici une fois qu'ils seront téléchargés par les utilisateurs.
-          </p>
-        </div>
-        
-        <div class="empty-actions">
-          <button nz-button nzType="primary" nzSize="large" (click)="rafraichir()">
-            <i nz-icon nzType="reload"></i>
-            Actualiser la liste
-          </button>
-          <button nz-button nzType="default" nzSize="large">
-            <i nz-icon nzType="question-circle"></i>
-            Aide
-          </button>
-        </div>
-        
-        <div class="empty-suggestions">
-          <h4>Suggestions :</h4>
-          <ul>
-            <li>Vérifiez que des utilisateurs ont téléchargé des documents</li>
-            <li>Contactez l'équipe technique si le problème persiste</li>
-            <li>Consultez les logs pour plus d'informations</li>
-          </ul>
-        </div>
+      
+      <div class="empty-suggestions">
+        <h4>Suggestions :</h4>
+        <ul>
+          <li>Vérifiez que des utilisateurs ont téléchargé des documents</li>
+          <li>Contactez l'équipe technique si le problème persiste</li>
+          <li>Consultez les logs pour plus d'informations</li>
+        </ul>
       </div>
     </div>
-  
-    <!-- Grille de cartes de documents -->
-    <div class="documents-grid" *ngIf="!loading && !error && documents.length > 0">
-      <nz-card 
-        *ngFor="let doc of documents" 
-        class="document-card"
-        [nzCover]="coverTemplate"
-        [nzActions]="[viewAction]"
-        nzHoverable
+  </div>
+
+  <!-- Grille de cartes de documents -->
+  <div class="documents-grid" *ngIf="!loading && !error && documents.length > 0">
+    <nz-card 
+      *ngFor="let doc of documents" 
+      class="document-card"
+      [nzCover]="coverTemplate"
+      [nzActions]="[viewAction]"
+      nzHoverable
+    >
+      <!-- Template pour la couverture -->
+      <ng-template #coverTemplate>
+        <div class="document-cover">
+          <!-- Aperçu pour les images -->
+          <div *ngIf="isImage(doc.nom_original)" class="image-preview">
+            <img 
+              [src]="documentService.getDocumentUrl(doc.chemin_fichier)" 
+              [alt]="doc.nom_original"
+              (error)="onImageError($event)"
+            />
+          </div>
+          
+          <!-- Icône pour les autres types de fichiers -->
+          <div *ngIf="!isImage(doc.nom_original)" class="file-icon-preview">
+            <span 
+              nz-icon 
+              [nzType]="getFileIcon(doc.nom_original)" 
+              nzTheme="outline"
+              class="large-icon"
+            ></span>
+            <div class="file-extension">
+              {{ doc.nom_original.split('.').pop()?.toUpperCase() }}
+            </div>
+          </div>
+          
+          <!-- Badge du type de document -->
+          <nz-tag 
+            class="document-type-badge" 
+            [nzColor]="getDocumentTypeColor(doc.type_document.libelle_type_document)"
+          >
+            {{ doc.type_document.libelle_type_document }}
+          </nz-tag>
+        </div>
+      </ng-template>
+
+      <!-- Actions -->
+      <ng-template #viewAction>
+        <span 
+          nz-icon 
+          nzType="eye" 
+          nzTheme="outline"
+          nz-tooltip="Voir en grand"
+          (click)="onConsulter(doc)"
+        ></span>
+      </ng-template>
+
+      <!-- Contenu de la carte -->
+      <nz-card-meta 
+        [nzTitle]="doc.nom_original"
+        [nzDescription]="metaTemplate"
       >
-        <!-- Template pour la couverture -->
-        <ng-template #coverTemplate>
-          <div class="document-cover">
-            <!-- Aperçu pour les images -->
-            <div *ngIf="isImage(doc.nom_original)" class="image-preview">
-              <img 
-                [src]="documentService.getDocumentUrl(doc.chemin_fichier)" 
-                [alt]="doc.nom_original"
-                (error)="onImageError($event)"
-              />
+        <ng-template #metaTemplate>
+          <div class="document-meta">
+            <div class="meta-row">
+              <span nz-icon nzType="calendar" nzTheme="outline"></span>
+              {{ doc.date_telechargement | date:'dd MMM yyyy à HH:mm' }}
             </div>
-            
-            <!-- Icône pour les autres types de fichiers -->
-            <div *ngIf="!isImage(doc.nom_original)" class="file-icon-preview">
-              <span 
-                nz-icon 
-                [nzType]="getFileIcon(doc.nom_original)" 
-                nzTheme="outline"
-                class="large-icon"
-              ></span>
-              <div class="file-extension">
-                {{ doc.nom_original.split('.').pop()?.toUpperCase() }}
-              </div>
+            <div class="meta-row">
+              <span nz-icon nzType="inbox" nzTheme="outline"></span>
+              {{ formatFileSize(doc.taille_fichier) }}
             </div>
-            
-            <!-- Badge du type de document -->
-            <nz-tag 
-              class="document-type-badge" 
-              [nzColor]="getDocumentTypeColor(doc.type_document.libelle_type_document)"
-            >
-              {{ doc.type_document.libelle_type_document }}
-            </nz-tag>
+            <div class="meta-row" *ngIf="doc.description_document">
+              <span nz-icon nzType="info-circle" nzTheme="outline"></span>
+              {{ doc.description_document }}
+            </div>
+            <div class="meta-row">
+              <span nz-icon nzType="number" nzTheme="outline"></span>
+              Version {{ doc.version_document }}
+            </div>
           </div>
         </ng-template>
-
-        <!-- Actions -->
-        <ng-template #viewAction>
-          <span 
-            nz-icon 
-            nzType="eye" 
-            nzTheme="outline"
-            nz-tooltip="Voir en grand"
-            (click)="onConsulter(doc)"
-          ></span>
-        </ng-template>
-
-        <!-- Contenu de la carte -->
-        <nz-card-meta 
-          [nzTitle]="doc.nom_original"
-          [nzDescription]="metaTemplate"
-        >
-          <ng-template #metaTemplate>
-            <div class="document-meta">
-              <div class="meta-row">
-                <span nz-icon nzType="calendar" nzTheme="outline"></span>
-                {{ doc.date_telechargement | date:'dd MMM yyyy à HH:mm' }}
-              </div>
-              <div class="meta-row">
-                <span nz-icon nzType="inbox" nzTheme="outline"></span>
-                {{ formatFileSize(doc.taille_fichier) }}
-              </div>
-              <div class="meta-row" *ngIf="doc.description_document">
-                <span nz-icon nzType="info-circle" nzTheme="outline"></span>
-                {{ doc.description_document }}
-              </div>
-              <div class="meta-row">
-                <span nz-icon nzType="number" nzTheme="outline"></span>
-                Version {{ doc.version_document }}
-              </div>
-            </div>
-          </ng-template>
-        </nz-card-meta>
-      </nz-card>
-    </div>
-  
-    <!-- PAGINATION CORRIGÉE -->
-    <div class="pagination-container" *ngIf="!loading && !error && totalDocuments > pageSize">
-      <nz-pagination 
-        [(nzPageIndex)]="currentPage"
-        [nzTotal]="totalDocuments"
-        [nzPageSize]="pageSize"
-        [nzShowSizeChanger]="true"
-        [nzShowQuickJumper]="true"
-        [nzShowTotal]="totalTemplate"
-        [nzPageSizeOptions]="[5, 10, 20, 50]"
-        (nzPageIndexChange)="onPageChange($event)"
-        (nzPageSizeChange)="onPageSizeChange($event)">
-      </nz-pagination>
-  
-      <ng-template #totalTemplate let-total let-range="range">
-        Affichage de {{ range[0] }} à {{ range[1] }} sur {{ total }} documents
-      </ng-template>
-    </div>
-  
+      </nz-card-meta>
+    </nz-card>
   </div>
+
+  <!-- PAGINATION CORRIGÉE -->
+  <div class="pagination-container" *ngIf="!loading && !error && totalDocuments > pageSize">
+    <nz-pagination 
+      [(nzPageIndex)]="currentPage"
+      [nzTotal]="totalDocuments"
+      [nzPageSize]="pageSize"
+      [nzShowSizeChanger]="true"
+      [nzShowQuickJumper]="true"
+      [nzShowTotal]="totalTemplate"
+      [nzPageSizeOptions]="[5, 10, 20, 50]"
+      (nzPageIndexChange)="onPageChange($event)"
+      (nzPageSizeChange)="onPageSizeChange($event)">
+    </nz-pagination>
+
+    <ng-template #totalTemplate let-total let-range="range">
+      Affichage de {{ range[0] }} à {{ range[1] }} sur {{ total }} documents
+    </ng-template>
+  </div>
+
+</div>
 
 <!-- Modal pour visualiser les documents -->
 <nz-modal
-  [(nzVisible)]="isModalVisible"
-  [nzTitle]="modalTitle"
-  [nzContent]="modalContent"
-  [nzFooter]="modalFooter"
-  [nzWidth]="'80%'"
-  [nzBodyStyle]="{ padding: '24px', textAlign: 'center' }"
-  (nzOnCancel)="closeModal()"
+[(nzVisible)]="isModalVisible"
+[nzTitle]="modalTitle"
+[nzContent]="modalContent"
+[nzFooter]="modalFooter"
+[nzWidth]="'80%'"
+[nzBodyStyle]="{ padding: '24px', textAlign: 'center' }"
+(nzOnCancel)="closeModal()"
 >
-  <!-- Titre du modal -->
-  <ng-template #modalTitle>
-    <div class="modal-title">
-      <span nz-icon [nzType]="getFileIcon(selectedDocument?.nom_original || '')" nzTheme="outline"></span>
-      {{ selectedDocument?.nom_original }}
-      <nz-tag 
-        [nzColor]="getDocumentTypeColor(selectedDocument?.type_document?.libelle_type_document || '')"
-        style="margin-left: 8px;"
-      >
-        {{ selectedDocument?.type_document?.libelle_type_document }}
-      </nz-tag>
+<!-- Titre du modal -->
+<ng-template #modalTitle>
+  <div class="modal-title">
+    <span nz-icon [nzType]="getFileIcon(selectedDocument?.nom_original || '')" nzTheme="outline"></span>
+    {{ selectedDocument?.nom_original }}
+    <nz-tag 
+      [nzColor]="getDocumentTypeColor(selectedDocument?.type_document?.libelle_type_document || '')"
+      style="margin-left: 8px;"
+    >
+      {{ selectedDocument?.type_document?.libelle_type_document }}
+    </nz-tag>
+  </div>
+</ng-template>
+
+<!-- Contenu du modal -->
+<ng-template #modalContent>
+  <div class="modal-document-viewer">
+    <!-- Aperçu pour les images -->
+    <div *ngIf="selectedDocument && isImage(selectedDocument.nom_original)" class="image-viewer">
+      <img 
+        [src]="documentUrl" 
+        [alt]="selectedDocument.nom_original"
+        class="modal-image"
+        (error)="onImageError($event)"
+      />
     </div>
-  </ng-template>
 
-  <!-- Contenu du modal -->
-  <ng-template #modalContent>
-    <div class="modal-document-viewer">
-      <!-- Aperçu pour les images -->
-      <div *ngIf="selectedDocument && isImage(selectedDocument.nom_original)" class="image-viewer">
-        <img 
-          [src]="documentUrl" 
-          [alt]="selectedDocument.nom_original"
-          class="modal-image"
-          (error)="onImageError($event)"
-        />
+    <!-- Aperçu pour les PDFs -->
+    <div *ngIf="selectedDocument && isPdf(selectedDocument.nom_original)" class="pdf-viewer">
+      <iframe 
+        [src]="safeDocumentUrl" 
+        class="modal-pdf"
+        frameborder="0">
+      </iframe>
+      <p class="pdf-fallback">
+        Si le PDF ne s'affiche pas, 
+        <a [href]="documentUrl" target="_blank">cliquez ici pour l'ouvrir dans un nouvel onglet</a>
+      </p>
+    </div>
+
+    <!-- Aperçu pour les vidéos -->
+    <div *ngIf="selectedDocument && isVideo(selectedDocument.nom_original)" class="video-viewer">
+      <video 
+        [src]="documentUrl" 
+        controls 
+        class="modal-video"
+        preload="metadata">
+        Votre navigateur ne supporte pas la lecture vidéo.
+      </video>
+    </div>
+
+    <!-- Pour les autres types de fichiers -->
+    <div *ngIf="selectedDocument && !isImage(selectedDocument.nom_original) && !isPdf(selectedDocument.nom_original) && !isVideo(selectedDocument.nom_original)" class="other-file-viewer">
+      <div class="file-icon-large">
+        <span 
+          nz-icon 
+          [nzType]="getFileIcon(selectedDocument.nom_original)" 
+          nzTheme="outline"
+        ></span>
       </div>
+      <h3>{{ selectedDocument.nom_original }}</h3>
+      <p>Ce type de fichier ne peut pas être prévisualisé. Utilisez le bouton de téléchargement pour l'ouvrir.</p>
+    </div>
 
-      <!-- Aperçu pour les PDFs -->
-      <div *ngIf="selectedDocument && isPdf(selectedDocument.nom_original)" class="pdf-viewer">
-        <iframe 
-          [src]="documentUrl" 
-          class="modal-pdf"
-          frameborder="0">
-        </iframe>
-        <p class="pdf-fallback">
-          Si le PDF ne s'affiche pas, 
-          <a [href]="documentUrl" target="_blank">cliquez ici pour l'ouvrir dans un nouvel onglet</a>
-        </p>
-      </div>
-
-      <!-- Aperçu pour les vidéos -->
-      <div *ngIf="selectedDocument && isVideo(selectedDocument.nom_original)" class="video-viewer">
-        <video 
-          [src]="documentUrl" 
-          controls 
-          class="modal-video"
-          preload="metadata">
-          Votre navigateur ne supporte pas la lecture vidéo.
-        </video>
-      </div>
-
-      <!-- Pour les autres types de fichiers -->
-      <div *ngIf="selectedDocument && !isImage(selectedDocument.nom_original) && !isPdf(selectedDocument.nom_original) && !isVideo(selectedDocument.nom_original)" class="other-file-viewer">
-        <div class="file-icon-large">
-          <span 
-            nz-icon 
-            [nzType]="getFileIcon(selectedDocument.nom_original)" 
-            nzTheme="outline"
-          ></span>
+    <!-- Informations du document -->
+    <div class="document-info-modal" *ngIf="selectedDocument">
+      <div class="info-grid">
+        <div class="info-item">
+          <strong>Taille :</strong> {{ formatFileSize(selectedDocument.taille_fichier) }}
         </div>
-        <h3>{{ selectedDocument.nom_original }}</h3>
-        <p>Ce type de fichier ne peut pas être prévisualisé. Utilisez le bouton de téléchargement pour l'ouvrir.</p>
-      </div>
-
-      <!-- Informations du document -->
-      <div class="document-info-modal" *ngIf="selectedDocument">
-        <div class="info-grid">
-          <div class="info-item">
-            <strong>Taille :</strong> {{ formatFileSize(selectedDocument.taille_fichier) }}
-          </div>
-          <div class="info-item">
-            <strong>Date :</strong> {{ selectedDocument.date_telechargement | date:'dd MMM yyyy à HH:mm' }}
-          </div>
-          <div class="info-item">
-            <strong>Version :</strong> {{ selectedDocument.version_document }}
-          </div>
-          <div class="info-item" *ngIf="selectedDocument.description_document">
-            <strong>Description :</strong> {{ selectedDocument.description_document }}
-          </div>
+        <div class="info-item">
+          <strong>Date :</strong> {{ selectedDocument.date_telechargement | date:'dd MMM yyyy à HH:mm' }}
+        </div>
+        <div class="info-item">
+          <strong>Version :</strong> {{ selectedDocument.version_document }}
+        </div>
+        <div class="info-item" *ngIf="selectedDocument.description_document">
+          <strong>Description :</strong> {{ selectedDocument.description_document }}
         </div>
       </div>
     </div>
-  </ng-template>
+  </div>
+</ng-template>
 
-  <!-- Footer du modal -->
-  <ng-template #modalFooter>
-    <div class="modal-footer">
-      <button nz-button nzType="default" (click)="closeModal()">
-        <span nz-icon nzType="close"></span>
-        Fermer
-      </button>
-      <button nz-button nzType="primary" (click)="openInNewTab()" *ngIf="selectedDocument">
-        <span nz-icon nzType="export"></span>
-        Ouvrir dans un nouvel onglet
-      </button>
-    </div>
-  </ng-template>
+<!-- Footer du modal -->
+<ng-template #modalFooter>
+  <div class="modal-footer">
+    <button nz-button nzType="default" (click)="closeModal()">
+      <span nz-icon nzType="close"></span>
+      Fermer
+    </button>
+    <button nz-button nzType="primary" (click)="openInNewTab()" *ngIf="selectedDocument">
+      <span nz-icon nzType="export"></span>
+      Ouvrir dans un nouvel onglet
+    </button>
+  </div>
+</ng-template>
 </nz-modal>

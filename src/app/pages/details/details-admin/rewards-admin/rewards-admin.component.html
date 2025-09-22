@@ -332,16 +332,6 @@
     </nz-alert>
   </div>
   
-  <!-- Message vide -->
-  <div *ngIf="!isLoading && recompenses.length === 0 && !error" class="empty-state">
-    <nz-empty 
-      nzNotFoundImage="simple"
-      nzNotFoundContent="Aucune récompense trouvée">
-      <span nz-typography><em>Aucune récompense ne correspond à vos critères de recherche.</em></span>
-    </nz-empty>
-  </div>
-</div>
-
 <!-- Modal de modification de statut -->
 <nz-modal
   [(nzVisible)]="isStatusModalVisible"

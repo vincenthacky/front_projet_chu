@@ -488,7 +488,7 @@ export class NewEventAdminComponent implements OnInit {
   }
 
   cancel(): void {
-    this.router.navigate(['/dashboard/admin/event-admin']);
+    this.router.navigate(['/dashboard/admin/details/event-admin']);
   }
 
   // Utilitaires pour les fichiers

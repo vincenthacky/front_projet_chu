@@ -11,6 +11,7 @@ import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { ApiDocument } from 'src/app/core/models/documents';
 import { DocumentService } from 'src/app/core/services/documents.service';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 
 @Component({
@@ -44,9 +45,13 @@ export class DocumentAdminComponent implements OnInit {
   // Propriétés pour le modal
   isModalVisible = false;
   selectedDocument: ApiDocument | null = null;
-  documentUrl = '';
+  documentUrl: string = '';
+  safeDocumentUrl: SafeResourceUrl | null = null;
 
-  constructor(public documentService: DocumentService) { }
+  constructor(
+    public documentService: DocumentService,
+    private sanitizer: DomSanitizer
+  ) { }
 
   ngOnInit(): void {
     this.chargerTousLesDocuments();
@@ -120,6 +125,7 @@ export class DocumentAdminComponent implements OnInit {
     console.log('Consultation du document:', document);
     this.selectedDocument = document;
     this.documentUrl = this.documentService.getDocumentUrl(document.chemin_fichier);
+    this.safeDocumentUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.documentUrl);
     this.isModalVisible = true;
   }
 
@@ -326,6 +332,7 @@ export class DocumentAdminComponent implements OnInit {
     this.isModalVisible = false;
     this.selectedDocument = null;
     this.documentUrl = '';
+    this.safeDocumentUrl = null;
   }
 
   /**

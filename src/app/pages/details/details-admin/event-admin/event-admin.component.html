@@ -1,4 +1,4 @@
-<!-- event-admin.component.html - Version avec pagination et AJOUT DES MODALS -->
+<!-- event-admin.component.html - Version corrigée avec modals fonctionnels -->
 <section class="content">
   <div class="container-fluid">
     <!-- Header avec bouton d'ajout -->
@@ -20,7 +20,8 @@
 
     <!-- Loading indicator -->
     <div *ngIf="loading" class="text-center p-4">
-      <i class="fas fa-spinner fa-spin"></i> Chargement des événements...
+      <nz-spin nzSimple></nz-spin>
+      <p style="margin-top: 10px;">Chargement des événements...</p>
     </div>
 
     <!-- Section Mes Souscriptions -->
@@ -61,19 +62,8 @@
             <div class="timeline-body">
               {{ event.description }}
               
-              <!-- Affichage des images au centre si disponibles -->
-              <div class="event-images" *ngIf="getEventPhotos(event).length > 0">
-                <img *ngFor="let photo of getEventPhotos(event)" 
-                     [src]="photo" 
-                     [alt]="event.titre"
-                     (click)="openPhotoModal(photo)"
-                     (error)="onImageError($event)"
-                     class="event-photo">
-              </div>
-
-              <!-- AJOUTS POUR DOCUMENTS SUPPLÉMENTAIRES -->
-              <!-- Images supplémentaires via nouvelle méthode -->
-              <div class="event-images-new" *ngIf="getEventImages(event).length > 0">
+              <!-- Images d'événements -->
+              <div class="event-images" *ngIf="getEventImages(event).length > 0">
                 <h6><i class="fas fa-images"></i> Images ({{ getEventImages(event).length }})</h6>
                 <div class="images-grid">
                   <img *ngFor="let image of getEventImages(event)" 
@@ -81,7 +71,8 @@
                        [alt]="event.titre"
                        (click)="openImageModal(getDocumentUrl(image), event.titre)"
                        (error)="onImageError($event)"
-                       class="event-photo">
+                       class="event-photo"
+                       loading="lazy">
                 </div>
               </div>
 
@@ -94,7 +85,7 @@
                       nz-button 
                       nzType="default" 
                       nzSize="small"
-                      (click)="openPdfModal(getDocumentUrl(pdf), event.titre)">
+                      (click)="openPdfModal(getDocumentUrl(pdf), pdf.nom_original)">
                       <i nz-icon nzType="eye"></i>
                       {{ pdf.nom_original }}
                     </button>
@@ -112,10 +103,10 @@
 
               <!-- Message si aucun document -->
               <div *ngIf="!hasDocuments(event)" 
-                       class="no-documents-message" style="background: #ffebee; padding: 10px; border: 1px solid #ffcdd2; border-radius: 5px; margin: 10px 0;">
-                    <i class="fas fa-info-circle"></i>
-                    Aucun document associé à cet événement
-                  </div>
+                   class="no-documents-message">
+                <i class="fas fa-info-circle"></i>
+                Aucun document associé à cet événement
+              </div>
             </div>
 
             <div class="evenement-info">
@@ -186,7 +177,7 @@
       <!-- Pagination -->
       <div class="pagination-container" *ngIf="evenementsSouscription.length > 0">
         <div class="pagination-info">
-          <!-- Affichage de {{ getPaginationInfo() }} événements -->
+          Affichage de {{ getPaginationInfo() }} événements
         </div>
         <nz-pagination 
           [(nzPageIndex)]="currentPage"
@@ -201,55 +192,51 @@
 
       <!-- Message si aucun événement de souscription -->
       <div *ngIf="evenementsSouscription.length === 0 && !loading" class="no-events-message">
-        <p>Aucun événement de souscription trouvé.</p>
+        <nz-empty 
+          nzNotFoundImage="simple"
+          nzNotFoundContent="Aucun événement de souscription trouvé.">
+        </nz-empty>
       </div>
     </div>
   </div>
 </section>
 
-<!-- AJOUT DES MODALS -->
-
-<!-- Modal pour agrandir les images -->
+<!-- MODAL POUR AGRANDIR UNE IMAGE -->
 <nz-modal
   [(nzVisible)]="isImageModalVisible"
+  (nzOnCancel)="closeImageModal()"
   [nzTitle]="selectedImageTitle"
   [nzFooter]="null"
-  [nzWidth]="800"
-  [nzBodyStyle]="{ padding: '20px', textAlign: 'center' }"
-  (nzOnCancel)="closeImageModal()">
-  <div class="image-modal-content">
+  [nzWidth]="'80vw'"
+  nzCentered>
+  
+  <div class="image-modal-content" *nzModalContent>
     <img 
       [src]="selectedImageUrl" 
       [alt]="selectedImageTitle"
+      class="modal-image"
       (error)="onImageError($event)"
-      style="max-width: 100%; max-height: 70vh; object-fit: contain;">
+      style="max-width: 100%; height: auto;">
   </div>
 </nz-modal>
 
-<!-- Modal pour visualiser les PDFs -->
+<!-- MODAL POUR VISUALISER UN PDF -->
 <nz-modal
   [(nzVisible)]="isPdfModalVisible"
-  [nzTitle]="'PDF: ' + selectedPdfTitle"
-  [nzWidth]="900"
-  [nzBodyStyle]="{ padding: '20px', height: '600px' }"
-  (nzOnCancel)="closePdfModal()">
-  <div class="pdf-modal-content" style="height: 100%;">
+  (nzOnCancel)="closePdfModal()"
+  [nzTitle]="selectedPdfTitle"
+  [nzFooter]="null"
+  [nzWidth]="'90vw'"
+  [nzBodyStyle]="{ height: '80vh', padding: '0' }"
+  nzCentered>
+  
+  <div class="pdf-modal-content" *nzModalContent style="height: 100%;">
     <iframe 
       [src]="selectedPdfUrl" 
       style="width: 100%; height: 100%; border: none;"
       frameborder="0">
       Votre navigateur ne supporte pas l'affichage des PDFs. 
-      <a [href]="selectedPdfUrl" target="_blank">Cliquez ici pour l'ouvrir</a>
+      <a [href]="selectedPdfUrl" target="_blank">Cliquez ici pour ouvrir le PDF</a>
     </iframe>
-  </div>
-  <div *nzModalFooter>
-    <button nz-button nzType="default" (click)="closePdfModal()">
-      <i nz-icon nzType="close"></i>
-      Fermer
-    </button>
-    <button nz-button nzType="primary" (click)="openPdfInNewTab(selectedPdfUrl)">
-      <i nz-icon nzType="external-link"></i>
-      Ouvrir dans un nouvel onglet
-    </button>
   </div>
 </nz-modal>

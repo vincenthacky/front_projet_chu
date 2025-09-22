@@ -299,16 +299,6 @@
       nzCloseable>
     </nz-alert>
   </div>
-  
-  <!-- Message vide -->
-  <div *ngIf="!isLoading && reclamations.length === 0 && !error" class="empty-state">
-    <nz-empty 
-      nzNotFoundImage="simple"
-      nzNotFoundContent="Aucune réclamation trouvée">
-      <span nz-typography><em>Aucune réclamation ne correspond à vos critères de recherche.</em></span>
-    </nz-empty>
-  </div>
-</div>
 
 <!-- Modal de réponse -->
 <nz-modal

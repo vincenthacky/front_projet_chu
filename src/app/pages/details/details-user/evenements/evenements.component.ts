@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzTagModule } from 'ng-zorro-antd/tag';
@@ -16,6 +16,10 @@ import { EvenementOrganise, ApiEvenement, TypeEvenement } from 'src/app/core/mod
 import { DocumentService } from 'src/app/core/services/documents.service';
 import { EvenementsService } from 'src/app/core/services/evenements.service';
 
+// Déclaration pour PDF.js
+declare const pdfjsLib: any;
+
+// INTERFACE POUR DOCUMENTS
 interface DocumentWithType {
   id_document: number;
   nom_original: string;
@@ -23,6 +27,10 @@ interface DocumentWithType {
   type_mime: string | null;
   taille_fichier: number;
   description_document: string;
+  type_document?: string;
+  mime_type?: string;
+  extension?: string;
+  url_document?: string;
 }
 
 @Component({
@@ -44,7 +52,9 @@ interface DocumentWithType {
   templateUrl: './evenements.component.html',
   styleUrls: ['./evenements.component.css']
 })
-export class EvenementsComponent implements OnInit {
+export class EvenementsComponent implements OnInit, AfterViewInit  {
+  @ViewChild('pdfCanvas', { static: false }) pdfCanvas!: ElementRef<HTMLCanvasElement>;
+  
   isBrowser: boolean;
 
   evenementsOrganises: EvenementOrganise[] = [];
@@ -52,21 +62,27 @@ export class EvenementsComponent implements OnInit {
   evenementsGlobaux: ApiEvenement[] = [];
   statistiques: any = null;
   loading: boolean = false;
-  error: string = '';
   
   // Propriétés de pagination
   currentPage: number = 1;
   pageSize: number = 3;
   
-  // Modal pour agrandir une image
+  // PROPRIÉTÉS POUR LES MODALS
   isImageModalVisible: boolean = false;
   selectedImageUrl: string = '';
   selectedImageTitle: string = '';
   
-  // Modal pour visualiser un PDF
   isPdfModalVisible: boolean = false;
   selectedPdfUrl: string = '';
   selectedPdfTitle: string = '';
+  
+  // NOUVELLES PROPRIÉTÉS POUR LE VISUALISEUR PDF
+  pdfLoading: boolean = false;
+  pdfError: boolean = false;
+  pdfErrorMessage: string = '';
+  pdfDoc: any = null;
+  currentPdfPage: number = 1;
+  totalPages: number = 0;
   
   // Filtres
   selectedStatut: string = '';
@@ -75,108 +91,90 @@ export class EvenementsComponent implements OnInit {
   constructor(
     @Inject(PLATFORM_ID) private platformId: Object, 
     private evenementsService: EvenementsService,
-    private documentService: DocumentService
+    private documentService: DocumentService,
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
   }
 
   ngOnInit(): void {
     this.chargerMesEvenements();
+    this.loadPdfJs();
   }
 
-  // Méthode pour afficher les informations de pagination
-  getPaginationInfo(): string {
-    const start = (this.currentPage - 1) * this.pageSize + 1;
-    const end = Math.min(this.currentPage * this.pageSize, this.evenementsSouscription.length);
-    return `${start}-${end} sur ${this.evenementsSouscription.length}`;
+  ngAfterViewInit(): void {
+    // Méthode appelée après l'initialisation de la vue
   }
 
-  // Méthode pour obtenir les événements paginés
+  // CHARGEMENT DE PDF.JS
+  private loadPdfJs(): void {
+    if (!this.isBrowser) return;
+
+    // Vérifier si PDF.js est déjà chargé
+    if (typeof pdfjsLib !== 'undefined') {
+      this.initPdfJs();
+      return;
+    }
+
+    // Charger PDF.js depuis CDN
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    script.onload = () => {
+      this.initPdfJs();
+    };
+    script.onerror = () => {
+      console.error('Erreur lors du chargement de PDF.js');
+    };
+    document.head.appendChild(script);
+  }
+
+  private initPdfJs(): void {
+    if (typeof pdfjsLib !== 'undefined') {
+      // Configuration du worker PDF.js
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      console.log('PDF.js initialisé avec succès');
+    }
+  }
+
+ 
+  // MÉTHODES DE PAGINATION
   getPaginatedEvents(): ApiEvenement[] {
     const startIndex = (this.currentPage - 1) * this.pageSize;
     const endIndex = startIndex + this.pageSize;
     return this.evenementsSouscription.slice(startIndex, endIndex);
   }
 
-  // Gestionnaire de changement de page
   onPageChange(page: number): void {
     this.currentPage = page;
   }
 
-  // Gestion dynamique du statut basé sur les dates
-  getEventStatusDynamic(event: ApiEvenement): { 
-    status: string; 
-    percentage: number; 
-    color: string;
-    bgColor: string;
-  } {
-    const now = new Date();
-    const dateDebut = new Date(event.date_debut_evenement);
-    const dateFin = new Date(event.date_fin_evenement);
-    
-    // Normaliser les dates (enlever l'heure pour la comparaison)
-    now.setHours(0, 0, 0, 0);
-    dateDebut.setHours(0, 0, 0, 0);
-    dateFin.setHours(0, 0, 0, 0);
-    
-    if (now < dateDebut) {
-      // À venir
-      return {
-        status: 'À venir',
-        percentage: 0,
-        color: '#6b7280',
-        bgColor: '#f3f4f6'
-      };
-    } else if (now >= dateDebut && now <= dateFin) {
-      // En cours
-      return {
-        status: 'En cours',
-        percentage: 50,
-        color: '#3b82f6',
-        bgColor: '#dbeafe'
-      };
-    } else {
-      // Terminé
-      return {
-        status: 'Terminé',
-        percentage: 100,
-        color: '#10b981',
-        bgColor: '#d1fae5'
-      };
-    }
+  getPaginationInfo(): string {
+    const start = (this.currentPage - 1) * this.pageSize + 1;
+    const end = Math.min(this.currentPage * this.pageSize, this.evenementsSouscription.length);
+    return `${start}-${end} sur ${this.evenementsSouscription.length}`;
   }
 
-  // Récupère les images d'un événement
+  // MÉTHODES POUR LA GESTION DES DOCUMENTS - CORRIGÉES
+  
   getEventImages(event: ApiEvenement): DocumentWithType[] {
     if (!event.documents || event.documents.length === 0) {
       return [];
     }
     
     return event.documents.filter((doc: any) => {
+      // Vérifier par extension
       const extension = doc.nom_original?.split('.').pop()?.toLowerCase() || '';
-      const isImageByExtension = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(extension);
+      const isImageByExtension = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'].includes(extension);
+      
+      // Vérifier par type MIME
       const isImageByMime = doc.type_mime?.startsWith('image/') || false;
       
-      return isImageByExtension || isImageByMime;
-    });
-  }
-  
-  // Récupère les vidéos d'un événement
-  getEventVideos(event: ApiEvenement): DocumentWithType[] {
-    if (!event.documents || event.documents.length === 0) {
-      return [];
-    }
-    
-    return event.documents.filter((doc: any) => {
-      const extension = doc.nom_original?.split('.').pop()?.toLowerCase() || '';
-      const isVideoByExtension = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv', 'm4v'].includes(extension);
-      const isVideoByMime = doc.type_mime?.startsWith('video/') || false;
+      // Vérifier par type_document
+      const isImageByType = doc.type_document === 'photo' || doc.type_document === 'image';
       
-      return isVideoByExtension || isVideoByMime;
+      return isImageByExtension || isImageByMime || isImageByType;
     });
   }
 
-  // Récupère les PDFs d'un événement
   getEventPdfs(event: ApiEvenement): DocumentWithType[] {
     if (!event.documents || event.documents.length === 0) {
       return [];
@@ -186,63 +184,217 @@ export class EvenementsComponent implements OnInit {
       const extension = doc.nom_original?.split('.').pop()?.toLowerCase() || '';
       const isPdfByExtension = extension === 'pdf';
       const isPdfByMime = doc.type_mime === 'application/pdf';
+      const isPdfByType = doc.type_document === 'pdf';
       
-      return isPdfByExtension || isPdfByMime;
+      return isPdfByExtension || isPdfByMime || isPdfByType;
     });
   }
-  
-  // Génère l'URL complète d'un document
+
+  // MÉTHODE CORRIGÉE POUR GÉNÉRER L'URL DES DOCUMENTS
   getDocumentUrl(doc: DocumentWithType): string {
-    if (!doc || !doc.chemin_fichier) {
+    if (!doc || (!doc.chemin_fichier && !doc.url_document)) {
       return this.documentService.getImagePlaceholder();
     }
+    
+    // Utiliser url_document en priorité, sinon chemin_fichier
+    const path = doc.url_document || doc.chemin_fichier;
+    
+    // Si l'URL est déjà complète, la retourner directement
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return path;
+    }
+    
+    // Sinon, construire l'URL avec le service
+    return this.documentService.getDocumentUrl(path);
+  }
 
-    return this.documentService.getDocumentUrl(doc.chemin_fichier);
+  hasDocuments(event: ApiEvenement): boolean {
+    return event.documents && event.documents.length > 0;
   }
-  
-  // Ouvre le modal pour agrandir une image
+
+  // MÉTHODES POUR LES MODALS - CORRIGÉES
+
   openImageModal(imageUrl: string, eventTitle: string): void {
+    // Vérifier que l'URL est valide
+    if (!imageUrl || imageUrl === this.documentService.getImagePlaceholder()) {
+      console.warn('URL d\'image invalide:', imageUrl);
+      return;
+    }
+    
     this.selectedImageUrl = imageUrl;
-    this.selectedImageTitle = eventTitle;
+    this.selectedImageTitle = eventTitle || 'Image de l\'événement';
     this.isImageModalVisible = true;
+    
+    console.log('Ouverture modal image:', { url: imageUrl, title: eventTitle });
   }
   
-  // Ferme le modal d'image
   closeImageModal(): void {
     this.isImageModalVisible = false;
     this.selectedImageUrl = '';
     this.selectedImageTitle = '';
   }
 
-  // Ouvre le modal pour visualiser un PDF
-  openPdfModal(pdfUrl: string, eventTitle: string): void {
+  // NOUVELLES MÉTHODES POUR LE PDF AVEC PDF.JS
+  openPdfModal(pdfUrl: string, pdfTitle: string): void {
+    if (!pdfUrl) {
+      console.warn('URL de PDF invalide:', pdfUrl);
+      return;
+    }
+    
     this.selectedPdfUrl = pdfUrl;
-    this.selectedPdfTitle = eventTitle;
+    this.selectedPdfTitle = pdfTitle || 'Document PDF';
     this.isPdfModalVisible = true;
+    this.resetPdfState();
+    
+    // Charger le PDF après un petit délai pour s'assurer que le modal est ouvert
+    setTimeout(() => {
+      this.loadPdf(pdfUrl);
+    }, 100);
+    
+    console.log('Ouverture modal PDF:', { url: pdfUrl, title: pdfTitle });
   }
   
-  // Ferme le modal PDF
-  closePdfModal(): void {
+ closePdfModal(): void {
     this.isPdfModalVisible = false;
     this.selectedPdfUrl = '';
     this.selectedPdfTitle = '';
   }
 
-  // Ouvre le PDF dans un nouvel onglet
-  openPdfInNewTab(pdfUrl: string): void {
-    window.open(pdfUrl, '_blank');
+  private resetPdfState(): void {
+    this.pdfLoading = false;
+    this.pdfError = false;
+    this.pdfErrorMessage = '';
+    this.pdfDoc = null;
+    this.currentPdfPage = 1;
+    this.totalPages = 0;
   }
-  
-  // Gestion d'erreur d'image
+
+  // CHARGEMENT ET RENDU PDF AVEC PDF.JS
+  private async loadPdf(url: string): Promise<void> {
+    if (!this.isBrowser || typeof pdfjsLib === 'undefined') {
+      this.showPdfError('PDF.js non disponible');
+      return;
+    }
+
+    this.pdfLoading = true;
+    this.pdfError = false;
+
+    try {
+      console.log('Chargement PDF:', url);
+      
+      // Charger le PDF
+      const loadingTask = pdfjsLib.getDocument(url);
+      this.pdfDoc = await loadingTask.promise;
+      this.totalPages = this.pdfDoc.numPages;
+      this.currentPdfPage = 1;
+      
+      console.log('PDF chargé:', { totalPages: this.totalPages });
+      
+      // Rendre la première page
+      await this.renderPdfPage(1);
+      
+      this.pdfLoading = false;
+    } catch (error) {
+      console.error('Erreur lors du chargement du PDF:', error);
+      this.showPdfError('Impossible de charger le document PDF');
+    }
+  }
+
+  private async renderPdfPage(pageNumber: number): Promise<void> {
+    if (!this.pdfDoc || !this.pdfCanvas) {
+      return;
+    }
+
+    try {
+      const page = await this.pdfDoc.getPage(pageNumber);
+      const canvas = this.pdfCanvas.nativeElement;
+      const context = canvas.getContext('2d');
+
+      // Calculer la taille d'affichage
+      const viewport = page.getViewport({ scale: 1 });
+      const containerWidth = canvas.parentElement?.clientWidth || 800;
+      const scale = Math.min(containerWidth / viewport.width, 1.5);
+      const scaledViewport = page.getViewport({ scale });
+
+      // Configurer le canvas
+      canvas.width = scaledViewport.width;
+      canvas.height = scaledViewport.height;
+
+      // Rendre la page
+      const renderContext = {
+        canvasContext: context,
+        viewport: scaledViewport
+      };
+
+      await page.render(renderContext).promise;
+      console.log('Page PDF rendue:', pageNumber);
+    } catch (error) {
+      console.error('Erreur lors du rendu de la page PDF:', error);
+      this.showPdfError('Erreur lors de l\'affichage de la page');
+    }
+  }
+
+  private showPdfError(message: string): void {
+    this.pdfLoading = false;
+    this.pdfError = true;
+    this.pdfErrorMessage = message;
+  }
+
+  // NAVIGATION DANS LE PDF
+  async nextPage(): Promise<void> {
+    if (this.currentPdfPage < this.totalPages) {
+      this.currentPdfPage++;
+      await this.renderPdfPage(this.currentPdfPage);
+    }
+  }
+
+  async previousPage(): Promise<void> {
+    if (this.currentPdfPage > 1) {
+      this.currentPdfPage--;
+      await this.renderPdfPage(this.currentPdfPage);
+    }
+  }
+
+  // MÉTHODES POUR OUVRIR DANS NOUVEAUX ONGLETS
+  openPdfInNewTab(pdfUrl: string): void {
+    if (pdfUrl) {
+      window.open(pdfUrl, '_blank', 'noopener,noreferrer');
+    }
+  }
+
+  openImageInNewTab(imageUrl: string): void {
+    if (imageUrl) {
+      window.open(imageUrl, '_blank', 'noopener,noreferrer');
+    }
+  }
+
+  // GESTION D'ERREURS AMÉLIORÉE
   onImageError(event: Event): void {
     const imgElement = event.target as HTMLImageElement;
-    if (imgElement && imgElement.src) {
+    if (imgElement) {
+      console.warn('Erreur de chargement d\'image:', imgElement.src);
       imgElement.src = this.documentService.getImagePlaceholder();
       imgElement.alt = 'Image non disponible';
     }
   }
+
+  onImageModalError(event: Event): void {
+    const imgElement = event.target as HTMLImageElement;
+    if (imgElement) {
+      console.error('Erreur de chargement d\'image dans le modal:', imgElement.src);
+      imgElement.src = this.documentService.getImagePlaceholder();
+      imgElement.alt = 'Image non disponible';
+    }
+  }
+
+  onImageLoad(event: Event): void {
+    const imgElement = event.target as HTMLImageElement;
+    if (imgElement) {
+      console.log('Image chargée avec succès:', imgElement.src);
+      imgElement.style.opacity = '1';
+    }
+  }
   
-  // Gestion d'erreur vidéo
   onVideoError(event: Event): void {
     const videoElement = event.target as HTMLVideoElement;
     if (videoElement) {
@@ -251,7 +403,7 @@ export class EvenementsComponent implements OnInit {
       const errorMsg = document.createElement('div');
       errorMsg.className = 'video-error-message';
       errorMsg.textContent = 'Vidéo non disponible';
-      errorMsg.style.cssText = 'color: #ef4444; font-size: 0.875rem; padding: 0.5rem;';
+      errorMsg.style.cssText = 'color: #ef4444; font-size: 0.875rem; padding: 0.5rem; text-align: center;';
       
       if (videoElement.parentNode) {
         videoElement.parentNode.insertBefore(errorMsg, videoElement.nextSibling);
@@ -259,7 +411,8 @@ export class EvenementsComponent implements OnInit {
     }
   }
 
-  // Obtenir l'icône selon le type d'événement
+  // MÉTHODES POUR LES ÉVÉNEMENTS
+
   getEventIcon(typeEvenement: TypeEvenement): string {
     if (typeEvenement.icone_type) {
       return typeEvenement.icone_type.replace('fas ', '');
@@ -277,7 +430,6 @@ export class EvenementsComponent implements OnInit {
     return icons[typeEvenement.libelle_type_evenement] || 'fa-calendar';
   }
 
-  // Obtenir la couleur selon le type et l'avancement
   getEventColor(typeEvenement: TypeEvenement, avancement: number): string {
     if (avancement === 100) {
       return 'bg-green';
@@ -299,12 +451,66 @@ export class EvenementsComponent implements OnInit {
     return colors[typeEvenement.libelle_type_evenement] || 'bg-blue';
   }
 
-  // Obtenir la classe CSS pour le type d'événement
   getTypeClass(typeLibelle: string): string {
     return 'type-' + typeLibelle.toLowerCase().replace(/\s+/g, '-');
   }
 
-  // Obtenir le label de progression
+  // LOGIQUE DE STATUT BASÉE SUR LA DATE
+  getEventStatus(event: ApiEvenement): string {
+    const now = new Date();
+    const dateDebut = new Date(event.date_debut_evenement);
+    const dateFin = new Date(event.date_fin_evenement);
+
+    if (now < dateDebut) {
+      return 'À venir';
+    } else if (now >= dateDebut && now <= dateFin) {
+      return 'En cours';
+    } else {
+      return 'Terminé';
+    }
+  }
+
+  getEventProgress(event: ApiEvenement): number {
+    const status = this.getEventStatus(event);
+    
+    switch (status) {
+      case 'À venir':
+        return 0;
+      case 'En cours':
+        return 50;
+      case 'Terminé':
+        return 100;
+      default:
+        return event.niveau_avancement_pourcentage || 0;
+    }
+  }
+
+  getStatusColor(status: string): string {
+    switch (status) {
+      case 'À venir':
+        return '#6b7280';
+      case 'En cours':
+        return '#3b82f6';
+      case 'Terminé':
+        return '#10b981';
+      default:
+        return '#6b7280';
+    }
+  }
+
+  getStatusClass(status: string): string {
+    switch (status) {
+      case 'À venir':
+        return 'status-upcoming';
+      case 'En cours':
+        return 'status-in-progress';
+      case 'Terminé':
+        return 'status-completed';
+      default:
+        return 'status-default';
+    }
+  }
+
   getProgressLabel(typeLibelle: string): string {
     const labels: { [key: string]: string } = {
       'Viabilisation': 'Avancement des travaux de viabilisation',
@@ -318,35 +524,50 @@ export class EvenementsComponent implements OnInit {
     return labels[typeLibelle] || 'Progression';
   }
 
-  // Obtenir le dégradé de progression
-  getProgressGradient(avancement: number, event?: ApiEvenement): string {
-    if (event) {
-      const statusInfo = this.getEventStatusDynamic(event);
-      if (statusInfo.percentage === 100) {
-        return 'linear-gradient(135deg, #10b981, #059669)';
-      } else if (statusInfo.percentage >= 50) {
-        return 'linear-gradient(135deg, #3b82f6, #1e40af)';
-      } else {
-        return 'linear-gradient(135deg, #6b7280, #4b5563)';
-      }
-    }
+  getProgressGradient(event: ApiEvenement): string {
+    const status = this.getEventStatus(event);
     
-    // Fallback
-    if (avancement === 100) {
-      return 'linear-gradient(135deg, #10b981, #059669)';
-    } else if (avancement >= 50) {
-      return 'linear-gradient(135deg, #3b82f6, #1e40af)';
-    } else {
-      return 'linear-gradient(135deg, #f59e0b, #d97706)';
+    switch (status) {
+      case 'À venir':
+        return 'linear-gradient(135deg, #6b7280, #4b5563)';
+      case 'En cours':
+        return 'linear-gradient(135deg, #3b82f6, #1e40af)';
+      case 'Terminé':
+        return 'linear-gradient(135deg, #10b981, #059669)';
+      default:
+        return 'linear-gradient(135deg, #6b7280, #4b5563)';
     }
   }
 
-  // Gestionnaire de clic sur événement
+  // GESTIONNAIRES D'ÉVÉNEMENTS
   onEventClick(event: ApiEvenement): void {
-    // Action personnalisée lors du clic sur un événement
+    console.log('Événement cliqué:', event);
+    // Logique pour afficher plus de détails
   }
 
-  // Méthodes utilitaires
+  // MÉTHODE SUPPRIMÉE - REDONDANTE AVEC getEventImages
+  // getEventPhotos était en conflit avec getEventImages
+  
+  // Animation des barres de progression
+  private animateProgressBars(): void {
+    if (!this.isBrowser) return;
+    
+    setTimeout(() => {
+      const progressBars = document.querySelectorAll('.progress-fill');
+      progressBars.forEach((bar, index) => {
+        setTimeout(() => {
+          const element = bar as HTMLElement;
+          const width = element.style.width;
+          element.style.width = '0%';
+          setTimeout(() => {
+            element.style.width = width;
+          }, 100);
+        }, index * 200);
+      });
+    }, 500);
+  }
+
+  // MÉTHODES UTILITAIRES
   formatDate(dateString: string): string {
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR', {
@@ -356,16 +577,12 @@ export class EvenementsComponent implements OnInit {
     });
   }
 
-  // Calcul des labels de dates dynamiques
   getDateRangeLabel(events: ApiEvenement[]): string {
     if (!events || events.length === 0) return '';
     
-    const sortedEvents = events.sort((a, b) => 
-      new Date(a.date_debut_evenement).getTime() - new Date(b.date_debut_evenement).getTime()
-    );
-    
-    const firstEvent = sortedEvents[0];
-    const lastEvent = sortedEvents[sortedEvents.length - 1];
+    // Ne pas trier, utiliser les événements dans leur ordre d'origine
+    const firstEvent = events[0];
+    const lastEvent = events[events.length - 1];
     
     const firstDate = new Date(firstEvent.date_debut_evenement);
     const lastDate = new Date(lastEvent.date_debut_evenement);
@@ -390,10 +607,9 @@ export class EvenementsComponent implements OnInit {
     return `${months[date.getMonth()]} ${date.getFullYear()}`;
   }
 
+  // MÉTHODES DE CHARGEMENT ET CONVERSION DES DONNÉES
   chargerMesEvenements(): void {
     this.loading = true;
-    this.error = '';
-    
     const filters = {
       per_page: 50,
       ...(this.selectedStatut && { statut: this.selectedStatut }),
@@ -402,16 +618,19 @@ export class EvenementsComponent implements OnInit {
 
     this.evenementsService.getMesEvenements(filters).subscribe({
       next: (response) => {
-        this.loading = false;
         if (response.success) {
           this.evenementsOrganises = response.data.evenements_organises;
           this.statistiques = response.data.statistiques;
           this.convertirDonneesApi();
           this.currentPage = 1;
+          this.animateProgressBars();
+          console.log('Événements chargés:', this.evenementsOrganises);
         }
+        this.loading = false;
       },
       error: (err) => {
-        this.loading = false;      
+        console.error('Erreur lors du chargement des événements:', err);
+        this.loading = false;
       }
     });
   }
@@ -432,7 +651,8 @@ export class EvenementsComponent implements OnInit {
       });
     });
     
-    this.sortEventsByDate();
+    // Ne pas trier, conserver l'ordre de l'API
+    // this.sortEventsByDate(); <- LIGNE SUPPRIMÉE
   }
 
   estEvenementPersonnel(event: ApiEvenement): boolean {
@@ -441,15 +661,9 @@ export class EvenementsComponent implements OnInit {
             event.type_evenement.categorie_type === 'personnel');
   }
 
-  sortEventsByDate(): void {
-    this.evenementsSouscription.sort((a, b) => 
-      new Date(a.date_debut_evenement).getTime() - new Date(b.date_debut_evenement).getTime()
-    );
-    this.evenementsGlobaux.sort((a, b) => 
-      new Date(a.date_debut_evenement).getTime() - new Date(b.date_debut_evenement).getTime()
-    );
-  }
+ 
 
+  // MÉTHODES DE FILTRAGE
   onFilterChange(): void {
     this.chargerMesEvenements();
   }
@@ -458,11 +672,11 @@ export class EvenementsComponent implements OnInit {
     this.chargerMesEvenements();
   }
 
+  // MÉTHODES UTILITAIRES DU SERVICE
   voirDocuments(event: ApiEvenement): void {
-    // Action pour voir les documents d'un événement
+    console.log('Voir documents de l\'événement:', event);
   }
 
-  // Méthodes utilitaires du service
   getStatutClass(statut: string): string {
     return this.evenementsService.getStatutClass(statut);
   }
@@ -484,38 +698,5 @@ export class EvenementsComponent implements OnInit {
     if (percentage < 50) return '#fd7e14';
     if (percentage < 75) return '#ffc107';
     return '#28a745';
-  }
-
-  // Méthodes utilitaires pour le template
-
-  // Vérifie si un événement a des documents
-  hasDocuments(event: ApiEvenement): boolean {
-    return event.documents && event.documents.length > 0;
-  }
-
-  // Obtient le nombre de documents
-  getDocumentsLength(event: ApiEvenement): number {
-    return event.documents ? event.documents.length : 0;
-  }
-
-  // Obtient l'extension d'un fichier
-  getFileExtension(fileName: string): string {
-    return fileName ? fileName.split('.').pop()?.toLowerCase() || '' : '';
-  }
-
-  // Vérifie si un document est une image
-  isDocumentImage(fileName: string): boolean {
-    return this.documentService.isImage(fileName);
-  }
-
-  // Vérifie si un document est une vidéo
-  isDocumentVideo(fileName: string): boolean {
-    return this.documentService.isVideo(fileName);
-  }
-
-  // Vérifie si un document est un PDF
-  isDocumentPdf(fileName: string): boolean {
-    const extension = fileName ? fileName.split('.').pop()?.toLowerCase() : '';
-    return extension === 'pdf';
   }
 }

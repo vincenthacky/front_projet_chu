@@ -1,280 +1,279 @@
 <div class="payment-container">
-    <!-- Header avec statistiques -->
-    <div class="header-section">
-      <h2 class="main-title">
-        <i class="fas fa-calendar-check"></i>
-        Échéancier de Paiement - Administration
-      </h2>
-      
-      <!-- Cards statistiques -->
-      <div class="stats-grid">
-        <nz-card class="stat-card total-card" [nzBodyStyle]="{ padding: '16px' }">
-          <div class="stat-icon">
-            <i class="fas fa-list-ol"></i>
-          </div>
-          <div class="stat-content">
-            <nz-statistic 
-              [nzValue]="getTotalMensualites()" 
-              [nzValueStyle]="{ color: '#1f2937', fontSize: '24px', fontWeight: '700', marginTop: '-15px' }"
-              [nzTitle]="'Total mensualités'"
-              [nzSuffix]="''">
-            </nz-statistic>
-          </div>
-        </nz-card>
-        
-        <nz-card class="stat-card success-card" [nzBodyStyle]="{ padding: '16px' }">
-          <div class="stat-icon">
-            <i class="fas fa-check-circle"></i>
-          </div>
-          <div class="stat-content">
-            <nz-statistic 
-              [nzValue]="getPayeATemps()" 
-              [nzValueStyle]="{ color: '#10b981', fontSize: '24px', fontWeight: '700', marginTop: '-15px' }"
-              [nzTitle]="'Payé à temps'"
-              [nzSuffix]="''">
-            </nz-statistic>
-          </div>
-        </nz-card>
-        
-        <nz-card class="stat-card warning-card" [nzBodyStyle]="{ padding: '16px' }">
-          <div class="stat-icon">
-            <i class="fas fa-exclamation-triangle"></i>
-          </div>
-          <div class="stat-content">
-            <nz-statistic 
-              [nzValue]="getEnRetard()" 
-              [nzValueStyle]="{ color: '#f59e0b', fontSize: '24px', fontWeight: '700', marginTop: '-15px' }"
-              [nzTitle]="'En retard'"
-              [nzSuffix]="''">
-            </nz-statistic>
-          </div>
-        </nz-card>
-        
-        <nz-card class="stat-card pending-card" [nzBodyStyle]="{ padding: '16px' }">
-          <div class="stat-icon">
-            <i class="fas fa-clock"></i>
-          </div>
-          <div class="stat-content">
-            <nz-statistic 
-              [nzValue]="getEnAttente()" 
-              [nzValueStyle]="{ color: '#3b82f6', fontSize: '24px', fontWeight: '700', marginTop: '-15px' }"
-              [nzTitle]="'En attente'"
-              [nzSuffix]="''">
-            </nz-statistic>
-          </div>
-        </nz-card>
-      </div>
-    </div>
-  
-    <!-- Montant total et pénalités -->
-    <div class="summary-cards">
-      <nz-card class="summary-card amount-card" [nzBodyStyle]="{ padding: '20px' }">
-        <div class="summary-icon">
-          <i class="fas fa-coins"></i>
+  <!-- Header avec statistiques -->
+  <div class="header-section">
+    <h2 class="main-title">
+      <i class="fas fa-calendar-check"></i>
+      Échéancier de Paiement - Administration
+    </h2>
+    
+    <!-- Cards statistiques -->
+    <div class="stats-grid">
+      <nz-card class="stat-card total-card" [nzBodyStyle]="{ padding: '16px' }">
+        <div class="stat-icon">
+          <i class="fas fa-list-ol"></i>
         </div>
-        <div class="summary-content">
+        <div class="stat-content">
           <nz-statistic 
-            [nzValue]="montantTotalPaye" 
-            [nzValueStyle]="{ color: '#10b981', fontSize: '28px', fontWeight: '800', marginTop: '-15px' }"
-            [nzTitle]="'Montant total payé'"
-            [nzSuffix]="'FCFA'">
+            [nzValue]="getTotalMensualites()" 
+            [nzValueStyle]="{ color: '#1f2937', fontSize: '24px', fontWeight: '700', marginTop: '-15px' }"
+            [nzTitle]="'Total mensualités'"
+            [nzSuffix]="''">
           </nz-statistic>
         </div>
       </nz-card>
       
-      <nz-card class="summary-card penalty-card" [nzBodyStyle]="{ padding: '20px' }">
-        <div class="summary-icon">
-          <i class="fas fa-ban"></i>
+      <nz-card class="stat-card success-card" [nzBodyStyle]="{ padding: '16px' }">
+        <div class="stat-icon">
+          <i class="fas fa-check-circle"></i>
         </div>
-        <div class="summary-content">
+        <div class="stat-content">
           <nz-statistic 
-            [nzValue]="totalPenalites" 
-            [nzValueStyle]="{ color: '#ef4444', fontSize: '28px', fontWeight: '800', marginTop: '-15px' }"
-            [nzTitle]="'Total pénalités'"
-            [nzSuffix]="'FCFA'">
+            [nzValue]="getPayeATemps()" 
+            [nzValueStyle]="{ color: '#10b981', fontSize: '24px', fontWeight: '700', marginTop: '-15px' }"
+            [nzTitle]="'Payé à temps'"
+            [nzSuffix]="''">
           </nz-statistic>
         </div>
       </nz-card>
-    </div>
-  
-    <!-- Loading State -->
-    <div *ngIf="loading" class="loading-container">
-      <nz-spin nzSize="large">
-        <div class="loading-text">Chargement des paiements...</div>
-      </nz-spin>
-    </div>
-  
-    <!-- Error State -->
-    <div *ngIf="error && !loading" class="error-container">
-      <i class="fas fa-exclamation-triangle"></i>
-      <p>{{ error }}</p>
-      <button nz-button nzType="primary" (click)="refresh()">
-        <i class="fas fa-redo"></i>
-        Réessayer
-      </button>
-    </div>
-  
-    <!-- Accordéon des paiements par utilisateur -->
-    <div *ngIf="!loading && !error" class="payments-accordion">
-      <div class="section-header">
-        <h3 class="section-title">
-          <i class="fas fa-users"></i>
-          Paiements par Utilisateur
-        </h3>
-        <button nz-button nzType="default" (click)="refresh()">
-          <i class="fas fa-sync-alt"></i>
-          Actualiser
-        </button>
-      </div>
-  
-      <nz-collapse [nzAccordion]="true" [nzBordered]="false" class="user-accordion">
-        <nz-collapse-panel 
-          *ngFor="let group of groupedPaymentsByUser; trackBy: trackByUser" 
-          [nzShowArrow]="false"
-          [nzHeader]="userHeaderTemplate">
-          
-          <ng-template #userHeaderTemplate>
-            <div class="user-header-content">
-              <div class="user-info-section">
-                <nz-avatar 
-                  class="user-avatar" 
-                  [nzText]="getUserInitials(group)" 
-                  nzSize="large">
-                </nz-avatar>
-                <div class="user-details">
-                  <div class="user-name">{{ group.utilisateur }}</div>
-                  <div class="user-email">{{ group.email }}</div>
-                </div>
-              </div>
-              <div class="user-stats">
-                <div class="stat-item">
-                  <span class="stat-value">{{ group.nombrePaiements }}</span>
-                  <span class="stat-text">PAIEMENTS</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-value">{{ formatCurrency(group.totalPaye) }}</span>
-                  <span class="stat-text">PAYÉ</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-value">{{ formatCurrency(group.totalPenalites) }}</span>
-                  <span class="stat-text">PÉNALITÉS</span>
-                </div>
-              </div>
-              <i class="fas fa-chevron-up panel-arrow"></i>
-            </div>
-          </ng-template>
-  
-          <!-- Contenu du panel - Tableau des paiements -->
-          <div class="payments-table-container">
-            <nz-table 
-              [nzData]="group.paiements" 
-              [nzPageSize]="10"
-              [nzShowPagination]="false"
-              [nzBordered]="false"
-              [nzScroll]="{ x: '1200px' }"
-              class="payments-table"
-              [nzSize]="'small'">
-              
-              <thead>
-                <tr>
-                  <th>MENSUALITÉ</th>
-                  <th>TERRAIN</th>
-                  <th>MONTANT PRÉVU</th>
-                  <th>DATE LIMITE</th>
-                  <th>DATE PAIEMENT</th>
-                  <th>MONTANT PAYÉ</th>
-                  <th>MODE</th>
-                  <th>RÉFÉRENCE</th>
-                  <th>PÉNALITÉ</th>
-                  <th>COMMENTAIRE</th>
-                  <th>STATUT</th>
-                </tr>
-              </thead>
-              
-              <tbody>
-                <tr *ngFor="let paiement of group.paiements; trackBy: trackByPayment">
-                  <td>
-                    <div class="mensualite-cell">
-                      <i class="fas fa-calendar-alt"></i>
-                      <span>Mensualité {{ paiement.numero_mensualite }}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="terrain-cell">
-                      <i class="fas fa-map"></i>
-                      <span>{{ getTerrainName(paiement) }}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <span class="amount-cell prevu">
-                      {{ formatCurrency(paiement.montant_versement_prevu) }}
-                    </span>
-                  </td>
-                  <td>
-                    <span class="date-cell limite">
-                      {{ formatDate(paiement.date_limite_versement) }}
-                    </span>
-                  </td>
-                  <td>
-                    <span class="date-cell paiement" *ngIf="paiement.date_paiement_effectif; else noDateTemplate">
-                      {{ formatDate(paiement.date_paiement_effectif) }}
-                    </span>
-                    <ng-template #noDateTemplate>
-                      <span class="no-date">Non payé</span>
-                    </ng-template>
-                  </td>
-                  <td>
-                    <span class="amount-cell paye">
-                      {{ formatCurrency(paiement.montant_paye) }}
-                    </span>
-                  </td>
-                  <td>
-                    <span class="mode-cell">
-                      {{ getPaymentModeLabel(paiement.mode_paiement) }}
-                    </span>
-                  </td>
-                  <td>
-                    <span class="reference-cell" *ngIf="paiement.reference_paiement; else noRefTemplate">
-                      {{ paiement.reference_paiement }}
-                    </span>
-                    <ng-template #noRefTemplate>
-                      <span class="no-reference">-</span>
-                    </ng-template>
-                  </td>
-                  <td>
-                    <span class="penalty-cell" [class.has-penalty]="parseFloat(paiement.penalite_appliquee) > 0">
-                      {{ formatCurrency(paiement.penalite_appliquee) }}
-                    </span>
-                  </td>
-                  <td>
-                    <span class="comment-cell" *ngIf="paiement.commentaire_paiement; else noCommentTemplate">
-                      {{ paiement.commentaire_paiement }}
-                    </span>
-                    <ng-template #noCommentTemplate>
-                      <span class="no-comment">-</span>
-                    </ng-template>
-                  </td>
-                  <td>
-                    <nz-tag 
-                      [nzColor]="getStatusColor(paiement.statut_versement)"
-                      class="status-tag">
-                      {{ getStatusLabel(paiement.statut_versement) }}
-                    </nz-tag>
-                  </td>
-                </tr>
-              </tbody>
-            </nz-table>
-          </div>
-        </nz-collapse-panel>
-      </nz-collapse>
-    </div>
-  
-    <!-- Empty State -->
-    <div *ngIf="!loading && !error && groupedPaymentsByUser.length === 0" class="empty-state">
-      <i class="fas fa-inbox"></i>
-      <h3>Aucun paiement trouvé</h3>
-      <p>Aucun paiement n'a été enregistré pour le moment.</p>
+      
+      <nz-card class="stat-card warning-card" [nzBodyStyle]="{ padding: '16px' }">
+        <div class="stat-icon">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="stat-content">
+          <nz-statistic 
+            [nzValue]="getEnRetard()" 
+            [nzValueStyle]="{ color: '#f59e0b', fontSize: '24px', fontWeight: '700', marginTop: '-15px' }"
+            [nzTitle]="'En retard'"
+            [nzSuffix]="''">
+          </nz-statistic>
+        </div>
+      </nz-card>
+      
+      <nz-card class="stat-card pending-card" [nzBodyStyle]="{ padding: '16px' }">
+        <div class="stat-icon">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-content">
+          <nz-statistic 
+            [nzValue]="getEnAttente()" 
+            [nzValueStyle]="{ color: '#3b82f6', fontSize: '24px', fontWeight: '700', marginTop: '-15px' }"
+            [nzTitle]="'En attente'"
+            [nzSuffix]="''">
+          </nz-statistic>
+        </div>
+      </nz-card>
     </div>
   </div>
 
-  
+  <!-- Montant total et pénalités -->
+  <div class="summary-cards">
+    <nz-card class="summary-card amount-card" [nzBodyStyle]="{ padding: '20px' }">
+      <div class="summary-icon">
+        <i class="fas fa-coins"></i>
+      </div>
+      <div class="summary-content">
+        <nz-statistic 
+          [nzValue]="montantTotalPaye" 
+          [nzValueStyle]="{ color: '#10b981', fontSize: '28px', fontWeight: '800', marginTop: '-15px' }"
+          [nzTitle]="'Montant total payé'"
+          [nzSuffix]="'FCFA'">
+        </nz-statistic>
+      </div>
+    </nz-card>
+    
+    <nz-card class="summary-card penalty-card" [nzBodyStyle]="{ padding: '20px' }">
+      <div class="summary-icon">
+        <i class="fas fa-ban"></i>
+      </div>
+      <div class="summary-content">
+        <nz-statistic 
+          [nzValue]="totalPenalites" 
+          [nzValueStyle]="{ color: '#ef4444', fontSize: '28px', fontWeight: '800', marginTop: '-15px' }"
+          [nzTitle]="'Total pénalités'"
+          [nzSuffix]="'FCFA'">
+        </nz-statistic>
+      </div>
+    </nz-card>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <nz-spin nzSize="large">
+      <div class="loading-text">Chargement des paiements...</div>
+    </nz-spin>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-container">
+    <i class="fas fa-exclamation-triangle"></i>
+    <p>{{ error }}</p>
+    <button nz-button nzType="primary" (click)="refresh()">
+      <i class="fas fa-redo"></i>
+      Réessayer
+    </button>
+  </div>
+
+  <!-- Accordéon des paiements par utilisateur -->
+  <div *ngIf="!loading && !error" class="payments-accordion">
+    <div class="section-header">
+      <h3 class="section-title">
+        <i class="fas fa-users"></i>
+        Paiements par Utilisateur
+      </h3>
+      <button nz-button nzType="default" (click)="refresh()">
+        <i class="fas fa-sync-alt"></i>
+        Actualiser
+      </button>
+    </div>
+
+    <nz-collapse [nzAccordion]="true" [nzBordered]="false" class="user-accordion">
+      <nz-collapse-panel 
+        *ngFor="let group of groupedPaymentsByUser; trackBy: trackByUser" 
+        [nzShowArrow]="false"
+        [nzHeader]="userHeaderTemplate">
+        
+        <ng-template #userHeaderTemplate>
+          <div class="user-header-content">
+            <div class="user-info-section">
+              <nz-avatar 
+                class="user-avatar" 
+                [nzText]="getUserInitials(group)" 
+                nzSize="large">
+              </nz-avatar>
+              <div class="user-details">
+                <div class="user-name">{{ group.utilisateur }}</div>
+                <div class="user-email">{{ group.email }}</div>
+              </div>
+            </div>
+            <div class="user-stats">
+              <div class="stat-item">
+                <span class="stat-value">{{ group.nombrePaiements }}</span>
+                <span class="stat-text">PAIEMENTS</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">{{ formatCurrency(group.totalPaye) }}</span>
+                <span class="stat-text">PAYÉ</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">{{ formatCurrency(group.totalPenalites) }}</span>
+                <span class="stat-text">PÉNALITÉS</span>
+              </div>
+            </div>
+            <i class="fas fa-chevron-up panel-arrow"></i>
+          </div>
+        </ng-template>
+
+        <!-- Contenu du panel - Tableau des paiements -->
+        <div class="payments-table-container">
+          <nz-table 
+            [nzData]="group.paiements" 
+            [nzPageSize]="10"
+            [nzShowPagination]="false"
+            [nzBordered]="false"
+            [nzScroll]="{ x: '1200px' }"
+            class="payments-table"
+            [nzSize]="'small'">
+            
+            <thead>
+              <tr>
+                <th>MENSUALITÉ</th>
+                <th>TERRAIN</th>
+                <th>MONTANT PRÉVU</th>
+                <th>DATE LIMITE</th>
+                <th>DATE PAIEMENT</th>
+                <th>MONTANT PAYÉ</th>
+                <th>MODE</th>
+                <th>RÉFÉRENCE</th>
+                <th>PÉNALITÉ</th>
+                <th style="font-size: 12px;">COMMENTAIRE</th>
+                <th>STATUT</th>
+              </tr>
+            </thead>
+            
+            <tbody>
+              <tr *ngFor="let paiement of group.paiements; trackBy: trackByPayment">
+                <td>
+                  <div class="mensualite-cell">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Mensualité {{ paiement.numero_mensualite }}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="terrain-cell">
+                    <i class="fas fa-map"></i>
+                    <span>{{ getTerrainName(paiement) }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="amount-cell prevu">
+                    {{ formatCurrency(paiement.montant_versement_prevu) }}
+                  </span>
+                </td>
+                <td>
+                  <span class="date-cell limite">
+                    {{ formatDate(paiement.date_limite_versement) }}
+                  </span>
+                </td>
+                <td>
+                  <span class="date-cell paiement" *ngIf="paiement.date_paiement_effectif; else noDateTemplate">
+                    {{ formatDate(paiement.date_paiement_effectif) }}
+                  </span>
+                  <ng-template #noDateTemplate>
+                    <span class="no-date">Non payé</span>
+                  </ng-template>
+                </td>
+                <td>
+                  <span class="amount-cell paye" style="font-size: 12px;">
+                    {{ formatCurrency(paiement.montant_paye) }}
+                  </span>
+                </td>
+                <td>
+                  <span class="mode-cell">
+                    {{ getPaymentModeLabel(paiement.mode_paiement) }}
+                  </span>
+                </td>
+                <td>
+                  <span class="reference-cell" *ngIf="paiement.reference_paiement; else noRefTemplate">
+                    {{ paiement.reference_paiement }}
+                  </span>
+                  <ng-template #noRefTemplate>
+                    <span class="no-reference">-</span>
+                  </ng-template>
+                </td>
+                <td>
+                  <span class="penalty-cell" [class.has-penalty]="parseFloat(paiement.penalite_appliquee) > 0" style="font-size: 12px;">
+                    {{ formatCurrency(paiement.penalite_appliquee) }}
+                  </span>
+                </td>
+                <td>
+                  <span class="comment-cell" *ngIf="paiement.commentaire_paiement; else noCommentTemplate">
+                    {{ paiement.commentaire_paiement }}
+                  </span>
+                  <ng-template #noCommentTemplate>
+                    <span class="no-comment">-</span>
+                  </ng-template>
+                </td>
+                <td>
+                  <!-- Tag de statut avec classe spécifique pour petite taille -->
+                  <nz-tag 
+                    [nzColor]="getStatusColor(paiement.statut_versement)"
+                    class="status-tag status-tag-table">
+                    {{ getStatusLabel(paiement.statut_versement) }}
+                  </nz-tag>
+                </td>
+              </tr>
+            </tbody>
+          </nz-table>
+        </div>
+      </nz-collapse-panel>
+    </nz-collapse>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && !error && groupedPaymentsByUser.length === 0" class="empty-state">
+    <i class="fas fa-inbox"></i>
+    <h3>Aucun paiement trouvé</h3>
+    <p>Aucun paiement n'a été enregistré pour le moment.</p>
+  </div>
+</div>
