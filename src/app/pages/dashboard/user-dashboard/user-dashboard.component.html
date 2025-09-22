@@ -6,10 +6,10 @@
     [(nzCollapsed)]="isCollapsed"
     [nzTrigger]="null">
     <div class="sidebar-logo">
-      <a href="#" target="_blank">
-        <nz-avatar class="header-avatar" nzIcon="user" [nzSrc]="profilePhoto" (error)="onImageError($event)"></nz-avatar>
-        <span class="header-username" nz-tooltip [nzTooltipTitle]="userName">{{ userName }}</span>
-      </a>
+      <!-- <a href="#" target="_blank"> -->
+        <nz-avatar class="header-avatar" nzIcon="user" [nzSrc]="profilePhoto"></nz-avatar>
+        <span class="header-username" nz-tooltip [nzTooltipTitle]="userName" style="margin-left: 10px;">{{ userName }}</span>
+      <!-- </a> -->
     </div>
     <ul nz-menu nzTheme="dark" nzMode="inline">
       <li nz-menu-item routerLink="/dashboard/user/details/welcome" routerLinkActive="ant-menu-item-selected" nz-tooltip [nzTooltipTitle]="'Vue d\'ensemble'" nzTooltipPlacement="right">
@@ -34,7 +34,7 @@
       </li>
       <li nz-menu-item routerLink="/dashboard/user/details/evenements" routerLinkActive="ant-menu-item-selected" nz-tooltip [nzTooltipTitle]="'Suivi Projet'" nzTooltipPlacement="right">
         <span nz-icon nzType="calendar"></span>
-        <span>Suivi Projet</span>
+        <span>Événements</span>
       </li>
       <li nz-menu-item routerLink="/dashboard/user/details/recompenses" routerLinkActive="ant-menu-item-selected" nz-tooltip [nzTooltipTitle]="'Mes Récompenses'" nzTooltipPlacement="right">
         <span nz-icon nzType="gift"></span>

@@ -247,10 +247,6 @@ private emailUniqueValidator = (control: AbstractControl): Observable<Validation
             : 'Utilisateur';
   
           this.message.success('Utilisateur créé avec succès');
-          this.notification.success(
-            'Création réussie',
-            `L'utilisateur ${userName} a été créé avec succès.`
-          );
   
           this.clearDraft();
           
