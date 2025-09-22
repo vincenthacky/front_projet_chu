@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Modal Suspension</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        button { padding: 10px 20px; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #c82333; }
+    </style>
+</head>
+<body>
+    <h1>Test du Modal de Suspension de Compte</h1>
+    <p>Cliquez sur le bouton ci-dessous pour simuler une suspension de compte :</p>
+    <button onclick="testSuspension()">Simuler Suspension de Compte</button>
+    
+    <script>
+        function testSuspension() {
+            // Simulation d'une réponse HTTP 403 avec message de suspension
+            const mockResponse = {
+                status: 403,
+                error: {
+                    success: false,
+                    status_code: 403,
+                    message: "Votre compte est inactif ou suspendu. Veuillez contacter l'administrateur."
+                }
+            };
+            
+            console.log('🧪 Test: Simulation de réponse 403 avec message de suspension');
+            console.log('📋 Réponse simulée:', mockResponse);
+            
+            // Dans un vrai test, ceci déclencherait l'intercepteur
+            alert('Modal simulation - Votre compte a été suspendu!\n\nDans l\'app Angular, ceci afficherait le modal avec l\'image "Do-not-enter-sign-bro.png" pendant 4 secondes avant redirection.');
+        }
+    </script>
+</body>
+</html>

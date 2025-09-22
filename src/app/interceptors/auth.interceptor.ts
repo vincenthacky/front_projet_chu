@@ -2,12 +2,16 @@ import { Injectable, inject } from '@angular/core';
 import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { Router } from '@angular/router';
 import { AuthService } from '../core/services/auth.service';
+import { ModalService } from '../core/services/modal.service';
 
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
   private authService = inject(AuthService);
+  private router = inject(Router);
+  private modalService = inject(ModalService);
 
   private readonly EXCLUDED_URLS = [
     '/api/login',
@@ -84,6 +88,16 @@ export class AuthInterceptor implements HttpInterceptor {
 
         if (error.status === 403) {
           console.log('🔴 INTERCEPTOR: Accès refusé (403)');
+          
+          // Vérifier si c'est une réponse avec status_code et message d'inactivité
+          if (error.error?.status_code === 403 && 
+              error.error?.success === false &&
+              error.error?.message?.includes('inactif ou suspendu')) {
+            console.log('🔴 INTERCEPTOR: Compte inactif/suspendu détecté - Déconnexion forcée');
+            this.handleAccountSuspension();
+            return throwError(() => new Error('Votre compte est inactif ou suspendu. Veuillez contacter l\'administrateur.'));
+          }
+          
           return throwError(() => new Error('Accès refusé'));
         }
 
@@ -119,5 +133,22 @@ export class AuthInterceptor implements HttpInterceptor {
   private shouldAddToken(url: string): boolean {
     const excluded = this.EXCLUDED_URLS.some(excludedUrl => url.includes(excludedUrl));
     return !excluded;
+  }
+
+  private handleAccountSuspension(): void {
+    console.log('🚨 INTERCEPTOR: Gestion de la suspension de compte');
+    
+    // Réinitialiser l'état utilisateur via AuthService (sans redirection)
+    this.authService.resetUserState();
+    
+    // Afficher le modal de suspension
+    this.modalService.showAccountSuspendedModal();
+    
+    // Rediriger vers la page de login après 4 secondes
+    setTimeout(() => {
+      this.modalService.hideModal();
+      this.router.navigate(['/authentification/login']);
+      console.log('🔄 INTERCEPTOR: Redirection vers /authentification/login');
+    }, 4000);
   }
 }

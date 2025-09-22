@@ -234,6 +234,20 @@ export class AuthService {
     this.completeLogout();
   }
 
+  resetUserState(): void {
+    console.log('🔄 Réinitialisation de l\'état utilisateur sans redirection');
+    this.stopInactivityDetection();
+    
+    if (this.isBrowser) {
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      localStorage.removeItem('authExpiry');
+    }
+
+    this.currentUserSubject.next(null);
+    this.isAuthenticatedSubject.next(false);
+  }
+
   private setAuthData(user: User, token: string): void {
     if (!this.isBrowser) return;
     
