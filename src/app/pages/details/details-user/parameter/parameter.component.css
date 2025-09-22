@@ -182,10 +182,11 @@
   letter-spacing: 0.5px;
 }
 
-.strength-weak { color: #ff4757; }
-.strength-fair { color: #ffa726; }
-.strength-good { color: #66bb6a; }
-.strength-excellent { color: #4caf50; }
+.strength-very-weak { color: #ff4757; }
+.strength-weak { color: #ff6b6b; }
+.strength-medium { color: #ffa726; }
+.strength-strong { color: #66bb6a; }
+.strength-very-strong { color: #4caf50; }
 
 /* Card d'informations supplémentaires */
 .info-card {
@@ -643,30 +644,6 @@
   }
 }
 
-/* ===== ADAPTATION À LA SIDEBAR ===== */
-
-/* Quand la sidebar est ouverte sur desktop */
-@media (min-width: 768px) {
-  .ant-layout-sider:not(.ant-layout-sider-collapsed) + .ant-layout .profile-container {
-    margin-left: 0; /* Pas de décalage car le layout gère déjà l'espace */
-  }
-}
-
-/* Quand la sidebar est fermée sur desktop */
-@media (min-width: 768px) {
-  .ant-layout-sider.ant-layout-sider-collapsed + .ant-layout .profile-container {
-    margin-left: 0; /* Pas de décalage car le layout gère déjà l'espace */
-  }
-}
-
-/* Sur mobile, la sidebar est gérée différemment */
-@media (max-width: 767px) {
-  .profile-container {
-    margin-left: 0;
-    width: 100%;
-  }
-}
-
 /* ===== AMÉLIORATIONS SPÉCIFIQUES ===== */
 
 /* Espacement vertical entre les champs du formulaire de mot de passe */
@@ -746,135 +723,6 @@
     image-rendering: crisp-edges;
   }
 }
-
-/* ===== ADAPTATION OPTIMISÉE À LA SIDEBAR ===== */
-
-/* Quand la sidebar est ouverte sur desktop */
-@media (min-width: 768px) {
-  .ant-layout-sider:not(.ant-layout-sider-collapsed) + .ant-layout .profile-container {
-    margin-left: 0; /* Pas de décalage car le layout gère déjà l'espace */
-    width: calc(100% - var(--sidebar-width-desktop));
-    max-width: calc(100vw - var(--sidebar-width-desktop));
-  }
-}
-
-/* Quand la sidebar est fermée sur desktop */
-@media (min-width: 768px) {
-  .ant-layout-sider.ant-layout-sider-collapsed + .ant-layout .profile-container {
-    margin-left: 0; /* Pas de décalage car le layout gère déjà l'espace */
-    width: calc(100% - var(--sidebar-collapsed-width));
-    max-width: calc(100vw - var(--sidebar-collapsed-width));
-  }
-}
-
-/* Sur tablette avec sidebar ouverte */
-@media (min-width: 481px) and (max-width: 767px) {
-  .ant-layout-sider:not(.ant-layout-sider-collapsed) + .ant-layout .profile-container {
-    margin-left: 0;
-    width: calc(100% - var(--sidebar-width-tablet));
-    max-width: calc(100vw - var(--sidebar-width-tablet));
-  }
-}
-
-/* Sur tablette avec sidebar fermée */
-@media (min-width: 481px) and (max-width: 767px) {
-  .ant-layout-sider.ant-layout-sider-collapsed + .ant-layout .profile-container {
-    margin-left: 0;
-    width: calc(100% - var(--sidebar-collapsed-width));
-    max-width: calc(100vw - var(--sidebar-collapsed-width));
-  }
-}
-
-/* Sur mobile, la sidebar est gérée différemment */
-@media (max-width: 480px) {
-  .profile-container {
-    margin-left: 0;
-    width: 100%;
-    max-width: 100vw;
-  }
-  
-  /* Quand la sidebar est ouverte sur mobile */
-  .ant-layout-sider:not(.ant-layout-sider-collapsed) + .ant-layout .profile-container {
-    width: calc(100% - var(--sidebar-width-mobile));
-    max-width: calc(100vw - var(--sidebar-width-mobile));
-  }
-  
-  /* Quand la sidebar est fermée sur mobile */
-  .ant-layout-sider.ant-layout-sider-collapsed + .ant-layout .profile-container {
-    width: 100%;
-    max-width: 100vw;
-  }
-}
-
-/* ===== AMÉLIORATIONS SPÉCIFIQUES POUR LA RESPONSIVITÉ ===== */
-
-/* Amélioration de la lisibilité sur petits écrans */
-@media (max-width: 480px) {
-  .ant-form-item-label > label {
-    font-size: 13px !important;
-  }
-  
-  .ant-input {
-    font-size: 13px !important;
-  }
-  
-  .ant-btn {
-    font-size: 12px !important;
-  }
-  
-  /* Réduire l'espacement des cartes sur mobile */
-  .profile-card,
-  .password-card,
-  .info-card {
-    margin-bottom: var(--spacing-sm);
-  }
-  
-  /* Optimiser les descriptions sur mobile */
-  .vertical-descriptions .ant-descriptions-item {
-    margin-bottom: var(--spacing-sm);
-  }
-  
-  .vertical-descriptions .ant-descriptions-item-label {
-    font-size: 12px;
-  }
-  
-  .vertical-descriptions .ant-descriptions-item-content {
-    font-size: 13px;
-  }
-}
-
-/* Optimisation pour les écrans tactiles */
-@media (hover: none) and (pointer: coarse) {
-  .ant-btn {
-    min-height: 44px; /* Taille minimale recommandée pour le touch */
-  }
-  
-  .ant-input {
-    min-height: 44px;
-  }
-  
-  .password-toggle {
-    min-width: 44px;
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-}
-
-/* Amélioration de l'accessibilité */
-@media (prefers-contrast: high) {
-  .profile-card,
-  .password-card,
-  .info-card {
-    border: 2px solid var(--text-primary);
-  }
-  
-  .ant-btn {
-    border: 2px solid currentColor;
-  }
-}
-
 
 .input{
   margin-left: 15px;
@@ -1004,6 +852,13 @@
   justify-content: center;
 }
 
+.modal-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
+}
+
 /* Responsive pour les documents */
 @media (max-width: 767px) {
   .documents-section {
@@ -1038,6 +893,18 @@
   
   .document-actions .ant-btn {
     width: 100%;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    align-items: stretch;
+  }
+
+  .modal-actions > div {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-sm);
   }
 }
 
@@ -1086,3 +953,62 @@
 .document-card:nth-child(1) { animation-delay: 0.1s; }
 .document-card:nth-child(2) { animation-delay: 0.2s; }
 .document-card:nth-child(3) { animation-delay: 0.3s; }
+
+/* Styles pour le modal des documents */
+::ng-deep .document-modal {
+  .ant-modal-content {
+    border-radius: var(--border-radius);
+  }
+
+  .ant-modal-header {
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  }
+
+  .ant-modal-body {
+    padding: var(--spacing-md);
+  }
+
+  .ant-modal-footer {
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+}
+
+/* Styles pour l'iframe PDF */
+.preview-container iframe {
+  border-radius: var(--border-radius-small);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Animation de chargement pour les PDFs */
+.pdf-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--text-secondary);
+}
+
+/* Styles pour les tags de type de fichier */
+.ant-tag {
+  font-weight: 500 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+.ant-tag .anticon {
+  font-size: 14px;
+}
+
+/* Amélioration des boutons d'action du modal */
+.modal-actions button {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.modal-actions button .anticon {
+  font-size: 14px;
+}
