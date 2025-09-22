@@ -411,9 +411,7 @@ export class EvenementsComponent implements OnInit {
         }
       },
       error: (err) => {
-        this.loading = false;
-        this.error = 'Erreur lors du chargement des événements';
-        console.error('Erreur lors du chargement des événements:', err);
+        this.loading = false;      
       }
     });
   }

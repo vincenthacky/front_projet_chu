@@ -57,6 +57,13 @@ export class AuthGuard implements CanActivate {
           return false;
         }
 
+        // Vérification supplémentaire du rôle (au cas où)
+        if (user.type !== 'user' && user.type !== 'superAdmin') {
+          console.error('❌ Guard - Rôle non autorisé:', user.type);
+          this.authService.forceLogout();
+          return false;
+        }
+
         console.log('👤 Guard - Utilisateur:', {
           nom: user.nom,
           type: user.type,

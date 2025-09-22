@@ -603,6 +603,38 @@ export class ParameterComponent implements OnInit {
     return `${environment.storageUrl}/${imagePath}`;
   }
 
+  // Méthode pour obtenir l'extension d'un fichier de manière sûre
+  private getFileExtension(document: DocumentData): string {
+    if (!document || !document.nom_fichier) return '';
+    return document.nom_fichier.split('.').pop()?.toLowerCase() || '';
+  }
+
+  // Nouvelle méthode pour déterminer si le document est une image
+  isImage(document: DocumentData | null): boolean {
+    if (!document) return false;
+    
+    if (document.type_mime) {
+      return document.type_mime.startsWith('image/');
+    }
+    
+    // Fallback sur l'extension si type_mime est null
+    const extension = this.getFileExtension(document);
+    return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(extension);
+  }
+
+  // Nouvelle méthode pour déterminer si le document est un PDF
+  isPdf(document: DocumentData | null): boolean {
+    if (!document) return false;
+    
+    if (document.type_mime) {
+      return document.type_mime === 'application/pdf';
+    }
+    
+    // Fallback sur l'extension si type_mime est null
+    const extension = this.getFileExtension(document);
+    return extension === 'pdf';
+  }
+
   getDocumentTypeLabel(documentType: 'carte_professionnelle' | 'cni' | 'fiche_souscription'): string {
     switch (documentType) {
       case 'carte_professionnelle':

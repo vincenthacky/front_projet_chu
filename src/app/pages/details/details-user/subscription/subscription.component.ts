@@ -21,7 +21,6 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 import { ApiSouscription } from 'src/app/core/models/souscription';
 import { SouscriptionService } from 'src/app/core/services/souscription.service';
 
-
 // Interface Payment améliorée
 interface Payment {
   date: string;
@@ -48,7 +47,6 @@ interface Subscription {
   progression: number;
   payments: Payment[];
 }
-
 
 @Component({
   selector: 'app-subscription',
@@ -420,7 +418,9 @@ export class SubscriptionComponent {
         planpaiements: item.planpaiements
       });
 
-      const progression = prixTotal > 0 ? Math.round((montantPaye / prixTotal) * 100) : 0;
+      const progression = prixTotal > 0 ? ((montantPaye / prixTotal) * 100) : 0;
+
+      console.log(`📊 Progression calculée avec décimales: ${progression.toFixed(2)}%`);
 
       // Logique pour le statut
       let statut = item.statut_dynamique;
@@ -469,6 +469,7 @@ export class SubscriptionComponent {
         surface: result.surface,
         statut: result.statut,
         prochainPaiement: result.prochainPaiement,
+        progression: result.progression,
         payments: result.payments
       });
 

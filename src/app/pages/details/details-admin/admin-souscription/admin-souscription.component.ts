@@ -20,31 +20,7 @@ import { Router } from '@angular/router';
 import { PayementsService } from 'src/app/core/services/payements.service';
 import { ApiSouscription, SouscriptionFilters, SouscriptionResponse } from 'src/app/core/models/souscription';
 import { SouscriptionService } from 'src/app/core/services/souscription.service';
-
-
-// Interfaces pour les paiements
-interface PaymentData {
-  id_souscription: number;
-  mode_paiement: string;
-  montant_paye: number;
-  date_paiement_effectif: string;
-}
-
-interface PaymentCreationResponse {
-  success: boolean;
-  status_code: number;
-  message: string;
-  data: {
-    id_plan_paiement: number;
-    id_souscription: number;
-    montant_paye: string;
-    mode_paiement: string;
-    date_paiement_effectif: string;
-    statut_versement: string;
-    created_at: string;
-    updated_at: string;
-  };
-}
+import { PaymentData, PaymentCreationResponse } from 'src/app/core/models/paiments';
 
 // Interface pour les utilisateurs groupés
 interface GroupedUser {
@@ -57,7 +33,7 @@ interface GroupedUser {
   totalInDelay: number;
 }
 
-// Interfaces pour le modal
+// Interfaces pour le modal de détails - CORRIGÉE
 interface Subscription {
   id: string;
   terrain: string;
@@ -77,7 +53,7 @@ interface Payment {
   amount: number;
   numero_mensualite?: number;
   mode_paiement?: string;
-  reference_paiement?: string;
+  reference_paiement?: string | null; // CORRECTION : Permettre null
   statut_versement?: string;
 }
 
@@ -151,7 +127,9 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
     id_souscription: 0,
     mode_paiement: '',
     montant_paye: 0,
-    date_paiement_effectif: ''
+    date_paiement_effectif: '',
+    reference_paiement: '',
+    commentaire_paiement: ''
   };
   isProcessingPayment = false;
 
@@ -498,7 +476,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Convertir ApiSouscription vers le format Subscription
+   * Convertir ApiSouscription vers le format Subscription - CORRIGÉ
    */
   private convertToSubscriptionFormat(apiSouscription: ApiSouscription): Subscription {
     console.log('🔄 Conversion de ApiSouscription vers Subscription:', apiSouscription);
@@ -519,7 +497,31 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
         break;
     }
 
-    const payments: Payment[] = this.generateMockPayments(apiSouscription);
+    // CORRECTION : Récupérer les vrais paiements depuis l'API avec tri par date décroissante (derniers en premier)
+    const payments: Payment[] = (apiSouscription.planpaiements || [])
+      .filter(plan => {
+        const montantPaye = this.souscriptionService.parseAmount(plan.montant_paye);
+        return montantPaye > 0 && plan.date_paiement_effectif;
+      })
+      .map(plan => {
+        const montantPaye = this.souscriptionService.parseAmount(plan.montant_paye);
+        return {
+          date: this.formatDate(plan.date_paiement_effectif) || 'Date non disponible',
+          amount: montantPaye,
+          numero_mensualite: plan.numero_mensualite,
+          mode_paiement: plan.mode_paiement || 'Non spécifié',
+          reference_paiement: plan.reference_paiement, // CORRECTION : Garder le type original (string | null)
+          statut_versement: plan.statut_versement || 'validé'
+        };
+      })
+      // TRI PAR DATE DÉCROISSANTE : Derniers paiements en premier
+      .sort((a, b) => {
+        const dateA = new Date(a.date === 'Date non disponible' ? '1900-01-01' : a.date);
+        const dateB = new Date(b.date === 'Date non disponible' ? '1900-01-01' : b.date);
+        return dateB.getTime() - dateA.getTime();
+      });
+
+    console.log('💳 Paiements réels mappés (derniers en premier):', payments);
 
     const subscription: Subscription = {
       id: apiSouscription.id_souscription.toString(),
@@ -540,52 +542,14 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Générer des paiements fictifs
-   */
-  private generateMockPayments(souscription: ApiSouscription): Payment[] {
-    console.log('🎭 Génération de paiements fictifs pour:', souscription.id_souscription);
-
-    const montantPaye = this.souscriptionService.parseAmount(souscription.montant_paye);
-    const montantTotal = souscription.prix_total_terrain || 0; // CORRECTION: Utiliser prix_total_terrain
-
-    if (montantPaye === 0) {
-      return [];
-    }
-
-    const payments: Payment[] = [];
-    const moyenneMensuelle = 500000;
-    const nombrePaiements = Math.min(5, Math.ceil(montantPaye / moyenneMensuelle));
-
-    for (let i = 0; i < nombrePaiements; i++) {
-      const date = new Date();
-      date.setMonth(date.getMonth() - (nombrePaiements - i - 1));
-
-      const montant = i === nombrePaiements - 1
-        ? montantPaye - moyenneMensuelle * (nombrePaiements - 1)
-        : moyenneMensuelle;
-
-      payments.push({
-        date: date.toISOString().split('T')[0],
-        amount: montant,
-        numero_mensualite: i + 1,
-        mode_paiement: ['Virement', 'Espèces', 'Chèque'][Math.floor(Math.random() * 3)],
-        reference_paiement: `PAY-${souscription.id_souscription}-${String(i + 1).padStart(3, '0')}`,
-        statut_versement: 'valide'
-      });
-    }
-
-    console.log('💳 Paiements générés:', payments);
-    return payments.reverse();
-  }
-
-  /**
-   * Afficher le modal de détails
+   * Afficher le modal de détails - CORRIGÉ
    */
   showModal(subscription: Subscription): void {
     console.log('🔍 Ouverture modal pour:', subscription.id);
-    console.log('💳 Paiements disponibles:', subscription.payments);
+    console.log('💳 Paiements disponibles (déjà triés par date décroissante):', subscription.payments);
 
     if (subscription.payments && Array.isArray(subscription.payments)) {
+      // Les paiements sont déjà triés par date décroissante, on prend les 5 premiers (les plus récents)
       this.lastFivePayments = subscription.payments.slice(0, 5).map(payment => ({
         date: payment.date,
         amount: payment.amount,
@@ -595,7 +559,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
         statut_versement: payment.statut_versement
       }));
 
-      console.log('📋 5 derniers paiements sélectionnés:', this.lastFivePayments);
+      console.log('📋 5 derniers paiements sélectionnés (les plus récents):', this.lastFivePayments);
     } else {
       this.lastFivePayments = [];
       console.log('⚠️ Aucun paiement trouvé pour cette souscription');
@@ -664,7 +628,9 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
       id_souscription: souscriptionId,
       mode_paiement: '',
       montant_paye: 0,
-      date_paiement_effectif: new Date().toISOString().split('T')[0] // Date d'aujourd'hui par défaut
+      date_paiement_effectif: new Date().toISOString().split('T')[0], // Date d'aujourd'hui par défaut
+      reference_paiement: '',
+      commentaire_paiement: ''
     };
 
     this.isPaymentModalVisible = true;
@@ -756,7 +722,9 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
       id_souscription: 0,
       mode_paiement: '',
       montant_paye: 0,
-      date_paiement_effectif: ''
+      date_paiement_effectif: '',
+      reference_paiement: '',
+      commentaire_paiement: ''
     };
   }
 

@@ -1,4 +1,4 @@
-/* subscription-table.component.scss - Version Complète avec Modal Compact */
+/* subscription-table.component.scss - Version Responsive Corrigée */
 
 :host {
   display: block;
@@ -54,10 +54,14 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
 }
 
 .header-info {
   text-align: left;
+  flex: 1;
+  min-width: 280px;
 }
 
 .main-title {
@@ -93,6 +97,7 @@
   border-radius: 12px;
   padding: 6px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
 }
 
 .toggle-btn {
@@ -109,6 +114,7 @@
   background: transparent;
   color: #666;
   position: relative;
+  white-space: nowrap;
 }
 
 .toggle-btn:hover {
@@ -219,6 +225,7 @@
       font-weight: 600;
       font-size: 0.95rem;
       white-space: nowrap;
+      flex-shrink: 0;
       
       &:hover:not(:disabled) {
         transform: translateY(-1px);
@@ -280,7 +287,6 @@
   overflow: hidden;
   margin-bottom: 20px;
   
-  /* Container du tableau */
   .table-container {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -377,12 +383,6 @@
         width: 120px;
         text-align: center;
         border-top-right-radius: 16px;
-      }
-      
-      i {
-        margin-left: 4px;
-        opacity: 0.8;
-        font-size: 0.7rem;
       }
     }
   }
@@ -530,49 +530,42 @@
   border: 1px solid transparent !important;
   transition: all 0.2s ease !important;
   
-  /* Statut Active */
   &.status-active {
     background: linear-gradient(135deg, #dbeafe, #bfdbfe) !important;
     color: #1e40af !important;
     border: 1px solid #3b82f6 !important;
   }
   
-  /* Statut En cours */
   &.status-en-cour {
     background: linear-gradient(135deg, #d1fae5, #a7f3d0) !important;
     color: #047857 !important;
     border: 1px solid #10b981 !important;
   }
   
-  /* Statut Terminée */
   &.status-terminee {
     background: linear-gradient(135deg, #dcfce7, #bbf7d0) !important;
     color: #15803d !important;
     border: 1px solid #22c55e !important;
   }
 
-  /* Statut Suspendue */
   &.status-suspendue {
     background: linear-gradient(135deg, #fed7aa, #fdba74) !important;
     color: #c2410c !important;
     border: 1px solid #f97316 !important;
   }
 
-  /* Statut Résiliée */
   &.status-resillee {
     background: linear-gradient(135deg, #f3f4f6, #e5e7eb) !important;
     color: #374151 !important;
     border: 1px solid #6b7280 !important;
   }
 
-  /* Statut En attente */
   &.status-en-attente {
     background: linear-gradient(135deg, #fef3c7, #fde68a) !important;
     color: #92400e !important;
     border: 1px solid #f59e0b !important;
   }
 
-  /* Statut Rejetée */
   &.status-rejete {
     background: linear-gradient(135deg, #fee2e2, #fecaca) !important;
     color: #dc2626 !important;
@@ -584,14 +577,12 @@
     margin-right: 2px !important;
   }
 
-  /* Hover effect */
   &:hover {
     transform: translateY(-1px) !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
   }
 }
 
-/* Badge origine pour les demandes */
 .origine-badge {
   display: inline-flex;
   align-items: center;
@@ -672,7 +663,7 @@
   }
 }
 
-/* Pagination - Simple avec alignement tableau */
+/* Pagination */
 .pagination-container {
   display: flex;
   justify-content: center;
@@ -682,23 +673,22 @@
   flex-wrap: wrap;
   width: 100%;
   
-  /* Style pour ng-zorro pagination - couleur du texte visible */
   ::ng-deep .ant-pagination-options-quick-jumper {
-    color:white !important;
+    color: #374151 !important;
     font-weight: 500 !important;
   }
   
   ::ng-deep .ant-pagination-options-quick-jumper input {
     background: white !important;
     border: 1px solid #e5e7eb !important;
-    color:white !important;
+    color: #374151 !important;
     border-radius: 6px !important;
   }
   
   ::ng-deep .ant-pagination-options-size-changer .ant-select-selector {
     background: white !important;
     border: 1px solid #e5e7eb !important;
-    color:white !important;
+    color: #374151 !important;
   }
   
   .pagination-btn {
@@ -734,7 +724,7 @@
   }
   
   .pagination-info {
-    color:white !important;
+    color: #374151 !important;
     font-size: 0.9rem;
     text-align: center;
   }
@@ -760,7 +750,7 @@
     }
     
     .loading-text {
-      color:white !important;
+      color: #374151 !important;
       font-weight: 500;
       font-size: 1rem;
     }
@@ -796,9 +786,8 @@
   100% { transform: rotate(360deg); }
 }
 
-/* ===== STYLES MODAL COMPACT ET RESPONSIVE - NOUVEAUX ===== */
+/* ===== STYLES MODAL COMPACT ===== */
 
-/* Override Angular Modal */
 ::ng-deep .compact-modal .ant-modal {
   max-width: 90vw;
 }
@@ -822,14 +811,12 @@
   font-weight: 600 !important;
 }
 
-/* Contenu principal compact */
 .modal-content-compact {
   padding: 0;
   font-size: 12px;
   line-height: 1.4;
 }
 
-/* ===== SECTION INFORMATIONS SOUSCRIPTION COMPACTE ===== */
 .subscription-info-compact {
   background: linear-gradient(135deg, #f8fafc 0%, #f0f9ff 100%);
   padding: 12px;
@@ -925,7 +912,6 @@
   color: #ff4d4f;
 }
 
-/* ===== SECTION PAIEMENTS COMPACTE ===== */
 .payments-section-compact {
   margin-bottom: 12px;
 }
@@ -1013,7 +999,7 @@
   align-items: center;
   gap: 4px;
   font-weight: 500;
-  color: #fff;
+  color: #333;
   font-size: 11px;
 }
 
@@ -1054,7 +1040,6 @@
   margin: 0 !important;
 }
 
-/* ===== MESSAGE AUCUN PAIEMENT COMPACT ===== */
 .no-payments-compact {
   text-align: center;
   padding: 20px 10px;
@@ -1074,7 +1059,6 @@
   color: #d9d9d9;
 }
 
-/* ===== ACTIONS MODAL COMPACTES ===== */
 .modal-actions-compact {
   display: flex;
   gap: 8px;
@@ -1119,605 +1103,311 @@
   border-color: #40a9ff;
 }
 
-/* ===== STYLES MODAL ORIGINAUX - MAINTENUS POUR COMPATIBILITÉ ===== */
-.modal-header-blue {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 20px 24px;
-  border-radius: 12px 12px 0 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: -24px -24px 0 -24px;
-  width: calc(100% + 48px);
-  justify-content: flex-start;
-}
-
-.modal-close-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: white;
-  padding: 8px;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  
-  &:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: scale(1.1);
-  }
-}
-
-.modal-header-content {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.modal-icon {
-  font-size: 1.2rem;
-}
-
-.modal-title-text {
-  font-size: 1.1rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-.modal-content {
-  padding: 0;
-}
-
-/* ✅ Section informations souscription */
-.subscription-info {
-  background: linear-gradient(135deg, #f6f9fc 0%, #eef7ff 100%);
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  border: 1px solid #e8f4fd;
-}
-
-.subscription-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.subscription-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1890ff;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.subscription-title i {
-  font-size: 20px;
-}
-
-.terrain-details {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.terrain-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-}
-
-.terrain-item .label {
-  font-weight: 500;
-  color: #666;
-}
-
-.terrain-item .value {
-  font-weight: 600;
-  color: #333;
-}
-
-.amounts-summary {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #e8f4fd;
-}
-
-.amount-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.amount-item .label {
-  font-size: 12px;
-  color: #666;
-  margin-bottom: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.amount-item .value {
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.amount-item .value.paid {
-  color: #52c41a;
-}
-
-.amount-item .value.remaining {
-  color: #ff4d4f;
-}
-
-/* ✅ Section historique des paiements */
-.payments-section {
-  margin-bottom: 20px;
-}
-
-.payments-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.payments-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.payments-title i {
-  color: #1890ff;
-}
-
-.payments-count {
-  font-size: 12px;
-  color: #666;
-  background: #f0f2f5;
-  padding: 4px 12px;
-  border-radius: 12px;
-}
-
-.payments-list {
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.payment-item {
-  background: #fafafa;
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 12px;
-  transition: all 0.3s ease;
-}
-
-.payment-item:hover {
-  background: #f0f9ff;
-  border-color: #91d5ff;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
-}
-
-.payment-main-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.payment-date {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 500;
-  color: #333;
-}
-
-.payment-date i {
-  color: #1890ff;
-  font-size: 14px;
-}
-
-.payment-amount {
-  font-size: 16px;
-  font-weight: 700;
-  color: #52c41a;
-}
-
-.payment-details {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 8px;
-  padding-top: 12px;
-  border-top: 1px solid #e8e8e8;
-}
-
-.payment-detail {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.detail-label {
-  font-size: 11px;
-  color: #666;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: 500;
-}
-
-.detail-value {
-  font-size: 13px;
-  color: #333;
-  font-weight: 600;
-}
-
-.status-tag {
-  font-size: 11px;
-  margin-top: 2px;
-}
-
-/* ✅ Message aucun paiement */
-.no-payments {
-  text-align: center;
-  padding: 40px 20px;
-  background: #fafafa;
-  border-radius: 8px;
-  border: 2px dashed #d9d9d9;
-}
-
-.no-payments-icon {
-  font-size: 48px;
-  color: #d9d9d9;
-  margin-bottom: 16px;
-}
-
-.no-payments-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  margin: 0 0 8px 0;
-}
-
-.no-payments-subtitle {
-  font-size: 14px;
-  color: #666;
-  margin: 0;
-}
-
-/* ✅ Actions du modal */
-.modal-actions {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding-top: 20px;
-  border-top: 1px solid #f0f0f0;
-}
-
-.cancel-btn,
-.details-btn {
-  flex: 1;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-weight: 500;
-}
-
-.cancel-btn {
-  border-color: #d9d9d9;
-}
-
-.details-btn {
-  background: #1890ff;
-  border-color: #1890ff;
-}
-
-.cancel-btn:hover {
-  border-color: #40a9ff;
-  color: #40a9ff;
-}
-
-.details-btn:hover {
-  background: #40a9ff;
-  border-color: #40a9ff;
-}
-
-/* RESPONSIVE BREAKPOINTS */
+/* ===== RESPONSIVE BREAKPOINTS CORRIGÉS ===== */
 
 /* Mobile Portrait (320px - 479px) */
-@media (max-width: 479px) {
+@media screen and (max-width: 479px) {
   :host {
     padding: 5px;
   }
   
   .subscription-container,
   .subscription-wrapper {
-    padding: 10px;
-    gap: 15px;
-    border-radius: 12px;
+    padding: 8px;
+    gap: 12px;
+    border-radius: 8px;
   }
   
+  /* Header corrigé pour mobile */
   .header-section {
+    margin-bottom: 15px;
+    
     .header-top {
       flex-direction: column;
-      gap: 15px;
+      gap: 12px;
       align-items: stretch;
+      text-align: center;
     }
 
     .header-info {
       text-align: center;
-    }
-
-    .view-toggle {
-      justify-content: center;
-      padding: 4px;
-    }
-
-    .toggle-btn {
-      padding: 10px 15px;
-      font-size: 0.85rem;
-    }
-
-    .count-badge {
-      font-size: 0.7rem;
-      padding: 3px 6px;
+      min-width: auto;
+      width: 100%;
     }
 
     .main-title {
-      font-size: 1.3rem;
+      font-size: 1.4rem;
+      line-height: 1.3;
     }
     
     .subtitle {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
+    }
+
+    .view-toggle {
+      width: 100%;
+      justify-content: center;
+      padding: 4px;
+      gap: 6px;
+    }
+
+    .toggle-btn {
+      padding: 8px 12px;
+      font-size: 0.8rem;
+      flex: 1;
+      
+      i {
+        font-size: 0.9rem;
+      }
+    }
+
+    .count-badge {
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      margin-left: 3px;
     }
   }
   
-  .mobile-table-title {
-    display: block;
-  }
-  
-  .table-scroll-indicator {
-    display: flex;
-  }
-  
+  /* Stats bar mobile optimisé */
   .stats-bar {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 8px;
     
     .stat-card {
-      padding: 10px 8px;
+      padding: 8px 6px;
+      min-height: 65px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
       
       .stat-number {
-        font-size: 1rem;
-        margin-bottom: 2px;
+        font-size: 1.1rem;
+        margin-bottom: 3px;
       }
       
       .stat-label {
         font-size: 0.65rem;
+        line-height: 1.2;
       }
     }
   }
   
+  /* Controls section mobile */
   .controls-section {
-    gap: 10px;
+    gap: 8px;
     
-    .search-input {
-      padding: 10px 12px 10px 35px;
-      font-size: 0.9rem;
-    }
-    
-    .search-icon {
-      left: 12px;
-      font-size: 0.9rem;
+    .search-container {
+      .search-input {
+        padding: 10px 12px 10px 35px;
+        font-size: 0.9rem;
+        border-radius: 8px;
+      }
+      
+      .search-icon {
+        left: 12px;
+        font-size: 0.9rem;
+      }
     }
     
     .filters-section {
       flex-direction: column;
+      width: 100%;
       
       .filter-select {
-        min-width: 100%;
+        width: 100%;
+        min-width: auto;
         padding: 8px 10px;
         font-size: 0.85rem;
+        border-radius: 8px;
       }
       
       .refresh-btn {
         width: 100%;
         padding: 10px;
         font-size: 0.85rem;
+        border-radius: 8px;
       }
     }
   }
   
+  /* Table mobile avec indicateurs */
+  .mobile-table-title {
+    display: block;
+    font-size: 0.9rem;
+    padding: 0 8px;
+    margin-bottom: 6px;
+  }
+  
+  .table-scroll-indicator {
+    display: flex;
+    font-size: 0.75rem;
+    padding: 0 8px;
+    margin-bottom: 6px;
+    color: #667eea;
+  }
+  
   .modern-table {
-    min-width: 600px;
-    font-size: 0.7rem;
+    min-width: 650px;
+    font-size: 0.65rem;
     
     .table-header th {
-      padding: 8px 4px;
+      padding: 6px 4px;
       font-size: 0.6rem;
       
       &:first-child {
-        width: 50px;
+        width: 45px;
       }
       
       &:nth-child(2) {
-        width: 120px;
+        width: 100px;
       }
       
       &:nth-child(3),
       &:nth-child(4),
       &:nth-child(5) {
-        width: 80px;
+        width: 70px;
       }
       
       &:nth-child(6),
       &:nth-child(7),
       &:nth-child(8) {
-        width: 70px;
+        width: 60px;
       }
       
       &:last-child {
-        width: 80px;
+        width: 65px;
       }
     }
     
     .table-cell {
-      padding: 8px 4px;
+      padding: 6px 4px;
     }
   }
   
+  /* Éléments du tableau mobile */
   .terrain-info {
-    gap: 6px;
+    gap: 4px;
     
     .terrain-icon {
-      width: 24px;
-      height: 24px;
-      font-size: 0.7rem;
+      width: 20px;
+      height: 20px;
+      font-size: 0.65rem;
     }
     
     .terrain-details {
       h4 {
-        font-size: 0.7rem;
+        font-size: 0.65rem;
+        margin-bottom: 1px;
       }
       
       .terrain-surface {
-        font-size: 0.6rem;
+        font-size: 0.55rem;
       }
     }
   }
   
   .subscription-id {
-    font-size: 0.7rem !important;
+    font-size: 0.65rem !important;
   }
   
   .price-display,
   .amount-paid,
   .amount-remaining,
   .date-display {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
   }
   
   .status-badge {
-    font-size: 0.6rem !important;
-    padding: 4px 8px !important;
+    font-size: 0.55rem !important;
+    padding: 3px 6px !important;
+    gap: 2px !important;
   }
   
   .next-payment {
-    font-size: 0.6rem;
-    padding: 2px 6px;
+    font-size: 0.55rem;
+    padding: 2px 4px;
   }
   
   .action-buttons {
+    gap: 2px;
+    
     .action-btn {
-      padding: 4px 6px;
-      font-size: 0.6rem;
-      min-height: 24px;
+      padding: 3px 5px;
+      font-size: 0.55rem;
+      min-height: 22px;
       
       i {
-        font-size: 0.7rem;
+        font-size: 0.6rem;
       }
     }
   }
   
+  /* Pagination mobile améliorée */
   .pagination-container {
     flex-direction: column;
-    gap: 12px;
-    padding: 12px;
+    gap: 8px;
+    padding: 10px;
     
     ::ng-deep .ant-pagination {
       flex-direction: column !important;
-      gap: 8px !important;
+      gap: 6px !important;
+      width: 100% !important;
     }
     
     ::ng-deep .ant-pagination-item,
     ::ng-deep .ant-pagination-prev,
     ::ng-deep .ant-pagination-next {
-      min-width: 28px !important;
-      height: 28px !important;
+      min-width: 26px !important;
+      height: 26px !important;
+      margin: 0 2px !important;
       
       a, .ant-pagination-item-link {
-        font-size: 0.75rem !important;
+        font-size: 0.7rem !important;
+        line-height: 26px !important;
       }
     }
     
     ::ng-deep .ant-pagination-options {
-      margin-top: 8px !important;
+      margin-top: 6px !important;
       text-align: center !important;
+      width: 100% !important;
     }
     
     ::ng-deep .ant-pagination-options-quick-jumper {
-      font-size: 0.8rem !important;
-      color: white !important;
+      font-size: 0.75rem !important;
+      color: #374151 !important;
       
       input {
-        width: 60px !important;
-        height: 28px !important;
-        font-size: 0.8rem !important;
-        background: rgba(255, 255, 255, 0.15) !important;
-        border-color: rgba(255, 255, 255, 0.3) !important;
-        color: white !important;
+        width: 45px !important;
+        height: 26px !important;
+        font-size: 0.7rem !important;
+        color: #374151 !important;
       }
     }
     
     ::ng-deep .ant-pagination-options-size-changer .ant-select-selector {
-      height: 28px !important;
-      font-size: 0.8rem !important;
-    }
-    
-    .pagination-btn {
-      min-width: 28px;
-      height: 28px;
-      font-size: 0.7rem;
-    }
-    
-    .pagination-info {
-      font-size: 0.8rem;
-      width: 100%;
-      order: 1;
+      height: 26px !important;
+      font-size: 0.7rem !important;
     }
   }
 
-  /* ===== RESPONSIVE MODAL COMPACT - MOBILE ===== */
+  /* Modal compact mobile */
   ::ng-deep .compact-modal .ant-modal {
     width: 95vw !important;
-    margin: 10px auto;
+    margin: 8px auto !important;
   }
 
   ::ng-deep .compact-modal .ant-modal-body {
-    padding: 12px !important;
-  }
-
-  ::ng-deep .compact-modal .ant-modal-header {
-    padding: 8px 12px !important;
+    padding: 10px !important;
   }
 
   .modal-content-compact {
-    font-size: 11px;
+    font-size: 10px;
   }
 
   .subscription-info-compact {
-    padding: 8px;
-    margin-bottom: 8px;
+    padding: 6px;
+    margin-bottom: 6px;
   }
 
   .subscription-header-compact {
@@ -1727,21 +1417,17 @@
   }
 
   .subscription-title-compact {
-    font-size: 12px;
-  }
-
-  .terrain-details-compact {
-    margin-bottom: 6px;
+    font-size: 11px;
   }
 
   .terrain-row {
-    font-size: 10px;
-    padding: 2px 0;
+    font-size: 9px;
+    padding: 1px 0;
   }
 
   .amounts-summary-compact {
-    gap: 6px;
     flex-direction: column;
+    gap: 4px;
   }
 
   .amount-item-compact {
@@ -1749,127 +1435,289 @@
     justify-content: space-between;
     align-items: center;
     text-align: left;
-    padding: 4px 6px;
+    padding: 3px 4px;
   }
 
   .amount-label {
-    font-size: 8px;
+    font-size: 7px;
     margin-bottom: 0;
   }
 
   .amount-value {
-    font-size: 10px;
-  }
-
-  .payments-section-compact {
-    margin-bottom: 8px;
-  }
-
-  .payments-header-compact {
-    margin-bottom: 6px;
-  }
-
-  .payments-title-compact {
-    font-size: 12px;
+    font-size: 9px;
   }
 
   .payments-list-compact {
-    max-height: 120px;
+    max-height: 100px;
   }
 
   .payment-item-compact {
-    padding: 6px;
-    margin-bottom: 4px;
+    padding: 4px;
+    margin-bottom: 3px;
   }
 
-  .payment-main-compact {
-    margin-bottom: 4px;
-  }
-
-  .payment-date-compact {
-    font-size: 10px;
-  }
-
+  .payment-date-compact,
   .payment-amount-compact {
-    font-size: 11px;
-  }
-
-  .payment-details-compact {
-    gap: 4px;
-    padding-top: 4px;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .detail-compact {
     font-size: 9px;
-    padding: 1px 4px;
-  }
-
-  .modal-actions-compact {
-    gap: 6px;
-    padding-top: 8px;
   }
 
   .btn-compact {
-    height: 28px !important;
-    font-size: 10px !important;
-    padding: 0 8px !important;
-  }
-
-  .stats-bar, .stats-overview {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 8px;
-  }
-  .stat-card {
-    width: 48%;
-    min-width: unset;
-    max-width: unset;
-    box-sizing: border-box;
-    margin: 0;
-    padding: 10px 6px;
-    border-radius: 10px;
-    height: 70px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: center;
-  }
-  .stat-value {
-    font-size: 1.05rem !important;
-    font-weight: 600;
-    line-height: 1.1;
-  }
-  .stat-label {
-    font-size: 0.8rem !important;
-    line-height: 1.1;
-  }
-  .stat-icon {
-    font-size: 1rem !important;
-    margin-bottom: 2px;
-  }
-  .stat-card {
-    width: 48%;
-    height: 35%;
+    height: 26px !important;
+    font-size: 9px !important;
+    padding: 0 6px !important;
   }
 }
 
-/* Mobile Landscape (480px - 767px) */
-@media (min-width: 480px) and (max-width: 767px) {
+/* Tablet Portrait (480px - 767px) */
+@media screen and (min-width: 480px) and (max-width: 767px) {
+  .subscription-container,
+  .subscription-wrapper {
+    padding: 15px;
+    gap: 16px;
+  }
+  
+  /* Header tablette */
+  .header-top {
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .header-info {
+    text-align: center;
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .main-title {
+    font-size: 1.6rem;
+  }
+  
+  .subtitle {
+    font-size: 1rem;
+  }
+  
+  .view-toggle {
+    width: 100%;
+    max-width: 400px;
+    justify-content: center;
+  }
+  
+  /* Stats tablette */
+  .stats-bar {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    
+    .stat-card {
+      padding: 12px 10px;
+      
+      .stat-number {
+        font-size: 1.3rem;
+      }
+      
+      .stat-label {
+        font-size: 0.75rem;
+      }
+    }
+  }
+  
+  /* Controls tablette */
+  .controls-section {
+    gap: 12px;
+    
+    .filters-section {
+      width: 100%;
+      justify-content: center;
+      
+      .filter-select {
+        flex: 1;
+        min-width: 130px;
+        max-width: 160px;
+      }
+      
+      .refresh-btn {
+        flex-shrink: 0;
+        padding: 10px 16px;
+      }
+    }
+  }
+  
+  /* Table tablette */
   .mobile-table-title {
     display: block;
+    padding: 0 10px;
   }
   
   .table-scroll-indicator {
     display: flex;
+    padding: 0 10px;
   }
   
+  .modern-table {
+    min-width: 750px;
+    font-size: 0.75rem;
+    
+    .table-header th {
+      padding: 8px 6px;
+      font-size: 0.65rem;
+      
+      &:first-child {
+        width: 55px;
+      }
+      
+      &:nth-child(2) {
+        width: 120px;
+      }
+    }
+    
+    .table-cell {
+      padding: 8px 6px;
+    }
+  }
+  
+  .terrain-info {
+    gap: 6px;
+    
+    .terrain-icon {
+      width: 26px;
+      height: 26px;
+      font-size: 0.75rem;
+    }
+    
+    .terrain-details {
+      h4 {
+        font-size: 0.75rem;
+      }
+      
+      .terrain-surface {
+        font-size: 0.65rem;
+      }
+    }
+  }
+  
+  .subscription-id {
+    font-size: 0.75rem !important;
+  }
+  
+  .price-display,
+  .amount-paid,
+  .amount-remaining,
+  .date-display {
+    font-size: 0.7rem;
+  }
+  
+  .status-badge {
+    font-size: 0.65rem !important;
+    padding: 4px 8px !important;
+  }
+  
+  .action-buttons {
+    flex-direction: row;
+    gap: 3px;
+    
+    .action-btn {
+      padding: 4px 7px;
+      font-size: 0.65rem;
+      min-height: 26px;
+    }
+  }
+  
+  /* Pagination tablette */
+  .pagination-container {
+    padding: 12px;
+    
+    ::ng-deep .ant-pagination-item,
+    ::ng-deep .ant-pagination-prev,
+    ::ng-deep .ant-pagination-next {
+      min-width: 30px !important;
+      height: 30px !important;
+      
+      a, .ant-pagination-item-link {
+        font-size: 0.75rem !important;
+      }
+    }
+    
+    ::ng-deep .ant-pagination-options-quick-jumper {
+      font-size: 0.8rem !important;
+      
+      input {
+        height: 30px !important;
+        width: 55px !important;
+      }
+    }
+  }
+
+  /* Modal compact tablette */
+  ::ng-deep .compact-modal .ant-modal {
+    width: 70vw !important;
+    max-width: 500px !important;
+  }
+
+  .payments-list-compact {
+    max-height: 140px;
+  }
+
+  .payment-details-compact {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+  }
+}
+
+/* Tablet Landscape (768px - 1023px) */
+@media screen and (min-width: 768px) and (max-width: 1023px) {
+  .subscription-container,
+  .subscription-wrapper {
+    padding: 20px;
+  }
+  
+  /* Header desktop-like mais responsive */
+  .header-top {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+  
+  .header-info {
+    text-align: left;
+    flex: 1;
+    min-width: 300px;
+  }
+  
+  .view-toggle {
+    flex-shrink: 0;
+    max-width: 300px;
+  }
+  
+  /* Controls en ligne */
+  .controls-section {
+    flex-direction: row;
+    align-items: center;
+    gap: 15px;
+    
+    .search-container {
+      flex: 1;
+      max-width: 350px;
+    }
+    
+    .filters-section {
+      flex-shrink: 0;
+      flex-wrap: nowrap;
+      width: auto;
+    }
+  }
+  
+  /* Stats 4 colonnes */
   .stats-bar {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
     
     .stat-card {
+      padding: 12px 10px;
+      
       .stat-number {
         font-size: 1.2rem;
       }
@@ -1880,145 +1728,85 @@
     }
   }
   
-  .controls-section {
-    .filters-section {
-      .filter-select {
-        min-width: 140px;
-      }
-    }
-  }
-  
-  .modern-table {
-    min-width: 700px;
-    
-    .table-header th:first-child {
-      width: 60px;
-    }
-  }
-  
-  .action-buttons {
-    flex-direction: row;
-    gap: 4px;
-  }
-
-  /* ===== RESPONSIVE MODAL COMPACT - TABLET ===== */
-  ::ng-deep .compact-modal .ant-modal {
-    width: 480px !important;
-  }
-
-  .payments-list-compact {
-    max-height: 150px;
-  }
-
-  .amounts-summary-compact {
-    gap: 10px;
-  }
-
-  .payment-details-compact {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4px;
-    align-items: start;
-  }
-  
-  /* Pagination mobile landscape */
-  .pagination-container {
-    padding: 12px;
-    
-    ::ng-deep .ant-pagination {
-      flex-wrap: wrap !important;
-      gap: 4px !important;
-    }
-    
-    ::ng-deep .ant-pagination-options-quick-jumper {
-      color: white !important;
-      font-size: 0.85rem !important;
-      
-      input {
-        height: 30px !important;
-        background: rgba(255, 255, 255, 0.15) !important;
-        border-color: rgba(255, 255, 255, 0.3) !important;
-        color: white !important;
-      }
-    }
-  }
-}
-
-/* Tablet (768px - 1023px) */
-@media (min-width: 768px) and (max-width: 1023px) {
-  .controls-section {
-    flex-direction: row;
-    align-items: center;
-    
-    .search-container {
-      flex: 1;
-      max-width: 400px;
-    }
-    
-    .filters-section {
-      flex-shrink: 0;
-    }
-  }
-  
-  .stats-bar {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-    
-    .stat-card {
-      padding: 12px 8px;
-      
-      .stat-number {
-        font-size: 1.1rem;
-      }
-      
-      .stat-label {
-        font-size: 0.7rem;
-      }
-    }
-  }
-  
-  .table-responsive {
-    overflow-x: auto;
-  }
-  
+  /* Masquer les indicateurs mobile */
   .mobile-table-title,
   .table-scroll-indicator {
     display: none;
   }
   
   .modern-table {
-    min-width: 800px;
+    min-width: 100%;
+    font-size: 0.8rem;
+    
+    .table-header th {
+      padding: 10px 8px;
+      font-size: 0.7rem;
+    }
+    
+    .table-cell {
+      padding: 10px 8px;
+    }
   }
   
-  .pagination-container {
-    padding: 12px;
+  .terrain-info {
+    gap: 8px;
     
-    ::ng-deep .ant-pagination-options-quick-jumper {
-      font-size: 0.85rem !important;
-      color: white !important;
+    .terrain-icon {
+      width: 30px;
+      height: 30px;
+      font-size: 0.8rem;
     }
     
-    ::ng-deep .ant-pagination-item,
-    ::ng-deep .ant-pagination-prev,
-    ::ng-deep .ant-pagination-next {
-      a, .ant-pagination-item-link {
-        font-size: 0.8rem !important;
+    .terrain-details {
+      h4 {
+        font-size: 0.8rem;
+      }
+      
+      .terrain-surface {
+        font-size: 0.7rem;
       }
     }
+  }
+  
+  .subscription-id {
+    font-size: 0.8rem !important;
+  }
+  
+  .price-display,
+  .amount-paid,
+  .amount-remaining,
+  .date-display {
+    font-size: 0.75rem;
+  }
+  
+  .status-badge {
+    font-size: 0.7rem !important;
+    padding: 5px 10px !important;
+  }
+  
+  .action-buttons {
+    flex-direction: row;
+    gap: 4px;
     
-    .pagination-info {
-      width: auto;
-      order: 0;
+    .action-btn {
+      padding: 6px 8px;
+      font-size: 0.7rem;
+      min-height: 28px;
     }
+  }
+  
+  /* Modal compact tablette landscape */
+  ::ng-deep .compact-modal .ant-modal {
+    width: 500px !important;
+  }
+
+  .payments-list-compact {
+    max-height: 160px;
   }
 }
 
-/* Desktop (1024px+) */
-@media (min-width: 1024px) {
-  .table-responsive {
-    overflow-x: visible;
-  }
-  
+/* Desktop (1024px+) - Styles existants maintenus */
+@media screen and (min-width: 1024px) {
   .mobile-table-title,
   .table-scroll-indicator {
     display: none;
@@ -2090,7 +1878,7 @@
     }
   }
 
-  /* ===== RESPONSIVE MODAL COMPACT - DESKTOP ===== */
+  /* Modal compact desktop */
   ::ng-deep .compact-modal .ant-modal {
     width: 450px !important;
   }
@@ -2098,20 +1886,14 @@
   .payments-list-compact {
     max-height: 200px;
   }
-
-  .payment-details-compact {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
 }
 
 /* Large Desktop (1280px+) */
-@media (min-width: 1280px) {
+@media screen and (min-width: 1280px) {
   .subscription-container,
   .subscription-wrapper {
     max-width: 1400px;
-    padding: 40px;
+    padding: 30px;
   }
   
   .modern-table {
@@ -2126,238 +1908,6 @@
       padding: 18px 15px;
     }
   }
-  
-  .pagination-container {
-    padding: 20px;
-    
-    ::ng-deep .ant-pagination-item,
-    ::ng-deep .ant-pagination-prev,
-    ::ng-deep .ant-pagination-next {
-      min-width: 36px !important;
-      height: 36px !important;
-      
-      a, .ant-pagination-item-link {
-        font-size: 0.9rem !important;
-      }
-    }
-    
-    ::ng-deep .ant-pagination-options-quick-jumper {
-      font-size: 1rem !important;
-      
-      input {
-        height: 36px !important;
-        width: 80px !important;
-      }
-    }
-  }
-}
-
-/* Angular Modal Overrides */
-::ng-deep .custom-modal .ant-modal-header {
-  padding: 0 !important;
-  border-bottom: none !important;
-  background: transparent !important;
-}
-
-::ng-deep .custom-modal .ant-modal-content {
-  border-radius: 12px !important;
-  overflow: hidden !important;
-  background: white !important;
-}
-
-::ng-deep .custom-modal .ant-modal-body {
-  padding: 24px !important;
-}
-
-::ng-deep .custom-modal .ant-modal-close {
-  display: none !important;
-}
-
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  :host {
-    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-  }
-  
-  .subscription-container,
-  .subscription-wrapper {
-    background: rgba(30, 41, 59, 0.95);
-    color: #f1f5f9;
-  }
-  
-  .modern-table, 
-  .table-responsive {
-    background: #1e293b;
-    color: #f1f5f9;
-  }
-  
-  .header-section .main-title {
-    background: linear-gradient(135deg, #a5b4fc, #6366f1);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  
-  .header-section .subtitle {
-    color: #fbbf24;
-  }
-  
-  .stat-card {
-    background: linear-gradient(135deg, #334155, #475569);
-    color: #f1f5f9;
-    border: 1px solid #6366f1;
-  }
-  
-  .table-header {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
-  }
-  
-  .table-row {
-    background: #1e293b;
-    
-    &:hover {
-      background: #334155;
-    }
-    
-    &:nth-child(even) {
-      background: rgba(51, 65, 85, 0.5);
-      
-      &:hover {
-        background: #475569;
-      }
-    }
-  }
-  
-  .table-cell {
-    border-bottom: 1px solid #475569;
-  }
-  
-  .search-input,
-  .filter-select {
-    background: #334155 !important;
-    border-color: #475569 !important;
-    color: #f1f5f9 !important;
-    
-    &:focus {
-      border-color: #6366f1 !important;
-    }
-  }
-  
-  .pagination-btn {
-    background: #334155;
-    border-color: #475569;
-    color: #f1f5f9;
-    
-    &:hover:not(.disabled) {
-      background: #475569;
-      border-color: #6366f1;
-    }
-    
-    &.active {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      border-color: #6366f1;
-    }
-  }
-  
-  .pagination-container {
-    background: linear-gradient(135deg, #1e293b, #334155) !important;
-    
-    /* Éléments de pagination en mode sombre */
-    ::ng-deep .ant-pagination-item {
-      background: rgba(71, 85, 105, 0.5) !important;
-      border-color: rgba(148, 163, 184, 0.3) !important;
-    }
-    
-    ::ng-deep .ant-pagination-prev,
-    ::ng-deep .ant-pagination-next {
-      background: rgba(71, 85, 105, 0.5) !important;
-      border-color: rgba(148, 163, 184, 0.3) !important;
-    }
-    
-    ::ng-deep .ant-pagination-options-quick-jumper input {
-      background: rgba(71, 85, 105, 0.5) !important;
-      border-color: rgba(148, 163, 184, 0.3) !important;
-    }
-    
-    ::ng-deep .ant-pagination-options-size-changer .ant-select-selector {
-      background: rgba(71, 85, 105, 0.5) !important;
-      border-color: rgba(148, 163, 184, 0.3) !important;
-    }
-  }
-
-  /* ===== DARK MODE MODAL COMPACT ===== */
-  .subscription-info-compact {
-    background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
-    border-color: #4b5563;
-  }
-
-  .subscription-title-compact {
-    color: #60a5fa;
-  }
-
-  .label-compact {
-    color: #d1d5db;
-  }
-
-  .value-compact {
-    color: #f9fafb;
-  }
-
-  .amount-item-compact {
-    background: rgba(75, 85, 99, 0.3);
-  }
-
-  .payment-item-compact {
-    background: #374151;
-    border-color: #4b5563;
-  }
-
-  .payment-item-compact:hover {
-    background: #475569;
-    border-color: #60a5fa;
-  }
-
-  .detail-compact {
-    background: #4b5563;
-    border-color: #6b7280;
-    color: #d1d5db;
-  }
-
-  .no-payments-compact {
-    background: #374151;
-    border-color: #6b7280;
-    color: #9ca3af;
-  }
-}
-
-/* Print Styles */
-@media print {
-  :host {
-    background: white !important;
-    padding: 0 !important;
-  }
-  
-  .subscription-container,
-  .subscription-wrapper {
-    background: white !important;
-    box-shadow: none !important;
-    padding: 20px !important;
-  }
-  
-  .controls-section,
-  .action-buttons,
-  .pagination-container {
-    display: none !important;
-  }
-  
-  .modern-table {
-    font-size: 10pt !important;
-  }
-  
-  .table-header {
-    background: #f8fafc !important;
-    color: #1f2937 !important;
-  }
 }
 
 /* Focus Styles pour l'accessibilité */
@@ -2370,11 +1920,6 @@
   outline-offset: 2px;
 }
 
-.payment-item-compact:focus-within {
-  outline: 1px solid #1890ff;
-  outline-offset: 1px;
-}
-
 /* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   * {
@@ -2385,23 +1930,8 @@
   .loading-spinner {
     animation: none !important;
   }
-
-  .payment-item-compact {
-    transition: none;
-  }
   
   .payment-item-compact:hover {
     transform: none;
-  }
-}
-
-/* High DPI Screens */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-  .terrain-icon {
-    border-radius: 8px;
-  }
-  
-  .status-badge {
-    border-radius: 10px !important;
   }
 }

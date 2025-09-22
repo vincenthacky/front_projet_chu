@@ -1,18 +1,15 @@
-import { Injectable, inject, Inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, tap, catchError, throwError, map, of } from 'rxjs';
 import { isPlatformBrowser } from '@angular/common';
 import { environment } from '@/environment';
 import { User, LoginResponse, LogoutResponse, ForgotPasswordResponse, ResetPasswordResponse, UserProfileResponse, UserUpdateResponse, UsersResponse } from '../models/auth';
+import { Inject, Injectable, PLATFORM_ID, inject } from '@angular/core';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  updateCurrentUser(data: User) {
-    throw new Error('Method not implemented.');
-  }
   private readonly API_URL = environment.apiUrl;
   private http = inject(HttpClient);
   private router = inject(Router);
@@ -141,13 +138,26 @@ export class AuthService {
           console.log('📨 Réponse API décodée:', decodedResponse);
           return decodedResponse;
         }),
-        tap(decodedResponse => {
+        map(decodedResponse => {
           if (decodedResponse.success === true && decodedResponse.data && decodedResponse.data.user && decodedResponse.data.token) {
-            console.log('✅ Connexion réussie, stockage des données...');
-            this.setAuthData(decodedResponse.data.user, decodedResponse.data.token);
+            const user = decodedResponse.data.user;
+            if (user.type !== 'user' && user.type !== 'superAdmin') {
+              console.error('❌ Rôle non autorisé:', user.type);
+              throw new Error('Accès non authorisé');
+            }
+            if (user.statut_utilisateur.toLowerCase() !== 'actif') {
+              console.error('❌ Statut non actif:', user.statut_utilisateur);
+              throw new Error('Compte non actif');
+            }
+            return decodedResponse;
           } else {
             console.error('❌ Structure de réponse inattendue:', decodedResponse);
+            throw new Error('Structure de réponse invalide');
           }
+        }),
+        tap(decodedResponse => {
+          console.log('✅ Connexion réussie, stockage des données...');
+          this.setAuthData(decodedResponse.data.user, decodedResponse.data.token);
         }),
         catchError(error => {
           console.error('❌ Erreur de connexion:', error);
@@ -261,6 +271,18 @@ export class AuthService {
         try {
           let userData: User = JSON.parse(user);
           userData = this.decodeUnicodeInObject(userData) as User;
+
+          if (userData.type !== 'user' && userData.type !== 'superAdmin') {
+            console.error('❌ Rôle non autorisé au chargement:', userData.type);
+            this.forceLogout();
+            return;
+          }
+          if (userData.statut_utilisateur.toLowerCase() !== 'actif') {
+            console.error('❌ Statut non actif au chargement:', userData.statut_utilisateur);
+            this.forceLogout();
+            return;
+          }
+
           console.log('✅ Session valide - Utilisateur connecté (décodé):', userData);
           this.currentUserSubject.next(userData);
           this.isAuthenticatedSubject.next(true);
@@ -328,23 +350,25 @@ export class AuthService {
     );
   }
 
+  // CORRECTION: Méthode pour mettre à jour son propre profil
   updateProfile(userData: Partial<User>): Observable<{ user: User }> {
     return this.http.put<{ user: User }>(`${this.API_URL}/profile`, userData)
       .pipe(
         map(response => this.decodeUnicodeInObject(response) as { user: User }),
         tap(response => {
+          // Pour le profil personnel, on peut toujours mettre à jour les données locales
           if (response && response.user && this.isBrowser) {
             const currentUser = this.getCurrentUser();
             if (currentUser) {
               const updatedUser = { ...currentUser, ...response.user };
               localStorage.setItem('user', JSON.stringify(updatedUser));
               this.currentUserSubject.next(updatedUser);
-              console.log('👤 Profil utilisateur mis à jour (décodé):', updatedUser);
+              console.log('👤 Profil personnel mis à jour (décodé):', updatedUser);
             }
           }
         }),
         catchError(error => {
-          console.error('❌ Erreur mise à jour profil:', error);
+          console.error('❌ Erreur mise à jour profil personnel:', error);
           if (error.error) {
             error.error = this.decodeUnicodeInObject(error.error);
           }
@@ -360,7 +384,7 @@ export class AuthService {
   }): Observable<any> {
     const token = this.getToken();
     if (!token) {
-      console.error('❌ Aucun token d’authentification trouvé');
+      console.error('❌ Aucun token d\'authentification trouvé');
       return throwError(() => new Error('Utilisateur non authentifié'));
     }
 
@@ -470,8 +494,7 @@ export class AuthService {
     if (!user) return false;
     
     const isAdmin = user.est_administrateur || 
-                    user.type === 'superAdmin' || 
-                    user.type === 'admin';
+                    user.type === 'superAdmin';
     console.log('🔍 Vérification admin:', { userId: user.id_utilisateur, isAdmin });
     return isAdmin;
   }
@@ -481,8 +504,7 @@ export class AuthService {
     if (!user) return false;
     
     return !user.est_administrateur && 
-           user.type !== 'superAdmin' && 
-           user.type !== 'admin';
+           user.type !== 'superAdmin';
   }
 
   getToken(): string | null {
@@ -630,6 +652,7 @@ export class AuthService {
     );
   }
 
+  // CORRECTION: Méthode corrigée pour la modification d'autres utilisateurs
   updateUserProfile(userId: number, userData: Partial<User>): Observable<UserUpdateResponse> {
     const token = this.getToken();
     if (!token) {
@@ -658,13 +681,18 @@ export class AuthService {
         return decoded;
       }),
       tap(decodedResponse => {
+        // CORRECTION: Ne mettre à jour les données locales que si c'est l'utilisateur connecté
         if (decodedResponse.success && decodedResponse.data && this.isBrowser) {
           const currentUser = this.getCurrentUser();
-          if (currentUser) {
+          
+          // Vérifier si c'est l'utilisateur connecté qui a été modifié
+          if (currentUser && currentUser.id_utilisateur === userId) {
             const updatedUser = { ...currentUser, ...decodedResponse.data };
             localStorage.setItem('user', JSON.stringify(updatedUser));
             this.currentUserSubject.next(updatedUser);
-            console.log('👤 Données utilisateur mises à jour localement:', updatedUser);
+            console.log('👤 Données utilisateur connecté mises à jour localement:', updatedUser);
+          } else {
+            console.log('👤 Modification d\'un autre utilisateur, pas de mise à jour locale');
           }
         }
       }),
@@ -678,7 +706,7 @@ export class AuthService {
     );
   }
 
-  // Nouvelle méthode pour utiliser l'API POST utilisateurs/{id}/update
+  // CORRECTION: Méthode corrigée pour l'API POST utilisateurs/{id}/update
   updateUserWithFormData(userId: number, formData: FormData): Observable<UserUpdateResponse> {
     const token = this.getToken();
     if (!token) {
@@ -706,13 +734,18 @@ export class AuthService {
         return decoded;
       }),
       tap(decodedResponse => {
+        // CORRECTION: Ne mettre à jour les données locales que si c'est l'utilisateur connecté
         if (decodedResponse.success && decodedResponse.data && this.isBrowser) {
           const currentUser = this.getCurrentUser();
-          if (currentUser) {
+          
+          // Vérifier si c'est l'utilisateur connecté qui a été modifié
+          if (currentUser && currentUser.id_utilisateur === userId) {
             const updatedUser = { ...currentUser, ...decodedResponse.data };
             localStorage.setItem('user', JSON.stringify(updatedUser));
             this.currentUserSubject.next(updatedUser);
-            console.log('👤 Données utilisateur mises à jour localement (POST):', updatedUser);
+            console.log('👤 Données utilisateur connecté mises à jour localement (POST):', updatedUser);
+          } else {
+            console.log('👤 Modification d\'un autre utilisateur, pas de mise à jour locale');
           }
         }
       }),
@@ -848,6 +881,15 @@ export class AuthService {
         return of(false);
       })
     );
+  }
+
+  // Méthode pour mettre à jour le currentUser (pour la méthode updateCurrentUser manquante)
+  updateCurrentUser(data: User): void {
+    if (this.isBrowser) {
+      localStorage.setItem('user', JSON.stringify(data));
+      this.currentUserSubject.next(data);
+      console.log('👤 Utilisateur courant mis à jour:', data);
+    }
   }
 
   ngOnDestroy(): void {
