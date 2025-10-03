@@ -453,9 +453,10 @@
 <nz-modal
   [(nzVisible)]="isDocumentModalVisible"
   [nzTitle]="selectedDocument ? selectedDocument.description_document : 'Document'"
-  [nzWidth]="800"
-  [nzFooter]="null"
-  (nzOnCancel)="closeDocumentModal()">
+  [nzWidth]="900"
+  [nzFooter]="modalFooter"
+  (nzOnCancel)="closeDocumentModal()"
+  class="document-modal">
   
   <div *nzModalContent>
     <div *ngIf="selectedDocument" class="document-modal-content">
@@ -485,6 +486,7 @@
       <!-- Aperçu du document -->
       <div class="document-preview" style="text-align: center;">
         <div class="preview-container" style="max-height: 500px; overflow-y: auto; border: 1px solid #d9d9d9; border-radius: 6px; padding: 16px;">
+          <!-- Aperçu pour les images -->
           <ng-container *ngIf="isImage(selectedDocument)">
             <img 
               [src]="getDocumentUrl(selectedDocument)" 
@@ -498,23 +500,55 @@
               <p style="font-size: 12px;">{{ selectedDocument.nom_original }}</p>
             </div>
           </ng-container>
+          
+          <!-- Aperçu pour les PDFs -->
           <ng-container *ngIf="isPdf(selectedDocument)">
-            <iframe 
-              [src]="getDocumentUrl(selectedDocument)" 
-              style="width: 100%; height: 500px; border: none;"
-              title="Aperçu du PDF"
-            ></iframe>
+            <div style="width: 100%; height: 500px; border: 1px solid #ddd; border-radius: 4px; overflow: hidden;">
+              <iframe 
+                [src]="getSafeDocumentUrl(selectedDocument)" 
+                style="width: 100%; height: 100%; border: none;"
+                title="Aperçu du PDF"
+                frameborder="0"
+                allowfullscreen>
+              </iframe>
+            </div>
+            <div *ngIf="!getDocumentUrl(selectedDocument)" style="padding: 40px; color: #999; text-align: center;">
+              <span nz-icon nzType="file-pdf" nzTheme="outline" style="font-size: 48px; margin-bottom: 16px; color: #ff4757;"></span>
+              <p>Impossible d'afficher ce PDF</p>
+              <p style="font-size: 12px;">{{ selectedDocument.nom_original }}</p>
+            </div>
           </ng-container>
-          <ng-container *ngIf="!isImage(selectedDocument) && !isPdf(selectedDocument)">
+          
+          <!-- Pour les autres types de fichiers -->
+          <ng-container *ngIf="!canPreview(selectedDocument)">
             <div style="padding: 40px; color: #999; text-align: center;">
               <span nz-icon nzType="file-unknown" nzTheme="outline" style="font-size: 48px; margin-bottom: 16px;"></span>
               <p>Aperçu non disponible pour ce type de fichier</p>
               <p style="font-size: 12px;">{{ selectedDocument.nom_original }}</p>
+              <p style="font-size: 11px; margin-top: 8px;">
+                Type : {{ selectedDocument.type_mime || 'Type inconnu' }}
+              </p>
             </div>
           </ng-container>
         </div>
       </div>
-
     </div>
   </div>
+
+  <!-- Footer personnalisé du modal -->
+  <ng-template #modalFooter>
+    <div class="modal-actions" style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <nz-tag [nzColor]="isPdf(selectedDocument) ? 'red' : isImage(selectedDocument) ? 'blue' : 'default'">
+          <span nz-icon [nzType]="isPdf(selectedDocument) ? 'file-pdf' : isImage(selectedDocument) ? 'file-image' : 'file'" nzTheme="outline"></span>
+          {{ isPdf(selectedDocument) ? 'PDF' : isImage(selectedDocument) ? 'IMAGE' : 'FICHIER' }}
+        </nz-tag>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button nz-button nzType="primary" (click)="closeDocumentModal()">
+          Fermer
+        </button>
+      </div>
+    </div>
+  </ng-template>
 </nz-modal>

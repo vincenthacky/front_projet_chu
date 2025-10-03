@@ -19,6 +19,7 @@ import { NzProgressModule } from 'ng-zorro-antd/progress';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { environment } from '@/environment';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 // Interface pour les documents
 interface DocumentData {
@@ -131,6 +132,7 @@ export class ParameterComponent implements OnInit {
     private message: NzMessageService,
     private cdr: ChangeDetectorRef,
     private authService: AuthService,
+    private sanitizer: DomSanitizer,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
@@ -597,10 +599,30 @@ export class ParameterComponent implements OnInit {
     this.selectedDocument = null;
   }
 
+  // Nouvelle méthode corrigée pour gérer les URLs des documents
   getDocumentUrl(document: DocumentData | null): string {
     if (!document || !document.chemin_fichier) return '';
-    const imagePath = document.chemin_fichier.replace(/\\/g, '/');
-    return `${environment.storageUrl}/${imagePath}`;
+    
+    const filePath = document.chemin_fichier.replace(/\\/g, '/');
+    const baseUrl = `${environment.storageUrl}/${filePath}`;
+    
+    console.log('📄 Document URL générée:', baseUrl);
+    console.log('📄 Type MIME:', document.type_mime);
+    console.log('📄 Extension:', this.getFileExtension(document));
+    
+    return baseUrl;
+  }
+
+  // Nouvelle méthode pour obtenir l'URL sécurisée des PDFs
+  getSafeDocumentUrl(document: DocumentData | null): SafeResourceUrl {
+    const url = this.getDocumentUrl(document);
+    if (!url) return '';
+    
+    // Pour les PDFs, on ajoute #toolbar=0 pour masquer la barre d'outils
+    const pdfUrl = this.isPdf(document) ? `${url}#toolbar=0&navpanes=0&scrollbar=0` : url;
+    console.log('🔒 URL sécurisée générée:', pdfUrl);
+    
+    return this.sanitizer.bypassSecurityTrustResourceUrl(pdfUrl);
   }
 
   // Méthode pour obtenir l'extension d'un fichier de manière sûre
@@ -619,7 +641,7 @@ export class ParameterComponent implements OnInit {
     
     // Fallback sur l'extension si type_mime est null
     const extension = this.getFileExtension(document);
-    return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(extension);
+    return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].includes(extension);
   }
 
   // Nouvelle méthode pour déterminer si le document est un PDF
@@ -633,6 +655,11 @@ export class ParameterComponent implements OnInit {
     // Fallback sur l'extension si type_mime est null
     const extension = this.getFileExtension(document);
     return extension === 'pdf';
+  }
+
+  // Nouvelle méthode pour vérifier si le document peut être prévisualisé
+  canPreview(document: DocumentData | null): boolean {
+    return this.isImage(document) || this.isPdf(document);
   }
 
   getDocumentTypeLabel(documentType: 'carte_professionnelle' | 'cni' | 'fiche_souscription'): string {
@@ -666,5 +693,10 @@ export class ParameterComponent implements OnInit {
       target.style.display = 'none';
       (target.nextElementSibling as HTMLElement).style.display = 'block';
     }
+  }
+
+  // Nouvelle méthode pour télécharger un document
+  downloadDocument(): void {
+  
   }
 }
