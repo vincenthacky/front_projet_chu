@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { UnsavedChangesGuard } from '../../../guards/unsaved-changes.guard';
 
 export const DETAILS_ADMIN_ROUTES: Routes = [
   { path: '', redirectTo: 'home-admin', pathMatch: 'full' },
@@ -16,7 +17,7 @@ export const DETAILS_ADMIN_ROUTES: Routes = [
   { path: 'rewards-admin', loadComponent: () => import('./rewards-admin/rewards-admin.component').then(m => m.RewardsAdminComponent) },
   { path: 'users-admin', loadComponent: () => import('./users/users.component').then(m => m.UsersComponent) },
   { path : 'profile-admin', loadComponent: () => import('./profile-admin/profile-admin.component').then(m => m.ProfileAdminComponent) },
-  { path : 'new-user-admin', loadComponent: () => import('./new-users/new-users.component').then(m => m.NewUsersComponent) },
+  { path : 'new-user-admin', loadComponent: () => import('./new-users/new-users.component').then(m => m.NewUsersComponent), canDeactivate: [UnsavedChangesGuard] },
   {path : 'log-admin', loadComponent: () => import('./log-admin/log-admin.component').then(m => m.LogAdminComponent) },
   {path : 'paiement-details-admin/:id', loadComponent: () => import('./paiement-details-admin/paiement-details-admin.component').then(m => m.PaiementDetailsAdminComponent) },
   {path : 'terrains', loadComponent: () => import('./terrains/terrains.component').then(m => m.TerrainsComponent) }

@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzPaginationModule } from 'ng-zorro-antd/pagination';
@@ -9,8 +10,15 @@ import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { NzModalModule } from 'ng-zorro-antd/modal';
+import { NzFormModule } from 'ng-zorro-antd/form';
+import { NzSelectModule } from 'ng-zorro-antd/select';
+import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzUploadModule, NzUploadFile } from 'ng-zorro-antd/upload';
+import { NzStepsModule } from 'ng-zorro-antd/steps';
+import { NzMessageService } from 'ng-zorro-antd/message';
 import { ApiDocument } from 'src/app/core/models/documents';
 import { DocumentService } from 'src/app/core/services/documents.service';
+import { SouscriptionService } from 'src/app/core/services/souscription.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 
@@ -19,6 +27,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
   standalone: true,
   imports: [ 
     CommonModule, 
+    ReactiveFormsModule,
     NzButtonModule, 
     NzIconModule, 
     NzPaginationModule,
@@ -27,7 +36,12 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
     NzCardModule,
     NzTagModule,
     NzToolTipModule,
-    NzModalModule
+    NzModalModule,
+    NzFormModule,
+    NzSelectModule,
+    NzInputModule,
+    NzUploadModule,
+    NzStepsModule
   ],
   templateUrl: './document-admin.component.html',
   styleUrl: './document-admin.component.css'
@@ -42,16 +56,37 @@ export class DocumentAdminComponent implements OnInit {
   pageSize: number = 10; // Augmenté à 10 documents par page
   totalDocuments: number = 0;
 
-  // Propriétés pour le modal
+  // Propriétés pour le modal de visualisation
   isModalVisible = false;
   selectedDocument: ApiDocument | null = null;
   documentUrl: string = '';
   safeDocumentUrl: SafeResourceUrl | null = null;
 
+  // Propriétés pour le modal d'ajout de document
+  isAddDocumentModalVisible = false;
+  addDocumentForm!: FormGroup;
+  currentStep = 0;
+  isSubmittingDocument = false;
+
+  // Données pour le formulaire d'ajout
+  utilisateursList: any[] = [];
+  availableSouscriptionsDocument: any[] = [];
+  selectedUtilisateurDocument: any = null;
+  selectedSouscriptionDocument: any = null;
+
+  // Gestion des fichiers
+  selectedDocumentFile: File | null = null;
+  documentFileList: NzUploadFile[] = [];
+
   constructor(
     public documentService: DocumentService,
-    private sanitizer: DomSanitizer
-  ) { }
+    private sanitizer: DomSanitizer,
+    private fb: FormBuilder,
+    private souscriptionService: SouscriptionService,
+    private message: NzMessageService
+  ) { 
+    this.initAddDocumentForm();
+  }
 
   ngOnInit(): void {
     this.chargerTousLesDocuments();
@@ -297,7 +332,8 @@ export class DocumentAdminComponent implements OnInit {
    */
   onImageError(event: Event): void {
     const target = event.target as HTMLImageElement;
-    target.src = 'assets/images/image-error.png';
+    // Utiliser l'image d'erreur depuis la racine public (comme pour login avec favicon.ico)
+    target.src = 'image-error.png';
   }
 
   /**
@@ -358,5 +394,269 @@ export class DocumentAdminComponent implements OnInit {
     if (this.documentUrl) {
       window.open(this.documentUrl, '_blank');
     }
+  }
+
+  // ===============================================
+  // MÉTHODES POUR LE MODAL D'AJOUT DE DOCUMENT
+  // ===============================================
+
+  /**
+   * Initialise le formulaire d'ajout de document
+   */
+  private initAddDocumentForm(): void {
+    this.addDocumentForm = this.fb.group({
+      id_utilisateur: ['', [Validators.required]],
+      id_souscription: ['', [Validators.required]],
+      libelle_type_document: ['', [Validators.required, Validators.maxLength(100)]],
+      document: ['', [Validators.required]]
+    });
+  }
+
+  /**
+   * Ouvre le modal d'ajout de document
+   */
+  openAddDocumentModal(): void {
+    console.log('Ouverture du modal d\'ajout de document');
+    this.isAddDocumentModalVisible = true;
+    this.currentStep = 0;
+    this.loadUtilisateurs();
+    this.resetAddDocumentForm();
+  }
+
+  /**
+   * Ferme le modal d'ajout de document
+   */
+  closeAddDocumentModal(): void {
+    this.isAddDocumentModalVisible = false;
+    this.currentStep = 0;
+    this.resetAddDocumentForm();
+  }
+
+  /**
+   * Remet à zéro le formulaire d'ajout
+   */
+  private resetAddDocumentForm(): void {
+    this.addDocumentForm.reset();
+    this.selectedUtilisateurDocument = null;
+    this.selectedSouscriptionDocument = null;
+    this.availableSouscriptionsDocument = [];
+    this.selectedDocumentFile = null;
+    this.documentFileList = [];
+    this.isSubmittingDocument = false;
+  }
+
+  /**
+   * Charge la liste des utilisateurs via les souscriptions
+   */
+  private loadUtilisateurs(): void {
+    // Récupérer toutes les souscriptions avec les utilisateurs
+    this.souscriptionService.getAllSouscriptions({ all_users: true, admin_view: true }).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          // Extraire les utilisateurs uniques des souscriptions
+          const utilisateursMap = new Map();
+          response.data.forEach((souscription: any) => {
+            if (souscription.utilisateur) {
+              utilisateursMap.set(souscription.utilisateur.id_utilisateur, souscription.utilisateur);
+            }
+          });
+          this.utilisateursList = Array.from(utilisateursMap.values());
+          console.log('Utilisateurs chargés:', this.utilisateursList.length);
+        }
+      },
+      error: (err: any) => {
+        console.error('Erreur lors du chargement des utilisateurs:', err);
+        this.message.error('Erreur lors du chargement des utilisateurs');
+      }
+    });
+  }
+
+  /**
+   * Gère le changement d'utilisateur
+   */
+  onUtilisateurDocumentChange(userId: number): void {
+    this.selectedUtilisateurDocument = this.utilisateursList.find(u => u.id_utilisateur === userId);
+    console.log('Utilisateur sélectionné:', this.selectedUtilisateurDocument);
+    
+    if (this.selectedUtilisateurDocument) {
+      this.loadSouscriptionsForUtilisateur(userId);
+    }
+  }
+
+  /**
+   * Charge les souscriptions pour l'utilisateur sélectionné
+   */
+  private loadSouscriptionsForUtilisateur(userId: number): void {
+    // Filtrer les souscriptions déjà chargées pour l'utilisateur sélectionné
+    this.souscriptionService.getAllSouscriptions({ all_users: true, admin_view: true }).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          this.availableSouscriptionsDocument = response.data.filter(
+            (souscription: any) => souscription.utilisateur?.id_utilisateur === userId
+          );
+          console.log('Souscriptions chargées:', this.availableSouscriptionsDocument.length);
+        }
+      },
+      error: (err: any) => {
+        console.error('Erreur lors du chargement des souscriptions:', err);
+        this.message.error('Erreur lors du chargement des souscriptions');
+      }
+    });
+  }
+
+  /**
+   * Gère le changement de souscription
+   */
+  onSouscriptionDocumentChange(souscriptionId: number): void {
+    this.selectedSouscriptionDocument = this.availableSouscriptionsDocument.find(s => s.id_souscription === souscriptionId);
+    console.log('Souscription sélectionnée:', this.selectedSouscriptionDocument);
+  }
+
+  /**
+   * Gestion de l'upload de fichier
+   */
+  beforeUploadDocument = (file: NzUploadFile): boolean => {
+    // Vérification du type de fichier
+    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                         'image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    
+    if (!allowedTypes.includes(file.type!)) {
+      this.message.error('Type de fichier non autorisé. Utilisez PDF, DOC, DOCX, JPG, PNG ou GIF.');
+      return false;
+    }
+
+    // Vérification de la taille (10MB max)
+    const isLt10M = file.size! / 1024 / 1024 < 10;
+    if (!isLt10M) {
+      this.message.error('Le fichier doit faire moins de 10MB');
+      return false;
+    }
+
+    // Stockage du fichier
+    this.selectedDocumentFile = file as any as File;
+    this.addDocumentForm.patchValue({ document: file.name });
+    this.documentFileList = [file];
+    
+    console.log('Fichier sélectionné:', file.name, file.size);
+    return false; // Empêche l'upload automatique
+  };
+
+  /**
+   * Suppression du fichier sélectionné
+   */
+  removeDocumentFile = (): boolean => {
+    this.selectedDocumentFile = null;
+    this.addDocumentForm.patchValue({ document: '' });
+    this.documentFileList = [];
+    return true;
+  };
+
+  /**
+   * Retourne l'icône pour le type de fichier
+   */
+  getFileIconType(fileName: string): string {
+    return this.documentService.getFileIcon(fileName);
+  }
+
+
+  /**
+   * Obtient le nom d'affichage d'un utilisateur
+   */
+  getUtilisateurDisplayName(utilisateur: any): string {
+    if (!utilisateur) return '';
+    return `${utilisateur.prenom} ${utilisateur.nom} (${utilisateur.email})`;
+  }
+
+  /**
+   * Obtient le nom d'affichage d'une souscription
+   */
+  getSouscriptionDisplayName(souscription: any): string {
+    if (!souscription) return '';
+    return `#${souscription.id_souscription} - ${souscription.statut_souscription} (${souscription.nombre_terrains} terrain(s))`;
+  }
+
+  /**
+   * Formate un montant en devise
+   */
+  formatCurrencyAmount(amount: any): string {
+    if (!amount) return '0 FCFA';
+    return this.souscriptionService.formatCurrency(parseFloat(amount.toString()));
+  }
+
+  /**
+   * Navigation - étape suivante
+   */
+  nextDocumentStep(): void {
+    if (this.currentStep < 3) {
+      this.currentStep++;
+    }
+  }
+
+  /**
+   * Navigation - étape précédente
+   */
+  previousDocumentStep(): void {
+    if (this.currentStep > 0) {
+      this.currentStep--;
+    }
+  }
+
+  /**
+   * Vérifie si l'étape actuelle est valide
+   */
+  isCurrentDocumentStepValid(): boolean {
+    switch (this.currentStep) {
+      case 0:
+        return this.addDocumentForm.get('id_utilisateur')?.valid || false;
+      case 1:
+        return this.addDocumentForm.get('id_souscription')?.valid || false;
+      case 2:
+        return (this.addDocumentForm.get('libelle_type_document')?.valid || false) && !!this.selectedDocumentFile;
+      case 3:
+        return this.addDocumentForm.valid && !!this.selectedDocumentFile;
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * Soumet le formulaire d'ajout de document
+   */
+  submitAddDocument(): void {
+    if (!this.addDocumentForm.valid || !this.selectedDocumentFile) {
+      this.message.error('Veuillez remplir tous les champs requis');
+      return;
+    }
+
+    this.isSubmittingDocument = true;
+
+    // Création du FormData pour l'envoi
+    const formData = new FormData();
+    formData.append('id_utilisateur', this.addDocumentForm.get('id_utilisateur')?.value);
+    formData.append('id_souscription', this.addDocumentForm.get('id_souscription')?.value);
+    formData.append('libelle_type_document', this.addDocumentForm.get('libelle_type_document')?.value);
+    formData.append('document', this.selectedDocumentFile);
+
+    console.log('Envoi du document:', {
+      id_utilisateur: this.addDocumentForm.get('id_utilisateur')?.value,
+      id_souscription: this.addDocumentForm.get('id_souscription')?.value,
+      libelle_type_document: this.addDocumentForm.get('libelle_type_document')?.value,
+      fileName: this.selectedDocumentFile.name
+    });
+
+    // Appel au service
+    this.documentService.ajouterDocumentSouscripteur(formData).subscribe({
+      next: (response) => {
+        console.log('Document ajouté avec succès:', response);
+        this.message.success('Document ajouté avec succès');
+        this.closeAddDocumentModal();
+        this.rafraichir(); // Recharge la liste des documents
+      },
+      error: (err) => {
+        console.error('Erreur lors de l\'ajout du document:', err);
+        this.message.error('Erreur lors de l\'ajout du document');
+        this.isSubmittingDocument = false;
+      }
+    });
   }
 }

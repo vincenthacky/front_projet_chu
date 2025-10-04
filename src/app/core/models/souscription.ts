@@ -158,6 +158,7 @@ export interface Terrain {
   localisation: string;
   superficie: string;
   prix_unitaire: string;
+  montant_mensuel: string;
   description: string;
   statut_terrain: string;
   coordonnees_gps: string;

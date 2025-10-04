@@ -38,6 +38,7 @@ interface Subscription {
 })
 export class PaiementDetailsAdminComponent implements OnInit {
   subscription: Subscription | null = null;
+  apiData: ApiSouscription | null = null; // Exposer les données API brutes
   loading = false;
   subscriptionId: string | null = null;
 
@@ -82,6 +83,8 @@ export class PaiementDetailsAdminComponent implements OnInit {
         console.log('📥 Réponse API détails:', response);
         
         if (response.success && response.data) {
+          // Stocker les données API brutes
+          this.apiData = response.data;
           // Mapper les données vers notre interface locale
           this.subscription = this.mapApiDataToSubscription(response.data);
           console.log('✅ Souscription mappée:', this.subscription);
@@ -464,6 +467,125 @@ export class PaiementDetailsAdminComponent implements OnInit {
       console.log('❌ Aucune donnée de souscription disponible');
     }
     console.log('🐛 === FIN DEBUG ===');
+  }
+
+  // ✅ Méthodes utilitaires pour l'affichage des paiements
+
+  // Obtenir les paiements valides depuis les données API
+  getValidPayments(): any[] {
+    if (!this.apiData?.planpaiements) {
+      return [];
+    }
+    
+    return this.apiData.planpaiements.filter(plan => 
+      plan && 
+      plan.est_paye === true && 
+      plan.montant_paye && 
+      parseFloat(plan.montant_paye.toString()) > 0
+    ).sort((a, b) => b.numero_mensualite - a.numero_mensualite);
+  }
+
+  // Compter les paiements valides
+  getValidPaymentsCount(): number {
+    return this.getValidPayments().length;
+  }
+
+  // Formater le mode de paiement en texte lisible
+  getPaymentModeText(mode: string): string {
+    const modes: { [key: string]: string } = {
+      'especes': 'Espèces',
+      'cheque': 'Chèque',
+      'virement': 'Virement bancaire',
+      'carte': 'Carte bancaire',
+      'mobile': 'Paiement mobile',
+      'orange_money': 'Orange Money',
+      'mtn_money': 'MTN Money',
+      'moov_money': 'Moov Money',
+      'wave': 'Wave'
+    };
+    
+    return modes[mode?.toLowerCase()] || mode || 'Non spécifié';
+  }
+
+  // Formater les dates de paiement
+  formatPaymentDate(dateString: string): string {
+    if (!dateString) {
+      return 'Date non disponible';
+    }
+    
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return 'Date invalide';
+      }
+      
+      return date.toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return 'Date non disponible';
+    }
+  }
+
+  // Formater les montants avec la méthode du service
+  formatCurrency(amount: any): string {
+    if (amount === null || amount === undefined) {
+      return '0 FCFA';
+    }
+    
+    const numAmount = parseFloat(amount.toString());
+    if (isNaN(numAmount)) {
+      return '0 FCFA';
+    }
+    
+    return this.souscriptionService.formatCurrency(numAmount);
+  }
+
+  // Obtenir le nom de l'admin qui a enregistré la souscription
+  getAdminName(): string {
+    if (!this.apiData?.admin) {
+      return 'Administrateur non spécifié';
+    }
+    
+    const admin = this.apiData.admin;
+    return `${admin.prenom} ${admin.nom}`.trim() || 'Administrateur';
+  }
+
+  // Obtenir le statut du paiement en texte lisible
+  getPaymentStatusText(status: string): string {
+    const statuses: { [key: string]: string } = {
+      'paye': 'Payé',
+      'paye_en_retard': 'Payé en retard',
+      'paye_avance': 'Payé en avance',
+      'non_paye': 'Non payé',
+      'en_attente': 'En attente',
+      'annule': 'Annulé'
+    };
+    
+    return statuses[status] || status || 'Statut inconnu';
+  }
+
+  // Obtenir la classe CSS pour le statut
+  getPaymentStatusClass(status: string): string {
+    const classes: { [key: string]: string } = {
+      'paye': 'status-paid',
+      'paye_en_retard': 'status-late',
+      'paye_avance': 'status-early',
+      'non_paye': 'status-unpaid',
+      'en_attente': 'status-pending',
+      'annule': 'status-cancelled'
+    };
+    
+    return classes[status] || 'status-unknown';
+  }
+
+  // Tracking pour les paiements enrichis
+  trackByPaymentEnhanced(_index: number, payment: any): string {
+    return `${payment.id_plan_paiement}-${payment.numero_mensualite}-${payment.montant_paye}`;
   }
 
   // Exposer la méthode de debug pour la console

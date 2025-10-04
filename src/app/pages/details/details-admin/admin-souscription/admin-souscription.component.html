@@ -165,7 +165,9 @@
                 <span class="date-debut">{{ formatDate(souscription.date_debut_paiement) }}</span>
               </td>
               <td class="table-data-cell">
-                <span class="next-payment-date">{{ formatDate(souscription.date_prochain) }}</span>
+                <span class="next-payment-date">
+                  {{ souscription.statut_souscription === 'terminee' ? '--/--/--' : formatDate(souscription.date_prochain) }}
+                </span>
               </td>
               <td class="table-data-cell">
                 <nz-tag

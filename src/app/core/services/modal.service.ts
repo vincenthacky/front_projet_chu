@@ -33,4 +33,14 @@ export class ModalService {
       type: 'error'
     });
   }
+
+  showConnectionErrorModal(): void {
+    this.showModal({
+      title: 'Connexion au serveur impossible',
+      message: 'Impossible de se connecter au serveur de données. Veuillez vérifier votre connexion réseau et réessayer.',
+      imageSrc: 'Do-not-enter-sign-bro.png',
+      duration: 4000,
+      type: 'error'
+    });
+  }
 }

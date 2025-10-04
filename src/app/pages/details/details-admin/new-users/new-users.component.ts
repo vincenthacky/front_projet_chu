@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -18,8 +18,11 @@ import { NzUploadModule } from 'ng-zorro-antd/upload';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzUploadFile } from 'ng-zorro-antd/upload';
+import { NzModalService } from 'ng-zorro-antd/modal';
+import { NzModalModule } from 'ng-zorro-antd/modal';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged, of, map, catchError, Observable } from 'rxjs';
 import { AuthService } from 'src/app/core/services/auth.service';
+import { CanComponentDeactivate } from 'src/app/guards/unsaved-changes.guard';
 
 @Component({
   selector: 'app-create-user',
@@ -38,17 +41,21 @@ import { AuthService } from 'src/app/core/services/auth.service';
     NzSpaceModule,
     NzProgressModule,
     NzAlertModule,
-    NzUploadModule
+    NzUploadModule,
+    NzModalModule
   ],
   templateUrl: './new-users.component.html',
   styleUrl: './new-users.component.css'
 })
-export class NewUsersComponent implements OnInit, OnDestroy {
+export class NewUsersComponent implements OnInit, OnDestroy, CanComponentDeactivate {
   createUserForm!: FormGroup;
   isSubmitting = false;
   passwordVisible = false;
   confirmPasswordVisible = false;
   private destroy$ = new Subject<void>();
+  hasUnsavedChanges = false;
+  private isFormSubmittedSuccessfully = false;
+  private initialFormState: any = null;
 
   // Variables pour les fichiers
   cniFile: File | null = null;
@@ -80,7 +87,8 @@ export class NewUsersComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private message: NzMessageService,
     private notification: NzNotificationService,
-    private router: Router
+    private router: Router,
+    private modal: NzModalService
   ) {
     this.initForm();
   }
@@ -88,12 +96,98 @@ export class NewUsersComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.setupRealTimeValidation();
     this.loadDraft();
+    this.trackFormChanges();
+    this.captureInitialFormState();
   }
 
   ngOnDestroy(): void {
-    this.clearDraft();
+    // Sauvegarder automatiquement en brouillon si il y a des changements et qu'on n'a pas soumis avec succès
+    if (this.hasUnsavedChanges && !this.isFormSubmittedSuccessfully) {
+      this.saveCurrentDraft();
+    }
+    
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  // Méthode requise par CanComponentDeactivate
+  canDeactivate(): Observable<boolean> | Promise<boolean> | boolean {
+    // Si le formulaire a été soumis avec succès, permettre la navigation
+    if (this.isFormSubmittedSuccessfully) {
+      return true;
+    }
+
+    // Si pas de changements, permettre la navigation
+    if (!this.hasUnsavedChanges) {
+      return true;
+    }
+
+    // Sauvegarder automatiquement en brouillon avant de demander confirmation
+    this.saveCurrentDraft();
+
+    return this.confirmUnsavedChanges();
+  }
+
+  // Protection contre la sortie non sauvegardée (fermeture navigateur/onglet)
+  @HostListener('window:beforeunload', ['$event'])
+  unloadNotification($event: any): void {
+    if (this.hasUnsavedChanges && !this.isFormSubmittedSuccessfully) {
+      // Sauvegarder automatiquement avant la fermeture
+      this.saveCurrentDraft();
+      $event.returnValue = 'Vous avez des modifications non sauvegardées. Elles ont été sauvegardées automatiquement en brouillon.';
+    }
+  }
+
+  // Capturer l'état initial du formulaire
+  private captureInitialFormState(): void {
+    // Attendre que le formulaire soit complètement initialisé
+    setTimeout(() => {
+      this.initialFormState = JSON.stringify(this.createUserForm.value);
+    }, 100);
+  }
+
+  // Suivre les changements du formulaire de manière intelligente
+  private trackFormChanges(): void {
+    this.createUserForm.valueChanges.pipe(
+      debounceTime(300), // Éviter les détections trop fréquentes
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.detectRealChanges();
+    });
+  }
+
+  // Détecter si il y a de vrais changements par rapport à l'état initial
+  private detectRealChanges(): void {
+    if (!this.initialFormState) {
+      return;
+    }
+
+    const currentFormState = JSON.stringify(this.createUserForm.value);
+    const hasFormChanges = currentFormState !== this.initialFormState;
+    const hasFileChanges = !!(this.cniFile || this.carteProFile || this.ficheSouscriptionFile || this.photoProfilFile);
+    
+    this.hasUnsavedChanges = hasFormChanges || hasFileChanges;
+  }
+
+  // Confirmer avant de quitter avec des changements non sauvegardés
+  private confirmUnsavedChanges(): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (!this.hasUnsavedChanges) {
+        resolve(true);
+        return;
+      }
+
+      this.modal.confirm({
+        nzTitle: 'Modifications non sauvegardées',
+        nzContent: 'Vous avez des modifications non sauvegardées. Êtes-vous sûr de vouloir quitter sans enregistrer ?',
+        nzOkText: 'Quitter sans sauvegarder',
+        nzOkType: 'primary',
+        nzOkDanger: true,
+        nzCancelText: 'Rester sur la page',
+        nzOnOk: () => resolve(true),
+        nzOnCancel: () => resolve(false)
+      });
+    });
   }
 
   // Modifiez le validateur asynchrone avec le typage correct
@@ -118,7 +212,7 @@ private emailUniqueValidator = (control: AbstractControl): Observable<Validation
       service: [''],
       type: ['user', Validators.required],
       statut_utilisateur: ['actif', Validators.required],
-      mot_de_passe: ['', [Validators.required, Validators.minLength(8), this.passwordStrengthValidator.bind(this)]],
+      mot_de_passe: ['', [Validators.required, Validators.minLength(8)]],
       confirmer_mot_de_passe: ['', [Validators.required]],
       est_administrateur: [false],
       cni: [''],
@@ -154,32 +248,6 @@ private emailUniqueValidator = (control: AbstractControl): Observable<Validation
     }
   }
 
-  // Validateur pour la force du mot de passe
-  private passwordStrengthValidator(control: AbstractControl): { [key: string]: any } | null {
-    if (!control.value) return null;
-    
-    const password = control.value;
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasLowerCase = /[a-z]/.test(password);
-    const hasNumbers = /\d/.test(password);
-    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-    
-    const valid = hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar && password.length >= 8;
-    
-    if (!valid) {
-      return { 
-        passwordStrength: {
-          hasUpperCase,
-          hasLowerCase,
-          hasNumbers,
-          hasSpecialChar,
-          minLength: password.length >= 8
-        }
-      };
-    }
-    
-    return null;
-  }
 
   onSubmit(): void {
     if (this.createUserForm.valid) {
@@ -241,13 +309,11 @@ private emailUniqueValidator = (control: AbstractControl): Observable<Validation
           console.log('✅ Réponse reçue:', response);
           this.isSubmitting = false;
   
-          // Vérifier que response.data existe
-          const userName = response.data?.prenom && response.data?.nom 
-            ? `${response.data.prenom} ${response.data.nom}`
-            : 'Utilisateur';
-  
           this.message.success('Utilisateur créé avec succès');
   
+          // Marquer comme soumis avec succès et nettoyer
+          this.isFormSubmittedSuccessfully = true;
+          this.hasUnsavedChanges = false;
           this.clearDraft();
           
           // Redirection avec gestion des erreurs
@@ -307,19 +373,44 @@ private emailUniqueValidator = (control: AbstractControl): Observable<Validation
     }
   }
 
-  onCancel(): void {
-    this.router.navigate(['/dashboard/admin/details/home-admin']);
+  async onCancel(): Promise<void> {
+    const canLeave = await this.confirmUnsavedChanges();
+    if (canLeave) {
+      this.hasUnsavedChanges = false;
+      this.router.navigate(['/dashboard/admin/details/home-admin']);
+    }
   }
 
-  onReset(): void {
-    this.createUserForm.reset({
-      type: 'user',
-      statut_utilisateur: 'actif',
-      est_administrateur: false
-    });
-    this.passwordVisible = false;
-    this.confirmPasswordVisible = false;
-    this.clearDraft();
+  async onReset(): Promise<void> {
+    const canReset = await this.confirmUnsavedChanges();
+    if (canReset) {
+      this.createUserForm.reset({
+        type: 'user',
+        statut_utilisateur: 'actif',
+        est_administrateur: false
+      });
+      this.passwordVisible = false;
+      this.confirmPasswordVisible = false;
+      this.hasUnsavedChanges = false;
+      this.isFormSubmittedSuccessfully = false;
+      
+      // Réinitialiser les fichiers
+      this.cniFile = null;
+      this.carteProFile = null;
+      this.ficheSouscriptionFile = null;
+      this.photoProfilFile = null;
+      this.cniPreview = null;
+      this.carteProPreview = null;
+      this.ficheSouscriptionPreview = null;
+      this.photoProfilPreview = null;
+      
+      this.clearDraft();
+      
+      // Recapturer l'état initial après reset
+      setTimeout(() => {
+        this.captureInitialFormState();
+      }, 100);
+    }
   }
 
   isFieldInvalid(fieldName: string): boolean {
@@ -351,17 +442,6 @@ private emailUniqueValidator = (control: AbstractControl): Observable<Validation
       }
       if (errors['passwordMismatch']) {
         return 'Les mots de passe ne correspondent pas';
-      }
-      if (errors['passwordStrength']) {
-        const strength = errors['passwordStrength'];
-        const missing = [];
-        if (!strength.hasUpperCase) missing.push('majuscule');
-        if (!strength.hasLowerCase) missing.push('minuscule');
-        if (!strength.hasNumbers) missing.push('chiffre');
-        if (!strength.hasSpecialChar) missing.push('caractère spécial');
-        if (!strength.minLength) missing.push('8 caractères minimum');
-        
-        return `Mot de passe faible. Manque: ${missing.join(', ')}`;
       }
     }
     return '';
@@ -478,14 +558,36 @@ private emailUniqueValidator = (control: AbstractControl): Observable<Validation
     }
   }
 
-  // Sauvegarder en brouillon (localStorage)
+  // Sauvegarder en brouillon (localStorage) - action manuelle
   saveDraft(): void {
+    this.saveCurrentDraft();
+    this.hasUnsavedChanges = false;
+    this.message.success('Brouillon sauvegardé');
+  }
+
+  // Sauvegarder automatiquement l'état actuel en brouillon
+  private saveCurrentDraft(): void {
+    if (!this.createUserForm) {
+      return;
+    }
+
     const formData = { ...this.createUserForm.value };
     delete formData.mot_de_passe;
     delete formData.confirmer_mot_de_passe;
     
-    localStorage.setItem('createUserDraft', JSON.stringify(formData));
-    this.message.success('Brouillon sauvegardé');
+    // Ajouter les informations sur les fichiers si présents
+    const draftData = {
+      formData,
+      timestamp: new Date().toISOString(),
+      hasFiles: {
+        cni: !!this.cniFile,
+        carteProf: !!this.carteProFile,
+        ficheSouscription: !!this.ficheSouscriptionFile,
+        photoProfil: !!this.photoProfilFile
+      }
+    };
+    
+    localStorage.setItem('createUserDraft', JSON.stringify(draftData));
   }
 
   // Charger un brouillon
@@ -494,10 +596,32 @@ private emailUniqueValidator = (control: AbstractControl): Observable<Validation
     if (draft) {
       try {
         const draftData = JSON.parse(draft);
-        this.createUserForm.patchValue(draftData);
-        this.message.info('Brouillon chargé');
+        
+        // Support pour l'ancien format de brouillon (rétrocompatibilité)
+        if (draftData.formData) {
+          this.createUserForm.patchValue(draftData.formData);
+          const timeDiff = new Date().getTime() - new Date(draftData.timestamp).getTime();
+          const hoursDiff = timeDiff / (1000 * 60 * 60);
+          
+          if (hoursDiff < 24) {
+            this.message.info(`Brouillon chargé (sauvegardé il y a ${Math.round(hoursDiff)} heures)`);
+          } else {
+            this.message.info('Brouillon chargé');
+          }
+        } else {
+          // Ancien format
+          this.createUserForm.patchValue(draftData);
+          this.message.info('Brouillon chargé');
+        }
+        
+        // Attendre que le formulaire soit mis à jour avant de capturer l'état initial
+        setTimeout(() => {
+          this.captureInitialFormState();
+        }, 200);
+        
       } catch (error) {
         console.error('Erreur lors du chargement du brouillon:', error);
+        localStorage.removeItem('createUserDraft');
       }
     }
   }
@@ -528,13 +652,13 @@ private emailUniqueValidator = (control: AbstractControl): Observable<Validation
       this.formatPhoneNumber();
     });
     
-    // Sauvegarde automatique en brouillon
+    // Sauvegarde automatique en brouillon (seulement si il y a des changements significatifs)
     this.createUserForm.valueChanges.pipe(
       debounceTime(2000),
       takeUntil(this.destroy$)
     ).subscribe(() => {
-      if (this.createUserForm.dirty) {
-        this.saveDraft();
+      if (this.hasUnsavedChanges && !this.isFormSubmittedSuccessfully) {
+        this.saveCurrentDraft();
       }
     });
   }
@@ -661,6 +785,9 @@ private emailUniqueValidator = (control: AbstractControl): Observable<Validation
     this.cniFile = finalFile;
     this.createUserForm.patchValue({ cni: finalFile.name });
     this.createFilePreview(finalFile, 'cni');
+    
+    // Marquer qu'il y a des changements
+    this.detectRealChanges();
   }
 
   async onCarteProChange(file: File): Promise<void> {
@@ -673,6 +800,7 @@ private emailUniqueValidator = (control: AbstractControl): Observable<Validation
     this.carteProFile = finalFile;
     this.createUserForm.patchValue({ carte_professionnel: finalFile.name });
     this.createFilePreview(finalFile, 'carte_professionnel');
+    this.detectRealChanges();
   }
 
   async onFicheSouscriptionChange(file: File): Promise<void> {
@@ -685,6 +813,7 @@ private emailUniqueValidator = (control: AbstractControl): Observable<Validation
     this.ficheSouscriptionFile = finalFile;
     this.createUserForm.patchValue({ fiche_souscription: finalFile.name });
     this.createFilePreview(finalFile, 'fiche_souscription');
+    this.detectRealChanges();
   }
 
   async onPhotoProfilChange(file: File): Promise<void> {
@@ -697,6 +826,7 @@ private emailUniqueValidator = (control: AbstractControl): Observable<Validation
     this.photoProfilFile = finalFile;
     this.createUserForm.patchValue({ photo_profil: finalFile.name });
     this.createFilePreview(finalFile, 'photo_profil');
+    this.detectRealChanges();
   }
 
   // Créer un aperçu du fichier
@@ -784,6 +914,8 @@ private emailUniqueValidator = (control: AbstractControl): Observable<Validation
         this.createUserForm.patchValue({ photo_profil: '' });
         break;
     }
+    // Détecter les changements après suppression
+    this.detectRealChanges();
   }
 
   // Vérifier si un fichier est sélectionné

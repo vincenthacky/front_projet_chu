@@ -101,6 +101,17 @@ export class AuthInterceptor implements HttpInterceptor {
           return throwError(() => new Error('Accès refusé'));
         }
 
+        // Gestion des erreurs de connexion API (0, timeout, network errors)
+        if (error.status === 0 || 
+            error.message?.includes('Network') ||
+            error.message?.includes('timeout') ||
+            error.message?.includes('connection') ||
+            error.error instanceof ProgressEvent) {
+          console.log('🔴 INTERCEPTOR: Erreur de connexion API détectée');
+          this.handleConnectionError();
+          return throwError(() => new Error('Connexion au serveur impossible. Veuillez vérifier votre connexion réseau.'));
+        }
+
         return throwError(() => error);
       })
     );
@@ -149,6 +160,23 @@ export class AuthInterceptor implements HttpInterceptor {
       this.modalService.hideModal();
       this.router.navigate(['/authentification/login']);
       console.log('🔄 INTERCEPTOR: Redirection vers /authentification/login');
+    }, 4000);
+  }
+
+  private handleConnectionError(): void {
+    console.log('🚨 INTERCEPTOR: Gestion des erreurs de connexion API');
+    
+    // Réinitialiser l'état utilisateur via AuthService (sans redirection)
+    this.authService.resetUserState();
+    
+    // Afficher le modal d'erreur de connexion
+    this.modalService.showConnectionErrorModal();
+    
+    // Rediriger vers la page de login après 4 secondes
+    setTimeout(() => {
+      this.modalService.hideModal();
+      this.router.navigate(['/authentification/login']);
+      console.log('🔄 INTERCEPTOR: Redirection vers /authentification/login après erreur de connexion');
     }, 4000);
   }
 }

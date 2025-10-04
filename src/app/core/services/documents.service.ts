@@ -145,6 +145,18 @@ export class DocumentService {
   }
 
   /**
+   * Ajouter un document pour un utilisateur et une souscription
+   */
+  ajouterDocumentSouscripteur(formData: FormData): Observable<any> {
+    return this.http.post<any>(`${this.API_URL}/dossier-souscripteur`, formData)
+      .pipe(
+        tap(response => {
+          console.log('Document souscripteur ajouté:', response);
+        })
+      );
+  }
+
+  /**
    * NOUVELLES MÉTHODES UTILITAIRES POUR LES MÉDIAS
    */
 

@@ -64,15 +64,16 @@ export class CreateSubscriptionAdminComponent implements OnInit {
   }
 
   initForm(): void {
+    const today = new Date();
     this.subscriptionForm = this.fb.group({
       id_utilisateur: [null, [Validators.required]],
       id_terrain: [null, [Validators.required]],
       id_admin: [null, [Validators.required]],
       nombre_terrains: [1, [Validators.required, Validators.min(1)]],
       montant_mensuel: [0, [Validators.required, Validators.min(0)]],
-      nombre_mensualites: [1, [Validators.required, Validators.min(1)]],
+      nombre_mensualites: [64, [Validators.required, Validators.min(1)]],
       date_souscription: [new Date(), [Validators.required]],
-      date_debut_paiement: [null, [Validators.required]],
+      date_debut_paiement: [today, [Validators.required]],
       statut_souscription: ['active', [Validators.required]],
       notes_admin: ['']
     });
@@ -136,6 +137,16 @@ export class CreateSubscriptionAdminComponent implements OnInit {
     }
   }
 
+  onTerrainChange(terrainId: number): void {
+    const selectedTerrain = this.terrains.find(t => t.id_terrain === terrainId);
+    if (selectedTerrain && selectedTerrain.montant_mensuel) {
+      this.subscriptionForm.patchValue({
+        montant_mensuel: parseFloat(selectedTerrain.montant_mensuel)
+      });
+      console.log('Montant mensuel mis à jour:', selectedTerrain.montant_mensuel);
+    }
+  }
+
   onSubmit(): void {
     if (this.subscriptionForm.invalid) {
       this.message.error('Veuillez remplir tous les champs requis correctement.');
@@ -153,15 +164,16 @@ export class CreateSubscriptionAdminComponent implements OnInit {
       next: (response: SouscriptionSingleResponse) => {
         this.isSubmitting = false;
         this.message.success('Souscription créée avec succès !');
+        const today = new Date();
         this.subscriptionForm.reset({
           id_utilisateur: null,
           id_terrain: null,
           id_admin: this.authService.getCurrentUser()?.id_utilisateur || null,
           nombre_terrains: 1,
           montant_mensuel: 0,
-          nombre_mensualites: 1,
+          nombre_mensualites: 64,
           date_souscription: new Date(),
-          date_debut_paiement: null,
+          date_debut_paiement: today,
           statut_souscription: 'active',
           notes_admin: ''
         });

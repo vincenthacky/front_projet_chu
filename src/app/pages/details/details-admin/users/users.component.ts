@@ -141,6 +141,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   // Options de type d'utilisateur
   userTypeOptions = [
     { label: 'Utilisateur', value: 'user' },
+    { label: 'Administrateur', value: 'admin' },
     { label: 'Super Admin', value: 'superAdmin' }  
   ];
 
@@ -340,7 +341,7 @@ export class UsersComponent implements OnInit, OnDestroy {
       telephone: user.telephone || '',
       poste: user.poste || '',
       service: user.service || '',
-      type: user.type.toLowerCase(),
+      type: user.type,
       est_administrateur: user.est_administrateur,
       statut_utilisateur: user.statut_utilisateur
     });
@@ -571,9 +572,11 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   getUserTypeLabel(type: string): string {
-    switch (type?.toLowerCase()) {
-      case 'superadmin':
+    switch (type) {
+      case 'superAdmin':
         return 'Super Admin';
+      case 'admin':
+        return 'Administrateur';
       case 'user':
         return 'Utilisateur';
       default:
@@ -582,9 +585,11 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   getUserTypeColor(type: string): string {
-    switch (type?.toLowerCase()) {
-      case 'superadmin':
+    switch (type) {
+      case 'superAdmin':
         return 'purple';
+      case 'admin':
+        return 'orange';
       case 'user':
         return 'cyan';
       default:
@@ -593,16 +598,18 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   isAdmin(user: User): boolean {
-    return user.est_administrateur || user.type.toLowerCase() === 'superadmin';
+    return user.est_administrateur || user.type === 'superAdmin' || user.type === 'admin';
   }
 
   // CORRECTION: Méthodes modifiées pour la colonne Admin basée sur le type
   getAdminLabel(user: User): string {
-    return user.type.toLowerCase() === 'superadmin' ? 'Oui' : 'Non';
+    const type = user.type;
+    return (type === 'superAdmin' || type === 'admin') ? 'Oui' : 'Non';
   }
 
   getAdminColor(user: User): string {
-    return user.type.toLowerCase() === 'superadmin' ? 'green' : 'red';
+    const type = user.type;
+    return (type === 'superAdmin' || type === 'admin') ? 'green' : 'red';
   }
 
   viewUser(user: User): void {
