@@ -282,6 +282,11 @@
 
 .history-header {
     margin-bottom: clamp(6px, 1.2vw, 8px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .history-title {
@@ -294,10 +299,229 @@
     margin: 0;
 }
 
+.payment-count {
+    font-size: 0.9em;
+    color: #6b7280;
+    background: #f3f4f6;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
 .payment-list {
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 12px;
+}
+
+/* ✅ Nouveaux styles pour les cartes de paiement enrichies */
+.payment-item-enhanced {
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.payment-item-enhanced:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-color: #667eea;
+}
+
+.payment-card {
+    width: 100%;
+}
+
+/* En-tête du paiement */
+.payment-header {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.payment-numero {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.payment-numero i {
+    color: #667eea;
+    font-size: 1.1em;
+}
+
+.mensualite-badge {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 0.85em;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.payment-status {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Classes de statut */
+.status-paid {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-late {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.status-early {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.status-unpaid {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.status-pending {
+    background: rgba(156, 163, 175, 0.1);
+    color: #6b7280;
+    border: 1px solid rgba(156, 163, 175, 0.2);
+}
+
+.status-cancelled {
+    background: rgba(107, 114, 128, 0.1);
+    color: #374151;
+    border: 1px solid rgba(107, 114, 128, 0.2);
+}
+
+/* Corps du paiement */
+.payment-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.payment-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+}
+
+.info-item i {
+    color: #667eea;
+    font-size: 0.9em;
+    flex-shrink: 0;
+}
+
+.info-label {
+    color: #6b7280;
+    font-size: 0.85em;
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.info-value {
+    color: #1f2937;
+    font-weight: 600;
+    font-size: 0.9em;
+    word-break: break-word;
+}
+
+.info-value.amount {
+    color: #059669;
+    font-weight: 700;
+    background: rgba(16, 185, 129, 0.05);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.info-value.mode-payment {
+    background: rgba(102, 126, 234, 0.05);
+    color: #667eea;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.info-value.reference {
+    font-family: 'Courier New', monospace;
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+}
+
+.info-value.admin-name {
+    color: #7c3aed;
+    font-weight: 600;
+}
+
+/* Ligne d'informations admin */
+.admin-info {
+    background: rgba(124, 58, 237, 0.02);
+    padding: 8px;
+    border-radius: 4px;
+    border-left: 3px solid #7c3aed;
+}
+
+/* Pénalités */
+.penalty .info-value.penalty-amount {
+    color: #dc2626;
+    background: rgba(239, 68, 68, 0.05);
+    font-weight: 700;
+}
+
+/* Commentaires */
+.payment-comment {
+    background: #f8fafc;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border-left: 3px solid #667eea;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.payment-comment i {
+    color: #667eea;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.comment-text {
+    color: #374151;
+    font-style: italic;
+    font-size: 0.9em;
+    line-height: 1.4;
 }
 
 .payment-item {
@@ -378,6 +602,17 @@
     .stat-card {
         padding: 1px;
     }
+    
+    /* Ajustements pour les cartes de paiement sur tablette */
+    .payment-info-row {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .info-item {
+        flex: none;
+        width: 100%;
+    }
 }
 
 @media (max-width: 768px) {
@@ -407,6 +642,44 @@
     .stat-label {
         font-size: 0.8em;
         line-height: 1.05;
+    }
+    
+    /* Ajustements pour les nouvelles cartes de paiement sur mobile */
+    .payment-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 10px 12px;
+    }
+    
+    .payment-body {
+        padding: 12px;
+        gap: 10px;
+    }
+    
+    .payment-info-row {
+        flex-direction: column;
+        gap: 6px;
+    }
+    
+    .info-item {
+        font-size: 0.9em;
+    }
+    
+    .mensualite-badge {
+        font-size: 0.8em;
+        padding: 3px 8px;
+    }
+    
+    .payment-status {
+        font-size: 0.75em;
+        padding: 3px 6px;
+    }
+    
+    .history-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
     }
 }
 
@@ -448,8 +721,49 @@
     }
 
     .payment-list {
-        font-size: 0.60em;  
-       
+        font-size: 0.85em;
+        gap: 8px;
+    }
+    
+    /* Ajustements très petit mobile pour les nouvelles cartes */
+    .payment-item-enhanced {
+        border-radius: 6px;
+    }
+    
+    .payment-header {
+        padding: 8px 10px;
+    }
+    
+    .payment-body {
+        padding: 10px;
+        gap: 8px;
+    }
+    
+    .info-item {
+        font-size: 0.85em;
+        gap: 6px;
+    }
+    
+    .info-label {
+        font-size: 0.8em;
+    }
+    
+    .info-value {
+        font-size: 0.85em;
+    }
+    
+    .mensualite-badge {
+        font-size: 0.75em;
+        padding: 2px 6px;
+    }
+    
+    .payment-comment {
+        padding: 6px 8px;
+        font-size: 0.8em;
+    }
+    
+    .admin-info {
+        padding: 6px;
     }
 }
 
