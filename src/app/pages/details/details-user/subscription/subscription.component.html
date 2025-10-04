@@ -161,7 +161,7 @@
                       <td class="table-cell">
                           <div *ngIf="currentViewMode === 'souscriptions'" class="next-payment">
                               <i class="fas fa-calendar-alt"></i>
-                              {{ formatDate(subscription.prochainPaiement) }}
+                              {{ subscription.statut === 'terminee' ? '--/--/--' : formatDate(subscription.prochainPaiement) }}
                           </div>
                           <div *ngIf="currentViewMode === 'demandes'" class="date-display">
                               <i class="fas fa-clock"></i>

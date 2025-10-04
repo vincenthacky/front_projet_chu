@@ -60,12 +60,39 @@
 
 .subscription-badge {
     background: rgba(255, 255, 255, 0.2);
-    padding: 3px 8px;
-    border-radius: 14px;
-    font-size: clamp(0.65rem, 1.3vw, 0.75rem);
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: clamp(0.7rem, 1.4vw, 0.85rem);
     font-weight: 600;
     border: 1px solid rgba(255, 255, 255, 0.3);
     backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Nouvelle section d'informations de souscription */
+.subscription-info {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin: 8px 0;
+    flex-wrap: wrap;
+}
+
+.subscription-date {
+    background: rgba(255, 255, 255, 0.15);
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: clamp(0.7rem, 1.4vw, 0.85rem);
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: rgba(255, 255, 255, 0.95);
 }
 
 .subtitle {
@@ -689,8 +716,17 @@
         gap: 3px;
     }
     
-    .subscription-badge {
-        order: -1;
+    .subscription-info {
+        flex-direction: column;
+        gap: 8px;
+        margin: 6px 0;
+    }
+    
+    .subscription-badge,
+    .subscription-date {
+        font-size: clamp(0.65rem, 1.2vw, 0.75rem);
+        padding: 4px 8px;
+        gap: 4px;
     }
     
     .stats-overview {

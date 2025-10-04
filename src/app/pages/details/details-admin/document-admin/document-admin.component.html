@@ -14,6 +14,10 @@
         <i nz-icon nzType="reload"></i>
         Actualiser
       </button>
+      <button nz-button nzType="primary" (click)="openAddDocumentModal()">
+        <i nz-icon nzType="plus"></i>
+        Ajouter un document
+      </button>
     </div>
   </div>
 </div>
@@ -321,4 +325,229 @@
     </button>
   </div>
 </ng-template>
+</nz-modal>
+
+<!-- Modal d'ajout de document -->
+<nz-modal
+  [(nzVisible)]="isAddDocumentModalVisible"
+  nzTitle="Ajouter un nouveau document"
+  [nzWidth]="700"
+  [nzFooter]="null"
+  (nzOnCancel)="closeAddDocumentModal()">
+  
+  <div *nzModalContent>
+    <!-- Étapes du formulaire -->
+    <nz-steps [nzCurrent]="currentStep" nzSize="small" style="margin-bottom: 24px;">
+      <nz-step nzTitle="Utilisateur"></nz-step>
+      <nz-step nzTitle="Souscription"></nz-step>
+      <nz-step nzTitle="Document"></nz-step>
+      <nz-step nzTitle="Finaliser"></nz-step>
+    </nz-steps>
+
+    <form nz-form [formGroup]="addDocumentForm">
+      <!-- Étape 1: Sélection de l'utilisateur -->
+      <div *ngIf="currentStep === 0">
+        <h4>Sélectionner un utilisateur</h4>
+        <nz-form-item>
+          <nz-form-label nzRequired>Utilisateur</nz-form-label>
+          <nz-form-control>
+            <nz-select 
+              formControlName="id_utilisateur"
+              nzPlaceHolder="Sélectionner un utilisateur"
+              nzShowSearch
+              (ngModelChange)="onUtilisateurDocumentChange($event)">
+              <nz-option 
+                *ngFor="let utilisateur of utilisateursList" 
+                [nzValue]="utilisateur.id_utilisateur"
+                [nzLabel]="getUtilisateurDisplayName(utilisateur)">
+              </nz-option>
+            </nz-select>
+            <div *ngIf="addDocumentForm.get('id_utilisateur')?.invalid && addDocumentForm.get('id_utilisateur')?.touched" class="error-text">
+              Veuillez sélectionner un utilisateur
+            </div>
+          </nz-form-control>
+        </nz-form-item>
+
+        <!-- Informations de l'utilisateur sélectionné -->
+        <div *ngIf="selectedUtilisateurDocument" class="user-info-card">
+          <h5>Informations utilisateur</h5>
+          <div class="info-grid">
+            <div class="info-item">
+              <strong>Nom:</strong> {{ getUtilisateurDisplayName(selectedUtilisateurDocument) }}
+            </div>
+            <div class="info-item">
+              <strong>Email:</strong> {{ selectedUtilisateurDocument.email }}
+            </div>
+            <div class="info-item">
+              <strong>Téléphone:</strong> {{ selectedUtilisateurDocument.telephone }}
+            </div>
+            <div class="info-item">
+              <strong>Service:</strong> {{ selectedUtilisateurDocument.service }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Étape 2: Sélection de la souscription -->
+      <div *ngIf="currentStep === 1">
+        <h4>Sélectionner une souscription</h4>
+        <nz-form-item>
+          <nz-form-label nzRequired>Souscription</nz-form-label>
+          <nz-form-control>
+            <nz-select 
+              formControlName="id_souscription"
+              nzPlaceHolder="Sélectionner une souscription"
+              (ngModelChange)="onSouscriptionDocumentChange($event)">
+              <nz-option 
+                *ngFor="let souscription of availableSouscriptionsDocument" 
+                [nzValue]="souscription.id_souscription"
+                [nzLabel]="getSouscriptionDisplayName(souscription)">
+              </nz-option>
+            </nz-select>
+            <div *ngIf="addDocumentForm.get('id_souscription')?.invalid && addDocumentForm.get('id_souscription')?.touched" class="error-text">
+              Veuillez sélectionner une souscription
+            </div>
+          </nz-form-control>
+        </nz-form-item>
+
+        <!-- Informations de la souscription sélectionnée -->
+        <div *ngIf="selectedSouscriptionDocument" class="subscription-info-card">
+          <h5>Détails de la souscription</h5>
+          <div class="info-grid">
+            <div class="info-item">
+              <strong>ID:</strong> #{{ selectedSouscriptionDocument.id_souscription }}
+            </div>
+            <div class="info-item">
+              <strong>Terrains:</strong> {{ selectedSouscriptionDocument.nombre_terrains }}
+            </div>
+            <div class="info-item">
+              <strong>Montant mensuel:</strong> {{ formatCurrencyAmount(selectedSouscriptionDocument.montant_mensuel) }}
+            </div>
+            <div class="info-item">
+              <strong>Statut:</strong> {{ selectedSouscriptionDocument.statut_souscription }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Étape 3: Informations du document -->
+      <div *ngIf="currentStep === 2">
+        <h4>Informations du document</h4>
+        
+        <nz-form-item>
+          <nz-form-label nzRequired>Libellé du document</nz-form-label>
+          <nz-form-control>
+            <input 
+              nz-input 
+              formControlName="libelle_type_document"
+              placeholder="Ex: Contrat de souscription, Pièce d'identité, etc.">
+            <div *ngIf="addDocumentForm.get('libelle_type_document')?.invalid && addDocumentForm.get('libelle_type_document')?.touched" class="error-text">
+              Le libellé du document est requis
+            </div>
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label nzRequired>Fichier</nz-form-label>
+          <nz-form-control>
+            <nz-upload
+              [nzBeforeUpload]="beforeUploadDocument"
+              [nzFileList]="documentFileList"
+              [nzRemove]="removeDocumentFile"
+              nzAccept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
+              [nzMultiple]="false">
+              <button nz-button nzType="default">
+                <i nz-icon nzType="upload"></i>
+                Sélectionner un fichier
+              </button>
+            </nz-upload>
+            <div *ngIf="addDocumentForm.get('document')?.invalid && addDocumentForm.get('document')?.touched" class="error-text">
+              Un fichier est requis
+            </div>
+            <div class="upload-hint">
+              Formats acceptés: PDF, DOC, DOCX, JPG, JPEG, PNG, GIF (Max: 10MB)
+            </div>
+          </nz-form-control>
+        </nz-form-item>
+
+        <!-- Aperçu du fichier sélectionné -->
+        <div *ngIf="selectedDocumentFile" class="file-preview">
+          <h5>Fichier sélectionné</h5>
+          <div class="preview-info">
+            <div class="preview-icon">
+              <i nz-icon [nzType]="getFileIconType(selectedDocumentFile.name)"></i>
+            </div>
+            <div class="preview-details">
+              <div class="file-name">{{ selectedDocumentFile.name }}</div>
+              <div class="file-size">{{ formatFileSize(selectedDocumentFile.size) }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Étape 4: Confirmation -->
+      <div *ngIf="currentStep === 3">
+        <h4>Confirmation</h4>
+        
+        <div class="confirmation-summary">
+          <div class="summary-section">
+            <h5>Utilisateur</h5>
+            <p>{{ getUtilisateurDisplayName(selectedUtilisateurDocument) }}</p>
+          </div>
+          
+          <div class="summary-section">
+            <h5>Souscription</h5>
+            <p>#{{ selectedSouscriptionDocument?.id_souscription }} - {{ selectedSouscriptionDocument?.statut_souscription }}</p>
+          </div>
+          
+          <div class="summary-section">
+            <h5>Document</h5>
+            <p><strong>Type:</strong> {{ addDocumentForm.get('libelle_type_document')?.value }}</p>
+            <p><strong>Fichier:</strong> {{ selectedDocumentFile?.name }}</p>
+            <p><strong>Taille:</strong> {{ formatFileSize(selectedDocumentFile?.size || 0) }}</p>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <!-- Actions du modal -->
+    <div class="modal-steps-actions">
+      <button 
+        nz-button 
+        nzType="default" 
+        (click)="previousDocumentStep()" 
+        [disabled]="currentStep === 0">
+        <span nz-icon nzType="left"></span>
+        Précédent
+      </button>
+      
+      <button 
+        nz-button 
+        nzType="default" 
+        (click)="closeAddDocumentModal()">
+        Annuler
+      </button>
+      
+      <button 
+        nz-button 
+        nzType="primary" 
+        (click)="nextDocumentStep()" 
+        *ngIf="currentStep < 3"
+        [disabled]="!isCurrentDocumentStepValid()">
+        Suivant
+        <span nz-icon nzType="right"></span>
+      </button>
+      
+      <button 
+        nz-button 
+        nzType="primary" 
+        (click)="submitAddDocument()" 
+        *ngIf="currentStep === 3"
+        [nzLoading]="isSubmittingDocument"
+        [disabled]="!addDocumentForm.valid || !selectedDocumentFile">
+        <span nz-icon nzType="save"></span>
+        Enregistrer le document
+      </button>
+    </div>
+  </div>
 </nz-modal>
