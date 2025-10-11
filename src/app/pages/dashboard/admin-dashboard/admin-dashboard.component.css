@@ -1,4 +1,3 @@
-/* Reset et styles de base */
 :host {
   display: block;
   height: 100vh;
@@ -66,7 +65,6 @@
   line-height: 1;
 }
 
-/* Quand la sidebar est réduite */
 .ant-layout-sider-collapsed .sidebar-logo {
   padding: 0 16px;
 }
@@ -84,7 +82,6 @@
   overflow: hidden;
 }
 
-/* Layout principal */
 .main-layout {
   flex: 1;
   display: flex;
@@ -94,7 +91,6 @@
   min-width: 0;
 }
 
-/* Header */
 nz-header {
   padding: 0;
   width: 100%;
@@ -219,7 +215,6 @@ nz-header {
   color: #ff4d4f !important;
 }
 
-/* Content */
 nz-content {
   flex: 1;
   overflow: auto;
@@ -234,7 +229,6 @@ nz-content {
   box-sizing: border-box;
 }
 
-/* Menu items - amélioration pour la sidebar réduite */
 .ant-layout-sider-collapsed .ant-menu-item {
   padding: 0 16px !important;
 }
@@ -245,7 +239,6 @@ nz-content {
   overflow: hidden;
 }
 
-/* Fix pour éviter les problèmes de largeur */
 .ant-layout {
   min-width: 0;
 }
@@ -254,19 +247,16 @@ nz-content {
   min-width: 0;
 }
 
-/* Fix important pour le header mobile */
 .ant-layout-header {
   height: auto !important;
   line-height: normal !important;
   padding: 0 !important;
 }
 
-/* Animation pour la sidebar */
 .ant-layout-sider {
   transition: all .2s;
 }
 
-/* Scrollbar personnalisée pour la sidebar */
 .menu-sidebar::-webkit-scrollbar {
   width: 6px;
 }
@@ -280,14 +270,12 @@ nz-content {
   background: rgba(255, 255, 255, 0.1);
 }
 
-/* Responsive - Tablette */
 @media (max-width: 768px) {
   .app-header {
     padding: 0 16px;
     height: 56px;
   }
 
-  /* Quand le menu est ouvert sur tablette/mobile */
   .ant-layout-sider:not(.ant-layout-sider-collapsed) .header-username {
     max-width: 120px;
     overflow: hidden;
@@ -309,10 +297,6 @@ nz-content {
     padding: 16px;
   }
 
-  .header-left {
-    gap: 16px;
-  }
-
   .header-username {
     font-size: 0.9rem;
     max-width: 120px;
@@ -325,18 +309,8 @@ nz-content {
     width: 32px !important;
     height: 32px !important;
   }
-
-  .logout-icon-btn {
-    padding: 6px 10px !important;
-    height: 36px !important;
-  }
-
-  .logout-icon-btn span[nz-icon] {
-    font-size: 18px !important;
-  }
 }
 
-/* Responsive - Mobile */
 @media (max-width: 480px) {
   .inner-content {
     padding: 8px;
@@ -345,10 +319,6 @@ nz-content {
   .app-header {
     padding: 0 8px;
     height: 48px;
-  }
-
-  .header-right {
-    gap: 6px;
   }
 
   .header-trigger {
@@ -372,26 +342,6 @@ nz-content {
     height: 24px !important;
   }
 
-  .logout-icon-btn {
-    padding: 4px 6px !important;
-    height: 30px !important;
-  }
-
-  .logout-icon-btn span[nz-icon] {
-    font-size: 14px !important;
-  }
-
-  .description {
-    font-size: 0.9rem;
-    margin-right: 8px;
-    max-width: none;
-  }
-
-  /* Cible spécifique quand sidebar ouverte */
-  .ant-layout-sider:not(.ant-layout-sider-collapsed) ~ .main-layout .description {
-    max-width: 120px;
-  }
-
   .sidebar-logo {
     padding: 0 12px;
     height: 44px;
@@ -406,40 +356,11 @@ nz-content {
     font-size: 9px;
     margin-left: 6px;
   }
-
-  .ant-menu-item {
-    height: 36px !important;
-    line-height: 36px !important;
-    font-size: 11px !important;
-    padding: 0 12px !important;
-  }
-
-  .ant-menu-item .anticon {
-    font-size: 12px !important;
-    margin-right: 6px !important;
-  }
-
-  .ant-menu-item span:not(.anticon) {
-    display: inline-block;
-    max-width: 100px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    vertical-align: middle;
-  }
 }
 
-/* Très petits écrans */
 @media (max-width: 360px) {
   .header-username {
     font-size: 0.65rem;
-    max-width: 100px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .ant-layout-sider:not(.ant-layout-sider-collapsed) .header-username {
     max-width: 100px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -450,30 +371,9 @@ nz-content {
     padding: 12px 4px;
   }
 
-  .logout-icon-btn {
-    padding: 3px 4px !important;
-    height: 28px !important;
-  }
-
-  .logout-icon-btn span[nz-icon] {
-    font-size: 12px !important;
-  }
-
   .header-avatar {
     width: 22px !important;
     height: 22px !important;
-  }
-
-  .header-right {
-    gap: 4px;
-  }
-
-  .description {
-    font-size: 0.8rem;
-  }
-
-  .ant-layout-sider:not(.ant-layout-sider-collapsed) ~ .main-layout .description {
-    max-width: 80px;
   }
 
   .ant-layout-sider:not(.ant-layout-sider-collapsed) {
@@ -491,25 +391,8 @@ nz-content {
     height: 18px;
     width: 18px;
   }
-
-  .ant-menu-item {
-    padding: 0 10px !important;
-    height: 34px !important;
-    line-height: 34px !important;
-    font-size: 10px !important;
-  }
-
-  .ant-menu-item .anticon {
-    font-size: 11px !important;
-    margin-right: 5px !important;
-  }
-
-  .ant-menu-item span:not(.anticon) {
-    max-width: 85px;
-  }
 }
 
-/* Comportement uniforme de la sidebar sur tous les appareils */
 .ant-layout-sider {
   position: relative !important;
   transition: all 0.2s;
@@ -520,7 +403,6 @@ nz-content {
   transition: all 0.2s;
 }
 
-/* Sur mobile, réduire BEAUCOUP la largeur de la sidebar */
 @media (max-width: 480px) {
   .ant-layout-sider:not(.ant-layout-sider-collapsed) {
     width: 160px !important;
