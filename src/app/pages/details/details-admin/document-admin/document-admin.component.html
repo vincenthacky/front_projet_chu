@@ -7,10 +7,10 @@
       <i nz-icon nzType="file-text" class="title-icon"></i>
       Gestion des Documents
     </h1>
-    <p class="page-subtitle">Administrez tous les documents du système</p>
+    <p class="page-subtitle" style="margin-right: 20px;">Administrez tous les documents du système</p>
     
-    <div class="header-actions">
-      <button nz-button nzType="primary" (click)="rafraichir()" [nzLoading]="loading">
+    <div class="header-actions" >
+      <button nz-button nzType="primary" (click)="rafraichir()" [nzLoading]="loading" style="margin-right: 20px">
         <i nz-icon nzType="reload"></i>
         Actualiser
       </button>
@@ -516,7 +516,8 @@
         nz-button 
         nzType="default" 
         (click)="previousDocumentStep()" 
-        [disabled]="currentStep === 0">
+        [disabled]="currentStep === 0"
+        style="margin-right: 20px">
         <span nz-icon nzType="left"></span>
         Précédent
       </button>
@@ -524,7 +525,8 @@
       <button 
         nz-button 
         nzType="default" 
-        (click)="closeAddDocumentModal()">
+        (click)="closeAddDocumentModal()"
+        style="margin-right: 20px">
         Annuler
       </button>
       
@@ -533,7 +535,8 @@
         nzType="primary" 
         (click)="nextDocumentStep()" 
         *ngIf="currentStep < 3"
-        [disabled]="!isCurrentDocumentStepValid()">
+        [disabled]="!isCurrentDocumentStepValid()"
+        >
         Suivant
         <span nz-icon nzType="right"></span>
       </button>

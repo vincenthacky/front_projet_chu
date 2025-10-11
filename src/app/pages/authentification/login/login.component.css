@@ -930,3 +930,64 @@ input::-moz-placeholder {
 input:-ms-input-placeholder {
   color: #9ca3af;
 }
+
+/* Styles pour les logos des partenaires */
+
+/* Styles pour les logos des partenaires */
+
+.partner-image {
+  width: 150px;
+  height: 100px;
+  border-radius: 5%;
+  transition: transform 0.3s ease; /* Transition pour l'agrandissement */
+}
+
+.partner-image:hover {
+  transform: scale(1.2); /* Agrandit de 20% au survol */
+}
+
+.partners-section {
+  position: absolute; 
+  bottom: 0; 
+  left: 50px; 
+  padding: 95px;
+}
+
+.partners-title {
+  color: white; 
+  margin-top: -10px;
+}
+
+.partners-logos {
+ display:  flex; 
+  justify-content: center; 
+  align-items: center; 
+  gap: 40px;
+}
+/* Media query pour tablettes (typiquement 768px à 1024px) : centrer la section partenaires */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .partners-section {
+    position: relative; /* Changer en relative pour permettre le centrage */
+    left: auto; /* Annuler le left fixe */
+    margin: 0 auto; /* Centrer horizontalement */
+    padding: 40px 20px; /* Réduire le padding pour s'adapter à l'écran tablette */
+    width: 100%; /* Prendre toute la largeur pour centrage */
+    text-align: center; /* Centrer le titre et les logos */
+  }
+
+  .partners-logos {
+    justify-content: center; /* Assurer le centrage des logos */
+  }
+
+  .partner-image {
+    width: 120px; /* Réduire légèrement la taille pour tablettes */
+    height: 80px;
+  }
+}
+
+/* Media query pour téléphones (max-width: 767px) : faire disparaître la section partenaires */
+@media (max-width: 767px) {
+  .partners-section {
+    display: none; /* Masquer complètement la section */
+  }
+}
