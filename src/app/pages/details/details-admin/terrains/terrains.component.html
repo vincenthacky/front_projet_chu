@@ -87,10 +87,33 @@
             </nz-form-control>
           </nz-form-item>
 
+            <!-- montant mensuel -->
+            <nz-form-item>
+              <nz-form-label [nzXs]="{ span: 24 }" [nzSm]="{ span: 8 }" [nzMd]="{ span: 12 }" nzRequired>
+                montant mensuel 
+              </nz-form-label>
+              <nz-form-control 
+                [nzXs]="{ span: 24 }"
+                [nzSm]="{ span: 16 }"
+                [nzMd]="{ span: 18 }"
+                [nzErrorTip]="getFieldError('montant_mensuel')"
+                [nzValidateStatus]="isFieldError('montant_mensuel') ? 'error' : ''">
+                <nz-input-number
+                  formControlName="montant_mensuel"
+                  [nzMin]="1"
+                  [nzMax]="999999999"
+                  [nzFormatter]="currencyFormatter"
+                  [nzParser]="currencyParser"
+                  (ngModelChange)="onMontantMensuelChange($event)"
+                  nzPlaceHolder="250000"
+                  class="full-width-input" />
+              </nz-form-control>
+            </nz-form-item>
+
           <!-- Prix unitaire -->
           <nz-form-item>
             <nz-form-label [nzXs]="{ span: 24 }" [nzSm]="{ span: 8 }" [nzMd]="{ span: 12 }" nzRequired>
-              Prix/m² (FCFA)
+              Prix Total 
             </nz-form-label>
             <nz-form-control 
               [nzXs]="{ span: 24 }"
@@ -109,6 +132,8 @@
                 class="full-width-input" />
             </nz-form-control>
           </nz-form-item>
+
+          
 
           <!-- Statut -->
           <nz-form-item>
@@ -302,16 +327,24 @@
                   </div>
                   <div class="info-value">{{ formatSuperficie(selectedTerrain.superficie) }}</div>
                 </div>
-                
                 <div class="info-card">
                   <div class="info-label">
                     <i nz-icon nzType="dollar" nzTheme="outline"></i>
-                    Prix unitaire
+                 Montant mensuel
+                  </div>
+                  <div class="info-value price">{{ formatPrice(selectedTerrain.montant_mensuel) }}/m²</div>
+                </div>
+
+                <div class="info-card">
+                  <div class="info-label">
+                    <i nz-icon nzType="dollar" nzTheme="outline"></i>
+                    Prix Total estimé
                   </div>
                   <div class="info-value price">{{ formatPrice(selectedTerrain.prix_unitaire) }}/m²</div>
                 </div>
+             
                 
-                <div class="info-card">
+                <!-- <div class="info-card">
                   <div class="info-label">
                     <i nz-icon nzType="calculator" nzTheme="outline"></i>
                     Prix total estimé
@@ -319,7 +352,7 @@
                   <div class="info-value total-price">
                     {{ calculateTotalPrice(selectedTerrain) }}
                   </div>
-                </div>
+                </div> -->
               </div>
             </div>
 

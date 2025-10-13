@@ -98,11 +98,20 @@ export class TerrainsComponent implements OnInit {
       });
     });
 
-    this.terrainForm.get('prix_unitaire')?.valueChanges.subscribe(value => {
+    this.terrainForm.get('montant_mensuel')?.valueChanges.subscribe(value => {
       if (typeof value === 'string') {
         const numericValue = parseFloat(value) || 0;
         if (numericValue !== this.terrainForm.get('prix_unitaire')?.value) {
           this.terrainForm.get('prix_unitaire')?.setValue(numericValue, { emitEvent: false });
+        }
+      }
+    });
+
+    this.terrainForm.get('montant_mensuel')?.valueChanges.subscribe(value => {
+      if (typeof value === 'string') {
+        const numericValue = parseFloat(value) || 0;
+        if (numericValue !== this.terrainForm.get('montant_mensuel')?.value) {
+          this.terrainForm.get('montant_mensuel')?.setValue(numericValue, { emitEvent: false });
         }
       }
     });
@@ -112,8 +121,9 @@ export class TerrainsComponent implements OnInit {
     return this.fb.group({
       libelle: ['', [Validators.required, Validators.minLength(3)]],
       localisation: ['', [Validators.required, Validators.minLength(5)]],
-      superficie: [null, [Validators.required, Validators.min(1)]],
-      prix_unitaire: [null, [Validators.required, Validators.min(1)]],
+      superficie: [250, [Validators.required, Validators.min(1)]],
+      prix_unitaire: [4121600 , [Validators.required, Validators.min(1)]],
+      montant_mensuel: [64400, [Validators.required, Validators.min(1)]],
       description: ['', [Validators.required, Validators.minLength(10)]],
       statut_terrain: ['disponible', [Validators.required]],
     });
@@ -197,6 +207,7 @@ export class TerrainsComponent implements OnInit {
       localisation: terrain.localisation,
       superficie: parseFloat(terrain.superficie.toString()),
       prix_unitaire: parseFloat(terrain.prix_unitaire.toString()) || 0,
+      montant_mensuel: parseFloat(terrain.montant_mensuel.toString()) || 0,
       description: terrain.description,
       statut_terrain: terrain.statut_terrain,
     });
@@ -242,6 +253,7 @@ export class TerrainsComponent implements OnInit {
     this.terrainForm.reset({
       statut_terrain: 'disponible',
       prix_unitaire: null,
+      montant_mensuel: 64400,
       superficie: null,
       libelle: '',
       localisation: '',
@@ -296,7 +308,8 @@ export class TerrainsComponent implements OnInit {
   calculateTotalPrice(terrain: Terrain): string {
     const superficie = parseFloat(terrain.superficie.toString());
     const prixUnitaire = parseFloat(terrain.prix_unitaire.toString());
-    return this.formatPrice(superficie * prixUnitaire);
+    const montantMensuel = parseFloat(terrain.montant_mensuel.toString());
+    return this.formatPrice(64 * montantMensuel);
   }
 
   trackByTerrain(index: number, terrain: Terrain): number | undefined {
@@ -308,4 +321,10 @@ export class TerrainsComponent implements OnInit {
     console.log('FormControl prix_unitaire:', this.terrainForm.get('prix_unitaire')?.value);
     console.log('Formulaire valide ?', this.terrainForm.valid);
   }
+  onMontantMensuelChange(value: number): void {
+    console.log('Montant mensuel changé:', value);
+    console.log('FormControl montant_mensuel:', this.terrainForm.get('montant_mensuel')?.value);
+    console.log('Formulaire valide ?', this.terrainForm.valid);
+  }
+
 }

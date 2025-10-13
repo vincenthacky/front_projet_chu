@@ -1,5 +1,5 @@
 export const environment = {
   production: false,
-  apiUrl: 'https://api.elokatecheznous.com/api',
-  storageUrl: 'https://api.elokatecheznous.com/storage'
+  apiUrl: 'http://192.168.252.75:8000/api',
+  storageUrl: 'http://192.168.252.75:8000/storage'
 };

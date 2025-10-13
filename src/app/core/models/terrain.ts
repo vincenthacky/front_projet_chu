@@ -6,6 +6,7 @@ export interface Terrain {
   prix_unitaire: string | number;
   description: string;
   statut_terrain: 'disponible' | 'vendu' | 'reserve';
+  montant_mensuel: 'string' | number;
   date_creation: string;
   created_at?: string;
   updated_at?: string;
