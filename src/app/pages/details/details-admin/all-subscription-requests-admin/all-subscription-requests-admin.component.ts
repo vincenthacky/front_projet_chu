@@ -23,7 +23,7 @@ import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 
-
+import { environment } from '@/environment';
 import { HttpClient } from '@angular/common/http';
 import { ApiSouscription, SouscriptionFilters, SouscriptionResponse } from 'src/app/core/models/souscription';
 import { SouscriptionService } from 'src/app/core/services/souscription.service';
@@ -89,7 +89,8 @@ export class AllSubscriptionRequestsAdminComponent implements OnInit, OnDestroy 
   private searchTimeout: any;
 
   // API URL pour les actions administrateur
-  private readonly API_URL = 'http://192.168.252.75:8000/api';
+  private readonly API_URL = `${environment.apiUrl}`;
+  //private API_BASE_URL = `${environment.apiUrl}/dashboard`;
 
   constructor(
     private souscriptionService: SouscriptionService,

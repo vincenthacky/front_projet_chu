@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
+import { environment } from '@/environment';
 
 // Interfaces pour les réponses API du dashboard
 export interface DashboardStats {
@@ -74,7 +75,8 @@ export interface DashboardCompleteData {
   providedIn: 'root'
 })
 export class DashboardService {
-  private readonly API_BASE_URL = 'http://192.168.252.75:8000/api/dashboard';
+   private API_BASE_URL = `${environment.apiUrl}/dashboard`;
+  //private readonly API_BASE_URL = 'http://192.168.252.75:8000/api/dashboard';
 
   // BehaviorSubjects pour maintenir l'état des données
   private statsSubject = new BehaviorSubject<DashboardStats | null>(null);
