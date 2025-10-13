@@ -1,0 +1,2 @@
+import './polyfills.server.mjs';
+import{Ob as o,Pb as m,jc as a,oa as t,sc as i}from"./chunk-OQNIVP4F.mjs";import"./chunk-5XUXGTUW.mjs";var c=class n{static \u0275fac=function(e){return new(e||n)};static \u0275cmp=t({type:n,selectors:[["app-new-document-admin"]],standalone:!0,features:[i],decls:2,vars:0,template:function(e,d){e&1&&(o(0,"p"),a(1,"new-document-admin works!"),m())}})};export{c as NewDocumentAdminComponent};

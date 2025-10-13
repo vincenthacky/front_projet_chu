@@ -140,7 +140,6 @@
   transform: rotate(-45deg) translate(6px, -6px);
 }
 
-/* Navigation desktop - visible par défaut */
 @media (min-width: 901px) {
   .burger {
     display: none !important;
@@ -151,7 +150,6 @@
   }
 }
 
-/* Navigation mobile */
 @media (max-width: 900px) {
   .nav-container {
     padding: 0 20px;
@@ -216,7 +214,6 @@
     padding-left: 10px;
   }
   
-  /* Overlay pour fermer le menu en cliquant à l'extérieur */
   .nav-menu.menu-mobile-open::before {
     content: '';
     position: fixed;
@@ -229,7 +226,6 @@
   }
 }
 
-/* Très petit écran */
 @media (max-width: 600px) {
   .nav-container {
     padding: 0 15px;
@@ -272,7 +268,6 @@
   }
 }
 
-/* Animation d'ouverture du menu */
 .ant-menu-horizontal {
   opacity: 0;
   visibility: hidden;
@@ -286,7 +281,6 @@
   transform: translateY(0);
 }
 
-/* Empêcher le scroll quand le menu est ouvert */
 body.menu-open {
   overflow: hidden;
 }
