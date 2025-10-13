@@ -115,34 +115,18 @@ export class DocumentService {
     return this.getAllDocuments(searchFilters);
   }
 
-  // MÉTHODE CORRIGÉE PRINCIPALE : Génération de l'URL des documents
-  getDocumentUrl(cheminFichier: string): string {
-    if (!cheminFichier) {
-      console.warn('🔴 Chemin fichier vide ou null');
-      return this.getImagePlaceholder();
-    }
+  
 
-    // Nettoyer le chemin en supprimant les slashes en début/fin
-    let cleanPath = cheminFichier.replace(/^\/+|\/+$/g, '');
-    
-    // S'assurer que le chemin commence par 'documents/' si ce n'est pas déjà le cas
-    if (!cleanPath.startsWith('documents/')) {
-      cleanPath = `documents/${cleanPath}`;
-    }
-    
-    // Construire l'URL complète en remplaçant /api par /storage
-    const baseUrl = this.API_URL.replace('/api', '');
-    const fullUrl = `${baseUrl}/storage/${cleanPath}`;
-    
-    console.log('🔍 URL générée pour document:', {
-      cheminOriginal: cheminFichier,
-      cheminNettoye: cleanPath,
-      urlComplete: fullUrl,
-      baseUrl: baseUrl
-    });
-    
-    return fullUrl;
-  }
+  getDocumentUrl(cheminFichier: string): string {
+  if (!cheminFichier) return this.getImagePlaceholder();
+
+  const imagePath = cheminFichier.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  const fullUrl = `${environment.storageUrl}/${imagePath}`;
+
+  console.log('✅ URL document générée:', fullUrl);
+  return fullUrl;
+}
+
 
   /**
    * Ajouter un document pour un utilisateur et une souscription
