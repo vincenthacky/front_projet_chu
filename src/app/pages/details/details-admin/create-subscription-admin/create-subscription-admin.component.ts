@@ -10,12 +10,12 @@ import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { NzGridModule } from 'ng-zorro-antd/grid';
 import { NzCardModule } from 'ng-zorro-antd/card';
 import { CommonModule } from '@angular/common';
+import { NzIconModule } from 'ng-zorro-antd/icon';
 import { User } from 'src/app/core/models/auth';
 import { Terrain, TerrainResponse, ApiSouscription, SouscriptionSingleResponse } from 'src/app/core/models/souscription';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { SouscriptionService } from 'src/app/core/services/souscription.service';
 import { TerrainsService } from 'src/app/core/services/terrains.service';
-
 
 @Component({
   selector: 'app-create-subscription-admin',
@@ -29,7 +29,8 @@ import { TerrainsService } from 'src/app/core/services/terrains.service';
     NzSelectModule,
     NzDatePickerModule,
     NzGridModule,
-    NzCardModule
+    NzCardModule,
+    NzIconModule
   ],
   templateUrl: './create-subscription-admin.component.html',
   styleUrls: ['./create-subscription-admin.component.css']
@@ -41,6 +42,7 @@ export class CreateSubscriptionAdminComponent implements OnInit {
   terrains: Terrain[] = [];
   admins: User[] = [];
   statutOptions = ['active', 'suspendu', 'annule'];
+  filteredUsers: User[] = []; // Propriété ajoutée
 
   constructor(
     private fb: FormBuilder,
@@ -89,6 +91,10 @@ export class CreateSubscriptionAdminComponent implements OnInit {
             statut_utilisateur: this.normalizeStatutUtilisateur(user.statut_utilisateur)
           } as User))
           .filter(user => user.type !== 'superAdmin' && user.type !== 'admin');
+        
+        // Initialiser la liste filtrée avec tous les utilisateurs
+        this.filteredUsers = [...this.users];
+        
         console.log('👥 Utilisateurs non-admin chargés:', this.users);
       },
       error: () => this.message.error('Erreur lors du chargement des utilisateurs.')
@@ -145,6 +151,29 @@ export class CreateSubscriptionAdminComponent implements OnInit {
       });
       console.log('Montant mensuel mis à jour:', selectedTerrain.montant_mensuel);
     }
+  }
+
+  // Méthode ajoutée pour la recherche
+  onSearchUser(searchValue: string): void {
+    if (!searchValue) {
+      this.filteredUsers = [...this.users];
+      return;
+    }
+
+    const searchLower = searchValue.toLowerCase();
+    this.filteredUsers = this.users.filter(user => {
+      const nomComplet = `${user.nom} ${user.prenom}`.toLowerCase();
+      const nomPrenom = `${user.prenom} ${user.nom}`.toLowerCase();
+      return nomComplet.includes(searchLower) || 
+             nomPrenom.includes(searchLower) ||
+             user.nom.toLowerCase().includes(searchLower) ||
+             user.prenom.toLowerCase().includes(searchLower);
+    });
+  }
+
+  // Méthode ajoutée pour le filtre personnalisé
+  filterOption = (): boolean => {
+    return true; // On gère le filtrage manuellement dans onSearchUser
   }
 
   onSubmit(): void {

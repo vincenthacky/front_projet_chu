@@ -98,11 +98,6 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
     box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
-
-    &.premium-badge {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-        box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
-    }
 }
 
 .plan-name {
@@ -322,49 +317,6 @@
     font-weight: 500;
 }
 
-.bonus-section {
-    background: linear-gradient(135deg, #ecfdf5, #d1fae5);
-    border-radius: 16px;
-    padding: 20px;
-    border: 2px solid #10b981;
-    position: relative;
-    flex-shrink: 0;
-}
-
-.bonus-badge {
-    background: #10b981;
-    color: white;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    position: absolute;
-    top: -10px;
-    left: 20px;
-    text-transform: uppercase;
-}
-
-.bonus-content {
-    margin-top: 12px;
-}
-
-.bonus-title {
-    color: #065f46;
-    font-weight: 600;
-    margin-bottom: 8px;
-    font-size: 0.875rem;
-
-    i {
-        margin-right: 8px;
-    }
-}
-
-.bonus-text {
-    color: #047857;
-    font-size: 0.875rem;
-    line-height: 1.5;
-}
-
 .terms-section {
     background: #f8fafc;
     border-radius: 12px;
@@ -390,27 +342,6 @@
     font-weight: 600;
 }
 
-.premium-card {
-    border: 3px solid #f59e0b;
-    transform: scale(1.02);
-
-    .card-header {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-    }
-
-    &:hover {
-        transform: scale(1.02) translateY(-8px);
-    }
-
-    .cta-button {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-
-        &:hover:not(:disabled) {
-            background: linear-gradient(135deg, #d97706, #b45309);
-        }
-    }
-}
-
 /* Responsive Design */
 @media (max-width: 1200px) {
     :host {
@@ -428,14 +359,6 @@
         min-width: 300px;
         max-width: 420px;
         min-height: 520px;
-    }
-
-    .premium-card {
-        transform: scale(1.01);
-
-        &:hover {
-            transform: scale(1.01) translateY(-8px);
-        }
     }
 }
 
@@ -468,7 +391,6 @@
 @media (max-width: 768px) {
     :host {
         padding: 12px 8px;
-        min-height: auto;
         display: flex;
         flex-direction: column;
     }
@@ -497,15 +419,6 @@
         max-width: 100%;
         min-width: 0;
         min-height: 480px;
-    }
-
-    .premium-card {
-        transform: none;
-        order: -1;
-
-        &:hover {
-            transform: translateY(-8px);
-        }
     }
 
     .card-header {
@@ -591,11 +504,6 @@
         padding: 6px;
         margin-bottom: 6px;
         gap: 6px;
-    }
-
-    .bonus-section {
-        padding: 16px;
-        margin: 12px 0;
     }
 
     .terms-section {

@@ -98,13 +98,13 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
 
   // Propriétés pour la pagination
   currentPage = 1;
-  perPage = 10;
+  perPage = 20;
   totalPages = 0;
 
   // Propriétés pour les filtres
   filters: SouscriptionFilters = {
     page: 1,
-    per_page: 100
+    per_page:20
   };
 
   // Variables pour les filtres du template
@@ -218,37 +218,53 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.error = null;
 
-    const searchFilters = {
+    const apiFilters: SouscriptionFilters = {
       ...this.filters,
       ...filters,
       all_users: true,
-      admin_view: true,
-      per_page: 100
+      admin_view: true
     };
 
-    console.log('📤 Filtres envoyés à l\'API:', searchFilters);
+    if (this.statusFilter) {
+      apiFilters.statut = this.statusFilter;
+      console.log('✅ Ajout filtre statut API:', apiFilters.statut);
+    }
 
-    this.souscriptionService.getAllSouscriptions(searchFilters).subscribe({
+    if (this.searchTerm) {
+      apiFilters.search = this.searchTerm;
+      console.log('✅ Ajout filtre recherche API:', apiFilters.search);
+    }
+
+    if (this.surfaceFilter) {
+      apiFilters.superficie = this.surfaceFilter;
+      console.log('✅ Ajout filtre superficie API:', apiFilters.superficie);
+    }
+
+    if (this.dateDebut) {
+      apiFilters.date_debut = this.dateDebut;
+      console.log('✅ Ajout filtre date début API:', apiFilters.date_debut);
+    }
+
+    if (this.dateFin) {
+      apiFilters.date_fin = this.dateFin;
+      console.log('✅ Ajout filtre date fin API:', apiFilters.date_fin);
+    }
+
+    console.log('📤 Paramètres envoyés à l\'API:', apiFilters);
+
+    this.souscriptionService.getAllSouscriptions(apiFilters).subscribe({
       next: (response: SouscriptionResponse) => {
         console.log('📡 Réponse complète de l\'API:', response);
 
         if (response.success) {
-          this.souscriptions = response.data;
+          let localData = response.data;
 
-          console.log('🔍 ANALYSE DES DONNÉES REÇUES:');
-          console.log('- Nombre total de souscriptions:', this.souscriptions.length);
+          console.log('📋 Données extraites:', localData.length, 'éléments');
 
-          const userIds = this.souscriptions.map(s => s.id_utilisateur);
-          const uniqueUserIds = [...new Set(userIds)];
-          console.log('- IDs utilisateurs dans les données:', userIds);
-          console.log('- IDs utilisateurs uniques:', uniqueUserIds);
-          console.log('- Nombre d\'utilisateurs uniques:', uniqueUserIds.length);
+          localData = this.applyClientSideFilters(localData);
+          console.log('🔧 Après filtrage client:', localData.length, 'éléments');
 
-          if (uniqueUserIds.length === 1) {
-            console.warn('⚠️ ATTENTION: L\'API ne retourne que les souscriptions d\'un seul utilisateur!');
-            console.warn('C\'est normal si cet utilisateur a toutes les souscriptions dans la BDD');
-          }
-
+          this.souscriptions = localData;
           this.totalSouscriptions = response.pagination.total;
           this.currentPage = response.pagination.current_page;
           this.totalPages = response.pagination.last_page;
@@ -270,6 +286,56 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
         console.log('✅ Chargement terminé. Utilisateurs finaux:', this.groupedUsers.length);
       }
     });
+  }
+
+  // AJOUT : Méthode applyClientSideFilters pour filtrer côté client (comme dans le premier code)
+  private applyClientSideFilters(souscriptions: ApiSouscription[]): ApiSouscription[] {
+    let filtered = [...souscriptions];
+    console.log('🔍 Début filtrage:', souscriptions.length, 'éléments');
+
+    if (this.statusFilter) {
+      console.log('🎯 Filtrage par statut:', this.statusFilter);
+      filtered = filtered.filter(sub => sub.statut_dynamique === this.statusFilter);
+      console.log('📊 Après filtre statut:', filtered.length, 'éléments');
+    }
+
+    if (this.surfaceFilter) {
+      console.log('🏔️ Filtrage par superficie:', this.surfaceFilter);
+      filtered = filtered.filter(sub => {
+        const surfaceNumber = sub.terrain?.superficie?.split('.')[0] || '0';
+        const match = surfaceNumber === this.surfaceFilter.toString();
+        console.log(`🎯 Surface API: "${sub.terrain?.superficie}" -> Nettoyée: "${surfaceNumber}" vs Filtre: "${this.surfaceFilter}" = ${match ? '✅' : '❌'}`);
+        return match;
+      });
+      console.log('📊 Après filtre superficie:', filtered.length, 'éléments');
+    }
+
+    if (this.searchTerm) {
+      console.log('🔎 Filtrage par recherche:', this.searchTerm);
+      const searchLower = this.searchTerm.toLowerCase();
+      filtered = filtered.filter(sub =>
+        sub.id_souscription.toString().includes(searchLower) ||
+        (sub.terrain?.libelle || '').toLowerCase().includes(searchLower) ||
+        sub.prix_total_terrain.toString().includes(searchLower) ||
+        sub.montant_paye.toString().includes(searchLower)
+      );
+      console.log('📊 Après filtre recherche:', filtered.length, 'éléments');
+    }
+
+    // Filtrage par dates (client-side si non géré par API)
+    if (this.dateDebut || this.dateFin) {
+      console.log('📅 Filtrage par dates:', { dateDebut: this.dateDebut, dateFin: this.dateFin });
+      filtered = filtered.filter(sub => {
+        const subDate = new Date(sub.date_souscription);
+        const start = this.dateDebut ? new Date(this.dateDebut) : new Date(0);
+        const end = this.dateFin ? new Date(this.dateFin) : new Date();
+        return subDate >= start && subDate <= end;
+      });
+      console.log('📊 Après filtre dates:', filtered.length, 'éléments');
+    }
+
+    console.log(`✅ Filtrage terminé: ${souscriptions.length} -> ${filtered.length} résultats`);
+    return filtered;
   }
 
   /**
@@ -559,12 +625,19 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
    */
   showModal(subscription: Subscription): void {
     console.log('🔍 Ouverture modal pour:', subscription.id);
-    console.log('💳 Paiements triés par date décroissante:', subscription.payments);
+    console.log('💳 Paiements triés par date décroissante (plus récent en premier):', subscription.payments);
 
     if (subscription.payments && Array.isArray(subscription.payments)) {
       // Les paiements sont déjà triés par date décroissante dans convertToSubscriptionFormat
       // On prend les 5 premiers (les plus récents)
-      this.lastFivePayments = subscription.payments.slice(0, 5);
+      this.lastFivePayments = subscription.payments.slice(0, 5).map(payment => ({
+        date: payment.date,
+        amount: payment.amount,
+        numero_mensualite: payment.numero_mensualite,
+        mode_paiement: payment.mode_paiement,
+        reference_paiement: payment.reference_paiement,
+        statut_versement: payment.statut_versement
+      }));
 
       console.log('📋 5 derniers paiements (ordre décroissant - plus récent en premier):', this.lastFivePayments);
     } else {
@@ -634,7 +707,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
     this.paymentForm = {
       id_souscription: souscriptionId,
       mode_paiement: '',
-      montant_paye: 0,
+      montant_paye: 64400,
       date_paiement_effectif: new Date().toISOString().split('T')[0], // Date d'aujourd'hui par défaut
       reference_paiement: '',
       commentaire_paiement: ''
@@ -754,6 +827,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
    */
   onPageChange(page: number): void {
     this.filters.page = page;
+    this.currentPage = page;
     this.loadSouscriptions();
   }
 
@@ -764,6 +838,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
     this.perPage = size;
     this.filters.per_page = size;
     this.filters.page = 1;
+    this.currentPage = 1;
     this.loadSouscriptions();
   }
 
@@ -771,6 +846,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
    * Filtrage par statut
    */
   filterByStatus(statut: string): void {
+    this.statusFilter = statut;
     this.filters.statut = statut === '' ? undefined : statut;
     this.filters.page = 1;
     this.loadSouscriptions();
@@ -781,6 +857,8 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
    * Filtrage par période
    */
   filterByPeriod(dateDebut?: string, dateFin?: string): void {
+    this.dateDebut = dateDebut || '';
+    this.dateFin = dateFin || '';
     this.filters.date_debut = dateDebut;
     this.filters.date_fin = dateFin;
     this.filters.page = 1;
@@ -791,6 +869,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
    * Filtrage par superficie
    */
   filterBySuperficie(superficie?: number): void {
+    this.surfaceFilter = superficie || '';
     this.filters.superficie = superficie;
     this.filters.page = 1;
     this.loadSouscriptions();
@@ -801,6 +880,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
    * Recherche globale
    */
   onSearch(searchTerm: string): void {
+    this.searchTerm = searchTerm;
     this.filters.search = searchTerm;
     this.filters.page = 1;
     this.loadSouscriptions();
@@ -811,8 +891,71 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
    * Rafraîchir les données
    */
   refresh(): void {
-    this.loadSouscriptions();
-    console.log('Actualisation des données...');
+    console.log('🔄 ACTUALISATION COMPLÈTE DÉMARRÉE');
+    this.isLoading = true;
+    this.souscriptions = [];
+    this.groupedUsers = [];
+    this.totalSouscriptions = 0;
+    this.totalPages = 0;
+    this.currentPage = 1;
+
+    console.log('🧹 Données vidées, rechargement depuis l\'API...');
+
+    const forceRefreshFilters: SouscriptionFilters = {
+      page: this.currentPage,
+      per_page: this.perPage,
+      all_users: true,
+      admin_view: true
+    };
+
+    if (this.statusFilter) {
+      forceRefreshFilters.statut = this.statusFilter;
+      console.log('🎯 Maintien du filtre statut:', this.statusFilter);
+    }
+    if (this.searchTerm) {
+      forceRefreshFilters.search = this.searchTerm;
+      console.log('🔍 Maintien de la recherche:', this.searchTerm);
+    }
+    if (this.surfaceFilter) {
+      forceRefreshFilters.superficie = this.surfaceFilter;
+      console.log('🏔️ Maintien du filtre superficie:', this.surfaceFilter);
+    }
+    if (this.dateDebut) {
+      forceRefreshFilters.date_debut = this.dateDebut;
+      console.log('📅 Maintien du filtre date début:', this.dateDebut);
+    }
+    if (this.dateFin) {
+      forceRefreshFilters.date_fin = this.dateFin;
+      console.log('📅 Maintien du filtre date fin:', this.dateFin);
+    }
+
+    this.souscriptionService.getAllSouscriptions(forceRefreshFilters).subscribe({
+      next: (response: SouscriptionResponse) => {
+        console.log('✅ Données fraîches reçues de l\'API:', response);
+        if (response.success) {
+          let localData = response.data;
+          localData = this.applyClientSideFilters(localData);
+
+          this.souscriptions = localData;
+          this.totalSouscriptions = response.pagination.total;
+          this.currentPage = response.pagination.current_page;
+          this.totalPages = response.pagination.last_page;
+
+          this.groupSouscriptionsByUser();
+        } else {
+          this.error = response.message || 'Erreur lors du chargement des souscriptions';
+        }
+        this.isLoading = false;
+        console.log('🎉 ACTUALISATION TERMINÉE - Nouvelles données chargées');
+      },
+      error: (error) => {
+        console.error('❌ Erreur lors de l\'actualisation forcée:', error);
+        this.isLoading = false;
+        this.error = 'Impossible de charger les souscriptions. Veuillez réessayer.';
+      }
+    });
+
+    console.log('🚀 Processus d\'actualisation lancé');
   }
 
   /**
@@ -821,7 +964,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   resetFilters(): void {
     this.filters = {
       page: 1,
-      per_page: 100
+      per_page: this.perPage
     };
     this.searchTerm = '';
     this.statusFilter = '';
@@ -850,7 +993,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
    */
   getStatusDisplay(souscription: ApiSouscription): { status: string; color: string; label: string } {
     const calculatedStatus = this.souscriptionService.calculateSouscriptionStatus(souscription);
-    const apiStatus = souscription.statut_souscription;
+    const apiStatus = souscription.statut_dynamique; // CORRECTION: Utiliser statut_dynamique au lieu de statut_souscription
 
     let finalStatus = calculatedStatus || apiStatus || 'en_attente';
 
@@ -869,12 +1012,18 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
       case 'en_cours':
         return { status: finalStatus, color: 'blue', label: 'En cours' };
       case 'suspendu':
+      case 'suspendue':
         return { status: finalStatus, color: 'orange', label: 'Suspendu' };
       case 'annule':
       case 'annulé':
+      case 'resillee':
         return { status: finalStatus, color: 'default', label: 'Annulé' };
       case 'en_attente':
         return { status: finalStatus, color: 'cyan', label: 'En attente' };
+      case 'rejete':
+        return { status: finalStatus, color: 'red', label: 'Rejeté' };
+      case 'active':
+        return { status: finalStatus, color: 'blue', label: 'Active' };
       default:
         return { status: finalStatus, color: 'default', label: finalStatus || 'Non défini' };
     }
@@ -1032,10 +1181,8 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
    * Gestionnaire de changement de terme de recherche avec debounce
    */
   onSearchChange(): void {
-    if (this.searchTimeout) {
-      clearTimeout(this.searchTimeout);
-    }
-
+    console.log('Recherche changée:', this.searchTerm);
+    clearTimeout(this.searchTimeout);
     this.searchTimeout = setTimeout(() => {
       this.onSearch(this.searchTerm);
     }, 500);
@@ -1045,6 +1192,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
    * Gestionnaire de changement de filtre de statut
    */
   onStatusFilterChange(): void {
+    console.log('Filtre statut changé:', this.statusFilter);
     this.filterByStatus(this.statusFilter);
   }
 
@@ -1052,6 +1200,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
    * Gestionnaire de changement de filtre de surface
    */
   onSurfaceFilterChange(): void {
+    console.log('Filtre surface changé vers:', this.surfaceFilter);
     const surface = this.surfaceFilter === '' ? undefined : Number(this.surfaceFilter);
     this.filterBySuperficie(surface);
   }
@@ -1104,33 +1253,23 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
     return mode;
   }
 
-  formatPaymentStatus(statut: string | undefined): string {
-    if (!statut) return 'Non défini';
-    switch (statut.toLowerCase()) {
-      case 'validé':
-      case 'valide': // Ajout pour compatibilité sans accent
-        return 'Validé';
-      case 'en_attente':
-        return 'En attente';
-      case 'rejeté':
-      case 'rejete': // Ajout pour compatibilité sans accent
-        return 'Rejeté';
-      default:
-        return statut;
-    }
+  formatPaymentStatus(status: string): string {
+    const statuses: { [key: string]: string } = {
+      'paye_a_temps': 'Payé à temps',
+      'paye_en_retard': 'Payé en retard',
+      'paiement_partiel': 'Paiement partiel',
+    };
+    return statuses[status?.toLowerCase()] || status || 'Statut inconnu';
   }
 
-  getPaymentStatusColor(statut: string | undefined): string {
-    if (!statut) return 'default';
-    switch (statut.toLowerCase()) {
-      case 'validé':
-      case 'valide': // Ajout pour compatibilité sans accent
+  getPaymentStatusColor(status: string): string {
+    switch (status.toLowerCase()) {
+      case 'paye_a_temps':
         return 'green';
-      case 'en_attente':
-        return 'orange';
-      case 'rejeté':
-      case 'rejete': // Ajout pour compatibilité sans accent
-        return 'red';
+      case 'paye_en_retard':
+        return 'orange'; // Jaune est souvent représenté par 'orange' ou 'gold' dans ng-zorro, mais 'orange' est plus courant pour les retards
+      case 'paiement_partiel':
+        return 'blue'; // Choix pour paiement partiel
       default:
         return 'default';
     }

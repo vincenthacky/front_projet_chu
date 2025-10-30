@@ -220,6 +220,7 @@ export class SubscriptionComponent {
   // Nouvelle méthode pour charger les demandes de souscriptions
   loadDemandesSouscriptions(): void {
     console.log('🚀 === CHARGEMENT DEMANDES SOUSCRIPTIONS ===');
+    this.loading = true;
     
     const apiFilters: any = {
       page: this.currentPage,
@@ -228,15 +229,20 @@ export class SubscriptionComponent {
 
     if (this.statusFilter) {
       apiFilters.statut_dynamique = this.statusFilter;
+      console.log('✅ Ajout filtre statut API:', apiFilters.statut_dynamique);
     }
 
     if (this.searchTerm) {
       apiFilters.search = this.searchTerm;
+      console.log('✅ Ajout filtre recherche API:', apiFilters.search);
     }
 
     if (this.terrainFilter) {
       apiFilters.superficie = this.terrainFilter;
+      console.log('✅ Ajout filtre superficie API:', apiFilters.superficie);
     }
+
+    console.log('📤 Paramètres envoyés à l\'API demandes:', apiFilters);
 
     this.souscriptionService.getMesDemandesSouscriptions(apiFilters).subscribe({
       next: (response) => {
@@ -244,12 +250,21 @@ export class SubscriptionComponent {
         const demandes = response.data.map(demande => this.mapDemandeToSubscription(demande));
         this.demandesSouscriptions = demandes;
         this.demandesCount = response.pagination.total;
+        
+        // Mettre à jour les données affichées si on est dans le mode demandes
+        if (this.currentViewMode === 'demandes') {
+          this.filteredSubscriptions = [...this.demandesSouscriptions];
+          this.totalItems = this.demandesCount;
+        }
+        
+        this.loading = false;
         console.log('✅ Demandes chargées:', demandes.length);
       },
       error: (error) => {
         console.error('❌ Erreur chargement demandes:', error);
         this.demandesSouscriptions = [];
         this.demandesCount = 0;
+        this.loading = false;
       }
     });
   }
@@ -583,7 +598,7 @@ export class SubscriptionComponent {
       'especes': 'Espèces',
       'virement': 'Virement bancaire',
       'carte': 'Carte bancaire',
-      'mobile': 'Paiement mobile',
+      'mobile_money': 'Paiement mobile',
       'mandat': 'Mandat',
       'autre': 'Autre'
     };
@@ -845,14 +860,26 @@ export class SubscriptionComponent {
   onPageChange(page: number): void {
     console.log('Changement de page:', page);
     this.currentPage = page;
-    this.loadSubscriptions();
+    
+    // Charger les données selon le mode actuel
+    if (this.currentViewMode === 'souscriptions') {
+      this.loadSubscriptions();
+    } else {
+      this.loadDemandesSouscriptions();
+    }
   }
 
   onPageSizeChange(size: number): void {
     console.log('Changement de taille de page:', size);
     this.itemsPerPage = size;
     this.currentPage = 1;
-    this.loadSubscriptions();
+    
+    // Charger les données selon le mode actuel
+    if (this.currentViewMode === 'souscriptions') {
+      this.loadSubscriptions();
+    } else {
+      this.loadDemandesSouscriptions();
+    }
   }
 
   preventDefault(event: Event): void {

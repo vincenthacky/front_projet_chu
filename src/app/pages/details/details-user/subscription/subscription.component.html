@@ -33,46 +33,64 @@
           </div>
       </div>
   </div>
-
   <!-- Contrôles -->
   <div class="controls-section">
-      <div class="search-container">
+    <div nz-row [nzGutter]="16" class="filters-section" nzAlign="middle">
+      
+      <!-- Sélecteur de statut -->
+      <div nz-col [nzXs]="24" [nzSm]="8" [nzMd]="6" [nzLg]="5">
+        <select 
+          class="filter-select" 
+          [(ngModel)]="statusFilter" 
+          (change)="onStatusFilterChange()"
+        >
+          <option value="">Tous les statuts</option>
+          <ng-container *ngIf="currentViewMode === 'souscriptions'">
+            <option value="active">Active</option>
+            <option value="en_cour">En cours</option>
+            <option value="terminee">Terminée</option>
+            <option value="suspendue">Suspendue</option>
+            <option value="resillee">Résiliée</option>
+          </ng-container>
+          <ng-container *ngIf="currentViewMode === 'demandes'">
+            <option value="en_attente">En attente</option>
+            <option value="approuve">Approuvé</option>
+            <option value="rejete">Rejeté</option>
+          </ng-container>
+        </select>
+      </div>
+  
+      <!-- Champ de recherche -->
+      <div nz-col [nzXs]="24" [nzSm]="10" [nzMd]="12" [nzLg]="13">
+        <div class="search-container">
           <i class="fas fa-search search-icon"></i>
           <input 
-              type="text" 
-              class="search-input" 
-              placeholder="Rechercher par ID, terrain, montant..."
-              [(ngModel)]="searchTerm"
-              (input)="onSearchChange()"
+            type="text" 
+            class="search-input" 
+            placeholder="Rechercher par ID, terrain, montant..."
+            [(ngModel)]="searchTerm"
+            (input)="onSearchChange()"
           >
+        </div>
       </div>
-      <div class="filters-section">
-          <select class="filter-select" [(ngModel)]="statusFilter" (change)="onStatusFilterChange()">
-              <option value="">Tous les statuts</option>
-              <ng-container *ngIf="currentViewMode === 'souscriptions'">
-                  <option value="active">Active</option>
-                  <option value="en_cour">En cours</option>
-                  <option value="terminee">Terminée</option>
-                  <option value="suspendue">Suspendue</option>
-                  <option value="resillee">Résiliée</option>
-              </ng-container>
-              <ng-container *ngIf="currentViewMode === 'demandes'">
-                  <option value="en_attente">En attente</option>
-                  <option value="approuve">Approuvé</option>
-                  <option value="rejete">Rejeté</option>
-              </ng-container>
-          </select>
-          <select class="filter-select" [(ngModel)]="terrainFilter" (change)="onTerrainFilterChange()">
-              <option value="">Toutes les surfaces</option>
-              <option value="250">250m²</option>
-              <option value="500">500m²</option>
-          </select>
-          <button class="refresh-btn" (click)="refreshData()" [disabled]="loading">
-              <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
-              {{ loading ? 'Chargement...' : 'Actualiser' }}
-          </button>
+  
+      <!-- Bouton Actualiser -->
+      <div nz-col [nzXs]="24" [nzSm]="6" [nzMd]="6" [nzLg]="5" class="text-right">
+        <button 
+          nz-button 
+          nzType="default" 
+          class="refresh-btn" 
+          (click)="refreshData()" 
+          [disabled]="loading"
+        >
+          <i class="fas fa-sync-alt" [class.fa-spin]="loading" ></i>
+          {{ loading ? 'Chargement...' : 'Actualiser' }}
+        </button>
       </div>
+  
+    </div>
   </div>
+  
 
   <!-- Statistiques -->
   <div class="stats-bar">
@@ -213,6 +231,7 @@
       <!-- Pagination ng-zorro CORRIGÉE -->
       <div class="pagination-container">
           <nz-pagination
+              style="margin-bottom: 20px;"
               [nzTotal]="totalItems"
               [nzPageSize]="itemsPerPage"
               [nzPageIndex]="currentPage"

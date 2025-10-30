@@ -37,6 +37,15 @@ export interface User {
   } | null;
 }
 
+export interface Pagination {
+  total: number;
+  per_page: number;
+  current_page: number;
+  last_page: number;
+  from: number;
+  to: number;
+}
+
 export interface UserProfileResponse {
   success: boolean;
   status_code: number;
@@ -49,6 +58,7 @@ export interface UsersResponse {
   status_code: number;
   message: string;
   data: User[];
+  pagination: Pagination;  // Ajouté pour refléter la réponse API réelle
 }
 
 export interface UserUpdateResponse {

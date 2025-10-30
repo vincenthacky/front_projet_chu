@@ -10,6 +10,7 @@ import { DocumentFilters, DocumentResponse, DocumentSingleResponse } from '../mo
 })
 export class DocumentService {
   private readonly API_URL = environment.apiUrl;
+  private readonly STORAGE_URL = environment.storageUrl;
 
   constructor(private http: HttpClient) { }
 
@@ -130,15 +131,14 @@ export class DocumentService {
       cleanPath = `documents/${cleanPath}`;
     }
     
-    // Construire l'URL complète en remplaçant /api par /storage
-    const baseUrl = this.API_URL.replace('/api', '');
-    const fullUrl = `${baseUrl}/storage/${cleanPath}`;
+    // Utiliser directement storageUrl au lieu de dériver de apiUrl
+    const fullUrl = `${this.STORAGE_URL}/${cleanPath}`;
     
     console.log('🔍 URL générée pour document:', {
       cheminOriginal: cheminFichier,
       cheminNettoye: cleanPath,
       urlComplete: fullUrl,
-      baseUrl: baseUrl
+      storageUrl: this.STORAGE_URL
     });
     
     return fullUrl;

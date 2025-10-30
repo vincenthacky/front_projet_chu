@@ -21,7 +21,6 @@ import { DocumentService } from 'src/app/core/services/documents.service';
 import { SouscriptionService } from 'src/app/core/services/souscription.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
-
 @Component({
   selector: 'app-document-admin',
   standalone: true,
@@ -50,10 +49,11 @@ export class DocumentAdminComponent implements OnInit {
   documents: ApiDocument[] = [];
   loading: boolean = false;
   error: string | null = null;
+  allSouscriptions: any[] = [];
   
   // Propriétés pour la pagination
   currentPage: number = 1;
-  pageSize: number = 10; // Augmenté à 10 documents par page
+  pageSize: number = 10;
   totalDocuments: number = 0;
 
   // Propriétés pour le modal de visualisation
@@ -95,19 +95,18 @@ export class DocumentAdminComponent implements OnInit {
   onPageSizeChange(size: number): void {
     console.log('Changement de taille de page de', this.pageSize, 'vers', size);
     this.pageSize = size;
-    this.currentPage = 1; // Retour à la première page
+    this.currentPage = 1;
     this.chargerTousLesDocuments();
   }
 
   /**
-   * CORRECTION: Charge TOUS les documents (pas seulement ceux de l'utilisateur)
+   * Charge TOUS les documents (pas seulement ceux de l'utilisateur)
    */
   chargerTousLesDocuments(): void {
     console.log('🔍 Chargement de tous les documents...');
     this.loading = true;
     this.error = null;
     
-    // CORRECTION: Utiliser getAllDocuments au lieu de getMesDocuments
     this.documentService.getAllDocuments({ 
       page: this.currentPage, 
       per_page: this.pageSize 
@@ -122,7 +121,6 @@ export class DocumentAdminComponent implements OnInit {
           console.log('✅ Documents récupérés:', this.documents.length);
           console.log('📊 Total documents dans la base:', this.totalDocuments);
           
-          // Log des premiers documents pour debug
           if (this.documents.length > 0) {
             console.log('📄 Premier document:', this.documents[0]);
           }
@@ -332,7 +330,6 @@ export class DocumentAdminComponent implements OnInit {
    */
   onImageError(event: Event): void {
     const target = event.target as HTMLImageElement;
-    // Utiliser l'image d'erreur depuis la racine public (comme pour login avec favicon.ico)
     target.src = 'image-error.png';
   }
 
@@ -446,26 +443,46 @@ export class DocumentAdminComponent implements OnInit {
   }
 
   /**
-   * Charge la liste des utilisateurs via les souscriptions
+   * Charge la liste des utilisateurs qui ont au moins une souscription
+   * CORRECTION: Récupère TOUTES les souscriptions pour avoir tous les utilisateurs
    */
   private loadUtilisateurs(): void {
-    // Récupérer toutes les souscriptions avec les utilisateurs
-    this.souscriptionService.getAllSouscriptions({ all_users: true, admin_view: true }).subscribe({
+    console.log('🔄 Chargement des utilisateurs ayant des souscriptions...');
+    
+    // Récupérer TOUTES les souscriptions (pas seulement la première page)
+    this.souscriptionService.getAllSouscriptions({ 
+      all_users: true, 
+      admin_view: true,
+      per_page: 100 // Nombre élevé pour récupérer toutes les souscriptions
+    }).subscribe({
       next: (response: any) => {
         if (response.success && response.data) {
+          // Stocker toutes les souscriptions pour usage ultérieur
+          this.allSouscriptions = response.data;
+          
           // Extraire les utilisateurs uniques des souscriptions
           const utilisateursMap = new Map();
           response.data.forEach((souscription: any) => {
             if (souscription.utilisateur) {
-              utilisateursMap.set(souscription.utilisateur.id_utilisateur, souscription.utilisateur);
+              utilisateursMap.set(
+                souscription.utilisateur.id_utilisateur, 
+                souscription.utilisateur
+              );
             }
           });
+          
           this.utilisateursList = Array.from(utilisateursMap.values());
-          console.log('Utilisateurs chargés:', this.utilisateursList.length);
+          console.log('👥 Utilisateurs avec souscriptions:', this.utilisateursList.length);
+          console.log('📋 Total souscriptions:', response.data.length);
+          console.log('👥 Liste des utilisateurs:', this.utilisateursList.map(u => ({
+            id: u.id_utilisateur,
+            nom: `${u.prenom} ${u.nom}`,
+            email: u.email
+          })));
         }
       },
       error: (err: any) => {
-        console.error('Erreur lors du chargement des utilisateurs:', err);
+        console.error('❌ Erreur lors du chargement des utilisateurs:', err);
         this.message.error('Erreur lors du chargement des utilisateurs');
       }
     });
@@ -485,23 +502,28 @@ export class DocumentAdminComponent implements OnInit {
 
   /**
    * Charge les souscriptions pour l'utilisateur sélectionné
+   * CORRECTION: Utilise les souscriptions déjà chargées dans allSouscriptions
    */
   private loadSouscriptionsForUtilisateur(userId: number): void {
-    // Filtrer les souscriptions déjà chargées pour l'utilisateur sélectionné
-    this.souscriptionService.getAllSouscriptions({ all_users: true, admin_view: true }).subscribe({
-      next: (response: any) => {
-        if (response.success && response.data) {
-          this.availableSouscriptionsDocument = response.data.filter(
-            (souscription: any) => souscription.utilisateur?.id_utilisateur === userId
-          );
-          console.log('Souscriptions chargées:', this.availableSouscriptionsDocument.length);
-        }
-      },
-      error: (err: any) => {
-        console.error('Erreur lors du chargement des souscriptions:', err);
-        this.message.error('Erreur lors du chargement des souscriptions');
+    // Utiliser les souscriptions déjà chargées dans allSouscriptions
+    this.availableSouscriptionsDocument = this.allSouscriptions
+      .filter((souscription: any) => souscription.utilisateur?.id_utilisateur === userId);
+
+    // Créer une copie triée par ordre croissant pour assigner les numéros
+    let sortedAsc = [...this.availableSouscriptionsDocument].sort((a, b) => a.id_souscription - b.id_souscription);
+
+    // Assigner les numéros basés sur l'ordre croissant (plus petit ID = 1)
+    sortedAsc.forEach((s, index) => {
+      const original = this.availableSouscriptionsDocument.find(o => o.id_souscription === s.id_souscription);
+      if (original) {
+        original._tempNumber = index + 1;
       }
     });
+
+    // Trier la liste principale par ordre décroissant pour l'affichage (plus grand ID en premier)
+    this.availableSouscriptionsDocument = this.availableSouscriptionsDocument.sort((a, b) => b.id_souscription - a.id_souscription);
+
+    console.log('📋 Souscriptions filtrées pour l\'utilisateur:', this.availableSouscriptionsDocument.length);
   }
 
   /**
@@ -558,7 +580,6 @@ export class DocumentAdminComponent implements OnInit {
     return this.documentService.getFileIcon(fileName);
   }
 
-
   /**
    * Obtient le nom d'affichage d'un utilisateur
    */
@@ -567,12 +588,49 @@ export class DocumentAdminComponent implements OnInit {
     return `${utilisateur.prenom} ${utilisateur.nom} (${utilisateur.email})`;
   }
 
+  // Ajoutez cette nouvelle méthode pour formater les dates (si pas déjà présente)
+  formatDateSouscription(dateString: string | undefined): string {
+    if (!dateString) return 'Date non disponible';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      });
+    } catch (error) {
+      return 'Date invalide';
+    }
+  }
+
   /**
-   * Obtient le nom d'affichage d'une souscription
+   * Obtient le nom d'affichage d'une souscription (version améliorée pour plus d'infos parlantes)
    */
   getSouscriptionDisplayName(souscription: any): string {
     if (!souscription) return '';
-    return `#${souscription.id_souscription} - ${souscription.statut_souscription} (${souscription.nombre_terrains} terrain(s))`;
+
+    // Calcul du label en fonction du numéro temporaire
+    const num = souscription._tempNumber;
+    let label = num === 1 ? `souscription ${num}` : `souscription ${num}`;
+
+    // Éléments de base
+    let display = `#${souscription.id_souscription} - ${souscription.statut_souscription} ${label}`;
+
+    // Ajout d'infos supplémentaires si disponibles
+    if (souscription.date_souscription) {
+      display += ` - Souscrit le ${this.formatDateSouscription(souscription.date_souscription)}`;
+    }
+    if (souscription.projet && souscription.projet.libelle_projet) {
+      display += ` - Projet: ${souscription.projet.libelle_projet}`;
+    }
+    if (souscription.montant_total) {
+      display += ` - Montant: ${this.formatCurrencyAmount(souscription.montant_total)}`;
+    }
+
+    // Log pour debug (optionnel, à retirer en prod)
+    console.log('Affichage souscription généré:', display);
+
+    return display;
   }
 
   /**

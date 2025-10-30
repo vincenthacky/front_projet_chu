@@ -83,6 +83,7 @@
                 [nzStep]="0.01"
                 [nzPrecision]="2"
                 nzPlaceHolder="500.75"
+                [nzDisabled]="true"
                 class="full-width-input" />
             </nz-form-control>
           </nz-form-item>
@@ -106,6 +107,7 @@
                   [nzParser]="currencyParser"
                   (ngModelChange)="onMontantMensuelChange($event)"
                   nzPlaceHolder="250000"
+                  [nzDisabled]="true"
                   class="full-width-input" />
               </nz-form-control>
             </nz-form-item>
@@ -129,6 +131,7 @@
                 [nzParser]="currencyParser"
                 (ngModelChange)="onPrixUnitaireChange($event)"
                 nzPlaceHolder="250000"
+                [nzDisabled]="true"
                 class="full-width-input" />
             </nz-form-control>
           </nz-form-item>

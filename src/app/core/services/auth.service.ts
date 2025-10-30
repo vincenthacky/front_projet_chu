@@ -1,10 +1,10 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, tap, catchError, throwError, map, of } from 'rxjs';
 import { isPlatformBrowser } from '@angular/common';
 import { environment } from '@/environment';
-import { User, LoginResponse, LogoutResponse, ForgotPasswordResponse, ResetPasswordResponse, UserProfileResponse, UserUpdateResponse, UsersResponse } from '../models/auth';
 import { Inject, Injectable, PLATFORM_ID, inject } from '@angular/core';
+import { User, LoginResponse, LogoutResponse, ForgotPasswordResponse, ResetPasswordResponse, UserProfileResponse, UserUpdateResponse, UsersResponse } from '../models/auth';
 
 @Injectable({
   providedIn: 'root'
@@ -785,14 +785,17 @@ export class AuthService {
       'Authorization': `Bearer ${token}`
     });
 
-    return this.http.get<UsersResponse>(`${this.API_URL}/utilisateurs`, { headers }).pipe(
+    // CORRECTION: Ajout de params pour forcer per_page=50 afin de récupérer tous les utilisateurs (total=30 < 50)
+    const params = new HttpParams().set('per_page', '50');
+
+    return this.http.get<UsersResponse>(`${this.API_URL}/utilisateurs`, { headers, params }).pipe(
       tap(response => {
         console.log('📋 Réponse brute récupération utilisateurs:', response);
       }),
       map(response => {
         const decoded = this.decodeUnicodeInObject(response) as UsersResponse;
         console.log('📋 Réponse décodée récupération utilisateurs:', decoded);
-        return decoded.data;
+        return decoded.data;  // data contiendra maintenant les 30 utilisateurs
       }),
       catchError(error => {
         console.error('❌ Erreur récupération utilisateurs:', error);

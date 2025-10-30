@@ -37,14 +37,7 @@ export class WelcomeComponent implements OnInit {
       paymentStart: 'mai 2024',
       paymentEnd: 'août 2029',
       features: [
-        'Terrain de 250m² viabilisé',
-        'Zone résidentielle calme',
-        'Proche des commodités'
-      ],
-      bonus: [
-        'Remise de 5% pour paiement anticipé',
-        'Accompagnement juridique gratuit',
-        'Plans de construction offerts'
+        'Terrain de 250m² viabilisé'
       ],
       terms: [
         'Première mensualité en mai 2024.',
@@ -59,45 +52,6 @@ export class WelcomeComponent implements OnInit {
       bonusTitle: 'Bonus fidélité inclus',
       bonusIcon: 'fa-gift',
       premium: false
-    },
-    {
-      type: 'premium',
-      badge: 'Offre Premium',
-      name: 'Terrain Premium',
-      subtitle: 'L\'investissement de référence pour les projets ambitieux',
-      surface: 500,
-      price: 161000,
-      total: 10304000,
-      period: 'par mois',
-      months: 64,
-      paymentStart: 'mai 2024',
-      paymentEnd: 'août 2029',
-      features: [
-        'Terrain de 500m² premium viabilisé',
-        // 'Titre foncier sécurisé avec garantie',
-        // 'Réseaux haute qualité inclus',
-        'Emplacement privilégié',
-        'Sécurité 24h/24',
-        // 'Espaces verts aménagés'
-      ],
-      bonus: [
-        'Remise de 10% pour paiement anticipé',
-        'Accompagnement architecte gratuit',
-        'Étude de sol offerte',
-        'Priorité sur les meilleurs emplacements'
-      ],
-      terms: [
-        'Service client prioritaire, suivi personnalisé de votre investissement,',
-        'et accès aux événements exclusifs propriétaires.'
-      ],
-      cta: 'Souscrire Premium',
-      icon: 'fa-crown',
-      highlight: '10 304 000 FCFA',
-      paymentLabel: 'Plan de paiement avantageux',
-      bonusLabel: 'Exclusif',
-      bonusTitle: 'Avantages exclusifs premium',
-      bonusIcon: 'fa-diamond',
-      premium: true
     }
   ];
 
@@ -137,12 +91,11 @@ export class WelcomeComponent implements OnInit {
   generateOffers() {
     this.offers = [];
     
-    // Afficher SEULEMENT les terrains disponibles
+    // Afficher SEULEMENT les terrains disponibles de 250m²
     this.terrainsData
-      .filter(terrain => terrain.statut_terrain === 'disponible')
+      .filter(terrain => terrain.statut_terrain === 'disponible' && parseFloat(terrain.superficie.toString()) === 250)
       .forEach((terrain) => {
-        const superficie = parseFloat(terrain.superficie.toString());
-        const type = superficie >= 500 ? 'premium' : 'standard';
+        const type = 'standard';
         this.offers.push(this.createOfferFromTerrain(terrain, type));
       });
     
@@ -154,7 +107,7 @@ export class WelcomeComponent implements OnInit {
     this.initializeArrays();
   }
   
-  createOfferFromTerrain(terrain: Terrain, type: 'standard' | 'premium'): any {
+  createOfferFromTerrain(terrain: Terrain, type: 'standard'): any {
     const superficie = parseFloat(terrain.superficie.toString());
     const prixUnitaire = parseFloat(terrain.prix_unitaire.toString());
     
@@ -164,7 +117,7 @@ export class WelcomeComponent implements OnInit {
     const months = 64;
     const monthlyPayment = total / months;
     
-    const baseOffer = type === 'standard' ? this.defaultOffers[0] : this.defaultOffers[1];
+    const baseOffer = this.defaultOffers[0];
     
     // Personnaliser selon les données du terrain
     const customOffer = {
@@ -176,25 +129,13 @@ export class WelcomeComponent implements OnInit {
       total: Math.round(total),
       highlight: `${Math.round(total).toLocaleString('fr-FR')} FCFA`,
       
-      // Adapter les caractéristiques selon la superficie
+      // Caractéristiques pour 250m²
       features: [
-        `Terrain de ${superficie}m² viabilisé`,
-        'Zone résidentielle calme',
-        'Proche des commodités',
-        ...(superficie >= 500 ? ['Emplacement privilégié', 'Sécurité 24h/24'] : [])
+        `Terrain ${superficie} m²`
       ],
       
-      // Adapter les bonus selon la superficie  
-      bonus: superficie >= 500 ? [
-        'Remise de 10% pour paiement anticipé',
-        'Accompagnement architecte gratuit',
-        'Étude de sol offerte',
-        'Priorité sur les meilleurs emplacements'
-      ] : [
-        'Remise de 5% pour paiement anticipé',
-        'Accompagnement juridique gratuit',
-        'Plans de construction offerts'
-      ],
+      // Bonus pour 250m²  
+      bonus: [],
       
       terrainsData: terrain
     };

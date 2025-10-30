@@ -32,15 +32,13 @@
     <div class="filters-section">
       <select class="filter-select" [(ngModel)]="statusFilter" (change)="onStatusFilterChange()">
         <option value="">Tous les statuts</option>
-        <option value="en_cours">En cours</option>
-        <option value="en_retard">En retard</option>
-        <option value="termine">Terminé</option>
+        <option value="active">Active</option>
+        <option value="en_cour">En cours</option>
+        <option value="terminee">Terminée</option>
+        <option value="suspendue">Suspendue</option>
+    <option value="resillee">Résiliée</option>
       </select>
-      <select class="filter-select" [(ngModel)]="surfaceFilter" (change)="onSurfaceFilterChange()">
-        <option value="">Toutes les surfaces</option>
-        <option value="250">250m²</option>
-        <option value="500">500m²</option>
-      </select>
+
       <button class="refresh-btn" (click)="refresh()">
         <i class="fas fa-sync-alt"></i>
         <span>Actualiser</span>
@@ -220,7 +218,7 @@
 <!-- Modal de détails -->
 <nz-modal
   [(nzVisible)]="isVisible"
-  nzTitle="Détails... des paiements"
+  nzTitle="Détails des paiements"
   nzWidth="450px"
   [nzFooter]="null"
   (nzOnCancel)="handleCancel()"
@@ -391,12 +389,10 @@
             [style.border-color]="paymentForm.mode_paiement ? '#10b981' : '#d1d5db'"
           >
             <option value="">Sélectionner un mode de paiement</option>
-            <option value="cheque">Chèque</option>
             <option value="especes">Espèces</option>
             <option value="virement">Virement bancaire</option>
-            <option value="carte">Carte bancaire</option>
-            <option value="mobile">Paiement mobile</option>
-            <option value="mandat">Mandat</option>
+            <option value="cheque">Chèque</option>
+            <option value="mobile_money">Mobile</option>
           </select>
         </div>
 
@@ -491,7 +487,7 @@
                 <span *ngIf="paymentForm.mode_paiement === 'especes'">Espèces</span>
                 <span *ngIf="paymentForm.mode_paiement === 'virement'">Virement bancaire</span>
                 <span *ngIf="paymentForm.mode_paiement === 'carte'">Carte bancaire</span>
-                <span *ngIf="paymentForm.mode_paiement === 'mobile'">Paiement mobile</span>
+                <span *ngIf="paymentForm.mode_paiement === 'mobile_money'">Paiement mobile</span>
                 <span *ngIf="paymentForm.mode_paiement === 'mandat'">Mandat</span>
                 <span *ngIf="!paymentForm.mode_paiement" style="color: #9ca3af;">Non sélectionné</span>
               </span>

@@ -179,7 +179,7 @@ export class PaiementComponent implements OnInit {
       case 'especes': return 'Espèces';
       case 'virement': return 'Virement bancaire';
       case 'carte': return 'Carte bancaire';
-      case 'mobile': return 'Paiement mobile';
+      case 'mobile_money': return 'Paiement mobile';
       case 'mandat': return 'Mandat';
       default: return mode || 'Non spécifié';
     }

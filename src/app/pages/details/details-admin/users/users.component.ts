@@ -215,7 +215,7 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.authService.getAllUsers().pipe(
       tap(users => {
         console.log('✅ Utilisateurs récupérés:', users);
-        console.log('📊 Nombre d\'utilisateurs:', users.length);
+        console.log('📊 Nombre d\'utilisateurs:', users.length);  // Devrait log 30 maintenant
       }),
       catchError(error => {
         console.error('❌ Erreur lors du chargement des utilisateurs:', error);
@@ -226,9 +226,9 @@ export class UsersComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe({
       next: (users: User[]) => {
-        this.users = users;
-        this.calculateStatistics();
-        this.applyFiltersAndPagination();
+        this.users = users;  // users.length = 30 maintenant
+        this.calculateStatistics();  // Basé sur 30
+        this.applyFiltersAndPagination();  // totalItems = 30
         this.loading = false;
       },
       error: (error) => {
@@ -277,10 +277,10 @@ export class UsersComponent implements OnInit, OnDestroy {
       console.log('🔍 Filtrage appliqué. Résultats:', this.filteredUsers.length);
     } else {
       this.filteredUsers = [...this.users];
-      console.log('📋 Aucun filtre. Tous les utilisateurs:', this.filteredUsers.length);
+      console.log('📋 Aucun filtre. Tous les utilisateurs:', this.filteredUsers.length);  // 30 maintenant
     }
 
-    this.totalItems = this.filteredUsers.length;
+    this.totalItems = this.filteredUsers.length;  // 30 maintenant
 
     console.log('📄 Pagination mise à jour:', {
       page: this.currentPage,

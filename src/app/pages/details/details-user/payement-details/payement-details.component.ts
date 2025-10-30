@@ -5,6 +5,7 @@ import { SouscriptionSingleResponse, ApiSouscription } from 'src/app/core/models
 import { SouscriptionService } from 'src/app/core/services/souscription.service';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 
 // ✅ Réutiliser les interfaces existantes du service
 interface Payment {
@@ -33,15 +34,21 @@ interface Subscription {
 @Component({
   selector: 'app-payement-details',
   standalone: true,
-  imports: [CommonModule, NzEmptyModule,NzSpinModule],
+  imports: [CommonModule, NzEmptyModule, NzSpinModule, NzPaginationModule],
   templateUrl: './payement-details.component.html',
   styleUrls: ['./payement-details.component.css']
 })
 export class PayementDetailsComponent implements OnInit {
   
   subscription: Subscription | null = null;
+  apiData: ApiSouscription | null = null; // Exposer les données API brutes
   loading = false;
   subscriptionId: string | null = null;
+
+  // Pagination variables
+  currentPage: number = 1;
+  pageSize: number = 5;
+  totalPayments: number = 0;
 
   constructor(
     private route: ActivatedRoute,
@@ -84,10 +91,15 @@ export class PayementDetailsComponent implements OnInit {
         console.log('📥 Réponse API détails:', response);
         
         if (response.success && response.data) {
+          // Stocker les données API brutes
+          this.apiData = response.data;
           // Mapper les données vers notre interface locale
           this.subscription = this.mapApiDataToSubscription(response.data);
           console.log('✅ Souscription mappée:', this.subscription);
           console.log('📊 Progression calculée:', this.subscription.progression + '%');
+          // Mise à jour de la pagination
+          this.totalPayments = this.getValidPayments().length;
+          this.currentPage = 1; // Réinitialiser à la première page
         } else {
           console.error('❌ Réponse API invalide:', response);
           this.router.navigate(['/dashboard/user/subscriptions']);
@@ -215,12 +227,12 @@ export class PayementDetailsComponent implements OnInit {
     console.log('📊 Données finales:', {
       id: result.id,
       terrain: result.terrain,
-      prixTotal: `${this.formatNumber(result.prixTotal)} (${result.prixTotal})`,
-      montantPaye: `${this.formatNumber(result.montantPaye)} (${result.montantPaye})`,
-      resteAPayer: `${this.formatNumber(result.resteAPayer)} (${result.resteAPayer})`,
-      progression: `${result.progression}%`,
+      prixTotal: `${this.formatNumber(result.prixTotal)} (raw: ${result.prixTotal})`,
+      montantPaye: `${this.formatNumber(result.montantPaye)} (raw: ${result.montantPaye})`,
+      resteAPayer: `${this.formatNumber(result.resteAPayer)} (raw: ${result.resteAPayer})`,
+      progression: `${result.progression}% (raw: ${result.progression})`,
       statut: result.statut,
-      totalPayments: result.payments.length,
+      dateDebut: result.dateDebut,
       prochainPaiement: result.prochainPaiement
     });
 
@@ -399,7 +411,7 @@ export class PayementDetailsComponent implements OnInit {
   // Navigation de retour
   goBack(): void {
     console.log('🔙 Retour vers les souscriptions');
-    this.router.navigate(['/dashboard/user/details/subscription']);
+    this.router.navigate(['/dashboard/admin/details/souscription-admin']);
   }
 
   // Rafraîchir les données
@@ -408,6 +420,141 @@ export class PayementDetailsComponent implements OnInit {
     if (this.subscriptionId) {
       this.loadSubscriptionDetails();
     }
+  }
+
+  // Exposer la méthode de debug pour la console
+  ngAfterViewInit(): void {
+    if (typeof window !== 'undefined') {
+      (window as any).debugPaymentDetails = () => this.debugSubscriptionData();
+      console.log('🛠️ Méthode de debug disponible: debugPaymentDetails()');
+      console.log('💡 Pour tester: Ouvrez la console et tapez debugPaymentDetails()');
+    }
+  }
+
+  // ✅ Méthodes utilitaires pour l'affichage des paiements
+
+  // Obtenir les paiements valides depuis les données API
+  getValidPayments(): any[] {
+    if (!this.apiData?.planpaiements) {
+      return [];
+    }
+    
+    return this.apiData.planpaiements.filter(plan => 
+      plan && 
+      plan.est_paye === true && 
+      plan.montant_paye && 
+      parseFloat(plan.montant_paye.toString()) > 0
+    ).sort((a, b) => b.numero_mensualite - a.numero_mensualite);
+  }
+
+  // Obtenir les paiements paginés
+  getPaginatedPayments(): any[] {
+    const validPayments = this.getValidPayments();
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    return validPayments.slice(startIndex, startIndex + this.pageSize);
+  }
+
+  // Compter les paiements valides
+  getValidPaymentsCount(): number {
+    return this.getValidPayments().length;
+  }
+
+  // Formater le mode de paiement en texte lisible
+  getPaymentModeText(mode: string): string {
+    const modes: { [key: string]: string } = {
+      'especes': 'Espèces',
+      'cheque': 'Chèque',
+      'virement': 'Virement bancaire',
+      'carte': 'Carte bancaire',
+      'mobile_money': 'Paiement mobile',
+      'orange_money': 'Orange Money',
+      'mtn_money': 'MTN Money',
+      'moov_money': 'Moov Money',
+      'wave': 'Wave'
+    };
+    
+    return modes[mode?.toLowerCase()] || mode || 'Non spécifié';
+  }
+
+  // Formater les dates de paiement
+  formatPaymentDate(dateString: string): string {
+    if (!dateString) {
+      return 'Date non disponible';
+    }
+    
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return 'Date invalide';
+      }
+      
+      return date.toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return 'Date non disponible';
+    }
+  }
+
+  // Formater les montants avec la méthode du service
+  formatCurrency(amount: any): string {
+    if (amount === null || amount === undefined) {
+      return '0 FCFA';
+    }
+    
+    const numAmount = parseFloat(amount.toString());
+    if (isNaN(numAmount)) {
+      return '0 FCFA';
+    }
+    
+    return this.souscriptionService.formatCurrency(numAmount);
+  }
+
+  // Obtenir le nom de l'admin qui a enregistré la souscription
+  getAdminName(): string {
+    if (!this.apiData?.admin) {
+      return 'Administrateur non spécifié';
+    }
+    
+    const admin = this.apiData.admin;
+    return `${admin.prenom} ${admin.nom}`.trim() || 'Administrateur';
+  }
+
+  // Obtenir le statut du paiement en texte lisible
+  getPaymentStatusText(status: string): string {
+    const statuses: { [key: string]: string } = {
+      'paye': 'Payé',
+      'paye_en_retard': 'Payé en retard',
+      'paye_avance': 'Payé en avance',
+      'non_paye': 'Non payé',
+      'en_attente': 'En attente',
+      'annule': 'Annulé'
+    };
+    
+    return statuses[status] || status || 'Statut inconnu';
+  }
+
+  // Obtenir la classe CSS pour le statut
+  getPaymentStatusClass(status: string): string {
+    const classes: { [key: string]: string } = {
+      'paye': 'status-paid',
+      'paye_en_retard': 'status-late',
+      'paye_avance': 'status-early',
+      'non_paye': 'status-unpaid',
+      'en_attente': 'status-pending',
+      'annule': 'status-cancelled'
+    };
+    
+    return classes[status] || 'status-unknown';
+  }
+
+  // Tracking pour les paiements enrichis
+  trackByPaymentEnhanced(_index: number, payment: any): string {
+    return `${payment.id_plan_paiement}-${payment.numero_mensualite}-${payment.montant_paye}`;
   }
 
   // Méthode de debug améliorée
@@ -468,12 +615,8 @@ export class PayementDetailsComponent implements OnInit {
     console.log('🐛 === FIN DEBUG ===');
   }
 
-  // Exposer la méthode de debug pour la console
-  ngAfterViewInit(): void {
-    if (typeof window !== 'undefined') {
-      (window as any).debugPaymentDetails = () => this.debugSubscriptionData();
-      console.log('🛠️ Méthode de debug disponible: debugPaymentDetails()');
-      console.log('💡 Pour tester: Ouvrez la console et tapez debugPaymentDetails()');
-    }
+  // Pagination handler
+  onPageChange(page: number): void {
+    this.currentPage = page;
   }
 }

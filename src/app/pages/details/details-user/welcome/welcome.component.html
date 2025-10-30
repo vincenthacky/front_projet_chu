@@ -1,15 +1,14 @@
 <nz-spin [nzSpinning]="loading" nzTip="Chargement des terrains...">
   <div class="pricing-container">   
-    <h1 class="main-title">Choisissez votre type d'abonnement de terrain</h1>
+    <h1 class="main-title">Découvrez notre offre de terrain de 250m²</h1>
     
     <!-- Affichage des offres si disponibles -->
     <ng-container *ngIf="!loading && offers.length > 0">
       <div *ngFor="let offer of offers; let i = index"
-           class="pricing-card"
-           [ngClass]="{'premium-card': offer.premium}">
+           class="pricing-card">
         
         <div class="card-header">
-          <div class="offer-badge" [ngClass]="{'premium-badge': offer.premium}">
+          <div class="offer-badge">
             {{ offer.badge }}
           </div>
           <h2 class="plan-name">{{ offer.name }}</h2>
@@ -55,9 +54,8 @@
           
           <div class="features-section">
             <h3 class="section-title">
-              <i class="fas section-icon"
-                 [ngClass]="offer.premium ? 'fa-star' : 'fa-map-marked-alt'"></i>
-              {{ offer.premium ? 'Caractéristiques premium' : 'Caractéristiques du terrain' }}
+              <i class="fas section-icon fa-map-marked-alt"></i>
+              Caractéristiques du terrain
             </h3>
             <ul class="feature-list">
               <li class="feature-item" *ngFor="let feature of offer.features">
@@ -67,21 +65,9 @@
             </ul>
           </div>
           
-          <div class="bonus-section">
-            <div class="bonus-badge">{{ offer.bonusLabel }}</div>
-            <div class="bonus-content">
-              <div class="bonus-title">
-                <i class="fas" [ngClass]="offer.bonusIcon"></i> {{ offer.bonusTitle }}
-              </div>
-              <div class="bonus-text">
-                <div *ngFor="let b of offer.bonus">• {{ b }}</div>
-              </div>
-            </div>
-          </div>
-          
           <div class="terms-section">
             <div class="terms-title">
-              {{ offer.premium ? 'Avantages premium' : 'Modalités de paiement' }}
+              Modalités de paiement
             </div>
             <div class="terms-text">
               <div *ngFor="let t of offer.terms">{{ t }}</div>

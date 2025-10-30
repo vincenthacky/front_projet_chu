@@ -12,10 +12,22 @@
       
       <h1 class="main-title">
         <i class="fas fa-receipt"></i>
-        Détail des Paiements
-        <div class="subscription-badge" *ngIf="subscription">{{ subscription.id }}</div>
+        Détails des paiements de {{ apiData?.utilisateur?.prenom }} {{ apiData?.utilisateur?.nom }}
       </h1>
-      <p class="subtitle">Suivi complet de votre souscription terrain</p>
+      <div class="subscription-info">
+        <span class="subscription-badge">
+          <i class="fas fa-file-contract"></i>
+          Souscription #{{ apiData?.id_souscription }}
+        </span>
+        <span class="subscription-date">
+          <i class="fas fa-calendar-plus"></i>
+          Souscrite le {{ formatPaymentDate(apiData?.date_souscription || '') }}
+        </span>
+      </div>
+      <p class="subtitle">
+        Email: {{ apiData?.utilisateur?.email }} | 
+        Téléphone: {{ apiData?.utilisateur?.telephone }}
+      </p>
     </div>
   </div>
 
@@ -30,7 +42,7 @@
   </div>
 
   <!-- Content -->
-  <div class="content-section" *ngIf="!loading && subscription">
+  <div class="content-section" *ngIf="!loading && subscription && apiData">
     <!-- Stats Overview -->
     <div class="stats-overview">
       <div class="stat-card">
@@ -87,26 +99,94 @@
           <i class="fas fa-history"></i>
           Historique des paiements
         </h3>
+        <div class="payment-count" *ngIf="apiData?.planpaiements">
+          {{ getValidPaymentsCount() }} paiement(s) enregistré(s)
+        </div>
       </div>
+      
       <div class="payment-list">
-        <div class="payment-item" *ngFor="let payment of subscription.payments; trackBy: trackByPayment">
-          <div class="payment-content">
-            <div class="payment-date">
-              <i class="fas fa-calendar-alt"></i>
-              {{ payment.date }}
+        <div class="payment-item-enhanced" *ngFor="let payment of getValidPayments(); trackBy: trackByPaymentEnhanced">
+          <div class="payment-card">
+            <!-- En-tête du paiement -->
+            <div class="payment-header">
+              <div class="payment-numero">
+                <i class="fas fa-calendar-check"></i>
+                <span class="mensualite-badge">Mensualité #{{ payment.numero_mensualite }}</span>
+              </div>
+              <div class="payment-status" [ngClass]="getPaymentStatusClass(payment.statut_versement)">
+                {{ getPaymentStatusText(payment.statut_versement) }}
+              </div>
             </div>
-            <div class="payment-amount">
-              {{ formatNumber(payment.amount) }} FCFA
+            
+            <!-- Corps du paiement -->
+            <div class="payment-body">
+              <div class="payment-info-row">
+                <div class="info-item">
+                  <i class="fas fa-calendar-alt"></i>
+                  <span class="info-label">Date de paiement:</span>
+                  <span class="info-value">{{ formatPaymentDate(payment.date_paiement_effectif) }}</span>
+                </div>
+                <div class="info-item">
+                  <i class="fas fa-money-bill-wave"></i>
+                  <span class="info-label">Montant payé:</span>
+                  <span class="info-value amount">{{ formatCurrency(payment.montant_paye) }}</span>
+                </div>
+              </div>
+              
+              <div class="payment-info-row">
+                <div class="info-item">
+                  <i class="fas fa-credit-card"></i>
+                  <span class="info-label">Mode de paiement:</span>
+                  <span class="info-value mode-payment">{{ getPaymentModeText(payment.mode_paiement) }}</span>
+                </div>
+                <div class="info-item" *ngIf="payment.reference_paiement">
+                  <i class="fas fa-receipt"></i>
+                  <span class="info-label">Référence:</span>
+                  <span class="info-value reference">{{ payment.reference_paiement }}</span>
+                </div>
+              </div>
+              
+              <!-- Informations administratives -->
+              <div class="payment-info-row admin-info">
+                <div class="info-item">
+                  <i class="fas fa-user-shield"></i>
+                  <span class="info-label">Enregistré par:</span>
+                  <span class="info-value admin-name">{{ getAdminName() }}</span>
+                </div>
+                <div class="info-item" *ngIf="payment.date_saisie">
+                  <i class="fas fa-clock"></i>
+                  <span class="info-label">Date de saisie:</span>
+                  <span class="info-value">{{ formatPaymentDate(payment.date_saisie) }}</span>
+                </div>
+              </div>
+              
+              <!-- Pénalités si présentes -->
+              <div class="payment-info-row" *ngIf="payment.penalite_appliquee && payment.penalite_appliquee != '0.00'">
+                <div class="info-item penalty">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  <span class="info-label">Pénalité appliquée:</span>
+                  <span class="info-value penalty-amount">{{ formatCurrency(payment.penalite_appliquee) }}</span>
+                </div>
+              </div>
+              
+              <!-- Commentaire si présent -->
+              <div class="payment-comment" *ngIf="payment.commentaire_paiement">
+                <i class="fas fa-comment"></i>
+                <span class="comment-text">{{ payment.commentaire_paiement }}</span>
+              </div>
             </div>
           </div>
         </div>
+        
+        <!-- État vide -->
         <nz-empty 
-          *ngIf="!loading && (!subscription.payments || subscription.payments.length === 0)"
+          *ngIf="!loading && getValidPaymentsCount() === 0"
           class="no-payments-empty"
           nzNotFoundImage="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
           nzNotFoundContent="Aucun paiement enregistré">
           <div nz-empty-description class="empty-description">
             <p><strong>Aucun paiement n'a encore été effectué pour cette souscription.</strong></p>
+            <p>Les paiements apparaîtront ici une fois qu'ils seront enregistrés par l'administration.</p>
           </div>
         </nz-empty>
       </div>

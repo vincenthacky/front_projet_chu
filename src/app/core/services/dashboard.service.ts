@@ -74,7 +74,8 @@ export interface DashboardCompleteData {
   providedIn: 'root'
 })
 export class DashboardService {
-  private readonly API_BASE_URL = 'http://192.168.252.75:8000/api/dashboard';
+  private readonly API_BASE_URL = 'https://api.elokatecheznous.com/api/dashboard';
+
 
   // BehaviorSubjects pour maintenir l'état des données
   private statsSubject = new BehaviorSubject<DashboardStats | null>(null);
