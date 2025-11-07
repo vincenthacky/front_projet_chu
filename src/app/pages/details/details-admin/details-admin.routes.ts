@@ -7,7 +7,6 @@ export const DETAILS_ADMIN_ROUTES: Routes = [
   { path: 'souscription-admin', loadComponent: () => import('./admin-souscription/admin-souscription.component').then(m => m.AdminSouscriptionComponent) },
   { path: 'create-souscription-admin', loadComponent: () => import('./create-subscription-admin/create-subscription-admin.component').then(m => m.CreateSubscriptionAdminComponent) },
   { path: 'all-subscription-requests-admin', loadComponent: () => import('./all-subscription-requests-admin/all-subscription-requests-admin.component').then(m => m.AllSubscriptionRequestsAdminComponent) },
-  { path: 'payment-admin', loadComponent: () => import('./payment-admin/payment-admin.component').then(m => m.PaymentAdminComponent) },
   { path: 'new-payment-admin', loadComponent: () => import('./new-payment-admin/new-payment-admin.component').then(m => m.NewPaymentAdminComponent) },
   { path: 'complaints-admin', loadComponent: () => import('./complaints/complaints.component').then(m => m.ComplaintsComponent) },
   {path: 'documents-admin', loadComponent: () => import('./document-admin/document-admin.component').then(m => m.DocumentAdminComponent) },
@@ -18,9 +17,9 @@ export const DETAILS_ADMIN_ROUTES: Routes = [
   { path: 'users-admin', loadComponent: () => import('./users/users.component').then(m => m.UsersComponent) },
   { path : 'profile-admin', loadComponent: () => import('./profile-admin/profile-admin.component').then(m => m.ProfileAdminComponent) },
   { path : 'new-user-admin', loadComponent: () => import('./new-users/new-users.component').then(m => m.NewUsersComponent), canDeactivate: [UnsavedChangesGuard] },
-  {path : 'log-admin', loadComponent: () => import('./log-admin/log-admin.component').then(m => m.LogAdminComponent) },
+ //{path : 'log-admin', loadComponent: () => import('./log-admin/log-admin.component').then(m => m.LogAdminComponent) },
   {path : 'paiement-details-admin/:id', loadComponent: () => import('./paiement-details-admin/paiement-details-admin.component').then(m => m.PaiementDetailsAdminComponent) },
-  {path : 'terrains', loadComponent: () => import('./terrains/terrains.component').then(m => m.TerrainsComponent) }
+  //{path : 'terrains', loadComponent: () => import('./terrains/terrains.component').then(m => m.TerrainsComponent) }
 
 
 ]; 

@@ -1,6 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 // Imports Ng-Zorro
 import { NzCollapseModule } from 'ng-zorro-antd/collapse';
@@ -12,19 +14,26 @@ import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzStatisticModule } from 'ng-zorro-antd/statistic';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
-import { ApiPaiement, PaiementsFilters, PaiementsResponse } from 'src/app/core/models/paiments';
+import { NzPaginationModule } from 'ng-zorro-antd/pagination';
+import { NzInputModule } from 'ng-zorro-antd/input';
+
+
+import { 
+  ApiPaiement, 
+  ApiUtilisateurAvecPaiements,
+  PaiementsGroupesFilters, 
+  PaiementsGroupesResponse 
+} from 'src/app/core/models/paiments';
 import { PayementsService } from 'src/app/core/services/payements.service';
 
-
-
-// Interface pour grouper les paiements par utilisateur
+// Interface pour grouper les paiements par utilisateur (locale)
 interface GroupedPaymentsByUser {
   utilisateur: string;
   idUtilisateur: number;
   email: string;
   telephone: string;
   paiements: ApiPaiement[];
-  souscriptions: Set<number>; // Liste des souscriptions de cet utilisateur
+  souscriptions: Set<number>;
   totalPaye: number;
   totalPrevu: number;
   totalPenalites: number;
@@ -46,18 +55,33 @@ interface GroupedPaymentsByUser {
     NzCardModule,
     NzStatisticModule,
     NzIconModule,
-    NzSpinModule
+    NzSpinModule,
+    NzPaginationModule,
+    NzInputModule
   ],
   templateUrl: './new-payment-admin.component.html',
   styleUrl: './new-payment-admin.component.css'
 })
-export class NewPaymentAdminComponent implements OnInit {
+export class NewPaymentAdminComponent implements OnInit, OnDestroy {
+  
+  // Référence au champ de recherche
+  @ViewChild('searchInput', { static: false }) searchInput!: ElementRef;
   
   // Données
-  paiements: ApiPaiement[] = [];
+  utilisateursAvecPaiements: ApiUtilisateurAvecPaiements[] = [];
   groupedPaymentsByUser: GroupedPaymentsByUser[] = [];
   loading = false;
   error: string | null = null;
+
+  // Pagination
+  currentPage = 1;
+  pageSize = 10;
+  totalItems = 0;
+  pageSizeOptions = [10, 20, 30, 40, 50, 100];
+
+  // Filtres
+  searchTerm = '';
+  private searchSubject = new Subject<string>();
 
   // Statistiques globales (depuis l'API)
   totalMensualites = 0;
@@ -70,64 +94,102 @@ export class NewPaymentAdminComponent implements OnInit {
   constructor(private payementsService: PayementsService) {}
 
   ngOnInit(): void {
-    this.loadAllPayments();
+    this.loadPaiementsGroupes();
+    
+    // ✅ Configuration de la recherche automatique avec debounce
+    this.searchSubject
+      .pipe(
+        debounceTime(500), // Attendre 500ms après la dernière frappe
+        distinctUntilChanged() // Ne déclencher que si la valeur a changé
+      )
+      .subscribe(searchValue => {
+        console.log('🔍 Recherche automatique:', searchValue);
+        this.searchTerm = searchValue;
+        this.currentPage = 1;
+        this.loadPaiementsGroupes();
+      });
+  }
+
+  ngOnDestroy(): void {
+    // ✅ Nettoyer la souscription
+    this.searchSubject.complete();
   }
 
   /**
-   * Charger tous les paiements
+   * ✅ Charger les paiements groupés par utilisateur avec pagination
    */
-  loadAllPayments(): void {
-    console.log('🔄 Chargement de tous les paiements...');
+  loadPaiementsGroupes(): void {
+    console.log('🔄 Chargement des paiements groupés par utilisateur...');
     this.loading = true;
     this.error = null;
   
-    const filters: PaiementsFilters = {
-      per_page: 1000 // Récupérer tous les paiements
+    const filters: PaiementsGroupesFilters = {
+      page: this.currentPage,
+      per_page: this.pageSize,
+      search: this.searchTerm || undefined
     };
-  
-    this.payementsService.getMesPaiements(filters).subscribe({
-      next: (response: PaiementsResponse) => {
-        console.log('📥 Réponse API paiements:', response);
+
+    this.payementsService.getPaiementsGroupesParUtilisateur(filters).subscribe({
+      next: (response: PaiementsGroupesResponse) => {
+        console.log('📥 Réponse API paiements groupés:', response);
         
         if (response.success) {
-          this.paiements = response.data;
-          this.updateStatsFromAPI(response.statistiques);
-          this.groupPaymentsByUser();
-          console.log('✅ Paiements chargés:', this.paiements.length);
-          console.log('📊 Statistiques API:', response.statistiques);
+          this.utilisateursAvecPaiements = response.data || [];
+          this.totalItems = response.pagination?.total || 0;
+          
+          // Mettre à jour les statistiques
+          if (response.statistiques) {
+            this.updateStatsFromAPI(response.statistiques);
+          }
+          
+          // Mapper vers l'interface locale
+          this.mapToGroupedPayments();
+          
+          console.log('✅ Paiements groupés chargés:', this.groupedPaymentsByUser.length, 'utilisateurs');
+          console.log('📊 Pagination:', {
+            page: response.pagination?.current_page,
+            total: response.pagination?.total,
+            perPage: response.pagination?.per_page
+          });
         } else {
           this.error = response.message || 'Erreur lors du chargement des paiements';
           console.error('❌ Erreur API:', response.message);
         }
+        
+        // ✅ IMPORTANT: Arrêter le loading dans tous les cas
+        this.loading = false;
       },
       error: (error) => {
         console.error('❌ Erreur lors du chargement:', error);
         this.error = 'Impossible de charger les paiements. Veuillez réessayer.';
-        this.paiements = [];
+        this.utilisateursAvecPaiements = [];
         this.groupedPaymentsByUser = [];
-      },
-      complete: () => {
+        
+        // ✅ IMPORTANT: Arrêter le loading en cas d'erreur
         this.loading = false;
-        console.log('✅ Chargement terminé');
       }
     });
   }
 
   /**
-   * Mettre à jour les statistiques depuis les données de l'API
+   * ✅ Mettre à jour les statistiques depuis les données de l'API
    */
   private updateStatsFromAPI(statistiques: any): void {
-    this.totalMensualites = statistiques.total_mensualites;
-    this.payeATemps = statistiques.total_paye_a_temps;
-    this.enRetard = statistiques.total_en_retard;
-    this.enAttente = statistiques.total_en_attente;
+    this.totalMensualites = statistiques.total_mensualites || 0;
+    this.payeATemps = statistiques.total_paye_a_temps || 0;
+    this.enRetard = statistiques.total_en_retard || 0;
+    this.enAttente = statistiques.total_en_attente || 0;
 
-    // Calculer montants depuis les données
-    this.montantTotalPaye = this.paiements.reduce((sum, p) => 
-      sum + this.payementsService.parseAmount(p.montant_paye), 0);
+    // Calculer montants depuis les données des utilisateurs
+    this.montantTotalPaye = this.utilisateursAvecPaiements.reduce((sum, user) => {
+      return sum + (user.paiements?.reduce((pSum, p) => 
+        pSum + this.payementsService.parseAmount(p.montant_paye), 0) || 0);
+    }, 0);
     
-    this.totalPenalites = this.paiements.reduce((sum, p) => 
-      sum + this.payementsService.parseAmount(p.penalite_appliquee), 0);
+    this.totalPenalites = this.utilisateursAvecPaiements.reduce((sum, user) => {
+      return sum + (user.paiements?.reduce((pSum, p) => 
+        pSum + this.payementsService.parseAmount(p.penalite_appliquee), 0) || 0);
+    }, 0);
 
     console.log('📊 Statistiques mises à jour depuis l\'API:', {
       totalMensualites: this.totalMensualites,
@@ -140,47 +202,92 @@ export class NewPaymentAdminComponent implements OnInit {
   }
 
   /**
-   * Grouper les paiements par utilisateur
+   * ✅ Mapper les données API vers l'interface locale
    */
-  private groupPaymentsByUser(): void {
-    console.log('🔄 Groupement des paiements par utilisateur...');
+  private mapToGroupedPayments(): void {
+    console.log('🔄 Mapping des utilisateurs vers l\'interface locale...');
     
-    const groups = new Map<number, GroupedPaymentsByUser>();
-
-    this.paiements.forEach(paiement => {
-      const idUtilisateur = paiement.souscription.id_utilisateur;
+    this.groupedPaymentsByUser = this.utilisateursAvecPaiements.map(user => {
+      const paiements = user.paiements || [];
+      const souscriptions = new Set<number>();
       
-      if (!groups.has(idUtilisateur)) {
-        // Créer un nouveau groupe pour cet utilisateur avec les vraies données
-        const utilisateur = paiement.souscription.utilisateur;
-        const newGroup: GroupedPaymentsByUser = {
-          utilisateur: utilisateur ? `${utilisateur.prenom} ${utilisateur.nom}` : `Utilisateur ${idUtilisateur}`,
-          idUtilisateur: idUtilisateur,
-          email: utilisateur?.email || 'Email non disponible',
-          telephone: utilisateur?.telephone || 'Téléphone non disponible',
-          paiements: [],
-          souscriptions: new Set<number>(),
-          totalPaye: 0,
-          totalPrevu: 0,
-          totalPenalites: 0,
-          nombrePaiements: 0,
-          nombreSouscriptions: 0
-        };
-        groups.set(idUtilisateur, newGroup);
-      }
+      paiements.forEach(p => {
+        if (p.id_souscription) {
+          souscriptions.add(p.id_souscription);
+        }
+      });
 
-      const group = groups.get(idUtilisateur)!;
-      group.paiements.push(paiement);
-      group.souscriptions.add(paiement.id_souscription);
-      group.totalPaye += this.payementsService.parseAmount(paiement.montant_paye);
-      group.totalPrevu += this.payementsService.parseAmount(paiement.montant_versement_prevu);
-      group.totalPenalites += this.payementsService.parseAmount(paiement.penalite_appliquee);
-      group.nombrePaiements = group.paiements.length;
-      group.nombreSouscriptions = group.souscriptions.size;
+      const totalPaye = paiements.reduce((sum, p) => 
+        sum + this.payementsService.parseAmount(p.montant_paye), 0);
+      
+      const totalPrevu = paiements.reduce((sum, p) => 
+        sum + this.payementsService.parseAmount(p.montant_versement_prevu), 0);
+      
+      const totalPenalites = paiements.reduce((sum, p) => 
+        sum + this.payementsService.parseAmount(p.penalite_appliquee), 0);
+
+      return {
+        utilisateur: `${user.prenom} ${user.nom}`,
+        idUtilisateur: user.id_utilisateur,
+        email: user.email,
+        telephone: user.telephone,
+        paiements: paiements,
+        souscriptions: souscriptions,
+        totalPaye: totalPaye,
+        totalPrevu: totalPrevu,
+        totalPenalites: totalPenalites,
+        nombrePaiements: paiements.length,
+        nombreSouscriptions: souscriptions.size
+      };
     });
 
-    this.groupedPaymentsByUser = Array.from(groups.values());
-    console.log('✅ Paiements groupés par utilisateur:', this.groupedPaymentsByUser.length, 'utilisateurs');
+    console.log('✅ Mapping terminé:', this.groupedPaymentsByUser.length, 'utilisateurs mappés');
+  }
+
+  /**
+   * ✅ Déclencher la recherche automatique au fur et à mesure de la saisie
+   */
+  onSearchInput(searchValue: string): void {
+    this.searchSubject.next(searchValue);
+  }
+
+  /**
+   * ✅ Rechercher des utilisateurs (pour compatibilité avec l'ancien code)
+   */
+  onSearch(searchValue: string): void {
+    console.log('🔍 Recherche:', searchValue);
+    this.searchTerm = searchValue;
+    this.currentPage = 1;
+    this.loadPaiementsGroupes();
+  }
+
+  /**
+   * ✅ Changer de page
+   */
+  onPageChange(page: number): void {
+    console.log('📄 Changement de page:', page);
+    this.currentPage = page;
+    this.loadPaiementsGroupes();
+  }
+
+  /**
+   * ✅ Changer la taille de page
+   */
+  onPageSizeChange(size: number): void {
+    console.log('📏 Changement de taille de page:', size);
+    this.pageSize = size;
+    this.currentPage = 1;
+    this.loadPaiementsGroupes();
+  }
+
+  /**
+   * ✅ Réinitialiser les filtres
+   */
+  resetFilters(): void {
+    console.log('🔄 Réinitialisation des filtres');
+    this.searchTerm = '';
+    this.currentPage = 1;
+    this.loadPaiementsGroupes();
   }
 
   /**
@@ -239,45 +346,22 @@ export class NewPaymentAdminComponent implements OnInit {
     return this.payementsService.getPaymentModeLabel(mode);
   }
 
-  // Obtenir le nom du terrain à partir de l'id_terrain  
+  // Obtenir le nom du terrain à partir du paiement
   getTerrainName(paiement: ApiPaiement): string {
-    return `Terrain ${paiement.souscription.id_terrain}`;
-  }
-
-  // Obtenir le nom complet de l'utilisateur
-  getUserFullName(paiement: ApiPaiement): string {
-    const utilisateur = paiement.souscription.utilisateur;
-    if (utilisateur) {
-      return `${utilisateur.prenom} ${utilisateur.nom}`;
+    // Si le paiement a une souscription avec terrain
+    if (paiement.souscription && paiement.souscription.id_terrain) {
+      return `Terrain ${paiement.souscription.id_terrain}`;
     }
-    return `Utilisateur ${paiement.souscription.id_utilisateur}`;
+    return 'Terrain non spécifié';
   }
 
-  // Obtenir l'email de l'utilisateur
-  getUserEmail(paiement: ApiPaiement): string {
-    return paiement.souscription.utilisateur?.email || 'Email non disponible';
-  }
-
-  // Obtenir les initiales pour l'avatar depuis les vraies données
+  // Obtenir les initiales pour l'avatar
   getUserInitials(group: GroupedPaymentsByUser): string {
     const names = group.utilisateur.split(' ');
     if (names.length >= 2) {
       return (names[0][0] + names[1][0]).toUpperCase();
     }
     return group.utilisateur.substring(0, 2).toUpperCase();
-  }
-
-  // Formater les montants en version courte (avec unités)
-  formatCurrencyShort(amount: string | number): string {
-    const numAmount = typeof amount === 'string' ? 
-      this.payementsService.parseAmount(amount) : amount;
-    
-    if (numAmount >= 1000000) {
-      return `${(numAmount / 1000000).toFixed(0)} M FCFA`;
-    } else if (numAmount >= 1000) {
-      return `${(numAmount / 1000).toFixed(0)} K FCFA`;
-    }
-    return `${numAmount.toLocaleString('fr-FR')} FCFA`;
   }
 
   // TrackBy pour optimiser les performances
@@ -292,7 +376,7 @@ export class NewPaymentAdminComponent implements OnInit {
   // Actions
   refresh(): void {
     console.log('🔄 Actualisation des paiements...');
-    this.loadAllPayments();
+    this.loadPaiementsGroupes();
   }
 
   viewPaymentDetails(paiement: ApiPaiement): void {

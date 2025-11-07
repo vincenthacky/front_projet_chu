@@ -105,7 +105,7 @@
       </div>
       
       <div class="payment-list">
-        <div class="payment-item-enhanced" *ngFor="let payment of getValidPayments(); trackBy: trackByPaymentEnhanced">
+        <div class="payment-item-enhanced" *ngFor="let payment of paginatedPayments; trackBy: trackByPaymentEnhanced">
           <div class="payment-card">
             <!-- En-tête du paiement -->
             <div class="payment-header">
@@ -190,6 +190,17 @@
           </div>
         </nz-empty>
       </div>
+      
+      <nz-pagination 
+        [nzPageIndex]="currentPage" 
+        [nzTotal]="totalItems" 
+        [nzPageSize]="pageSize" 
+        [nzShowSizeChanger]="true" 
+        [nzPageSizeOptions]="[10, 20, 30, 40, 50]" 
+        (nzPageIndexChange)="onPageChange($event)" 
+        (nzPageSizeChange)="onPageSizeChange($event)"
+        style="margin-top: 24px; text-align: center;">
+      </nz-pagination>
     </div>
   </div>
 </div>

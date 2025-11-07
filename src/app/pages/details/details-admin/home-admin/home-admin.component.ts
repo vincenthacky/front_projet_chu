@@ -4,6 +4,7 @@ import { Chart, ChartConfiguration, ChartType } from 'chart.js';
 import { registerables } from 'chart.js';
 import { Router, RouterModule } from '@angular/router';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
+import { NzSpinModule } from 'ng-zorro-antd/spin';
 
 // Import du service dashboard
 import { 
@@ -19,7 +20,7 @@ Chart.register(...registerables);
 @Component({
   selector: 'app-home-admin',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, NzSpinModule],
   templateUrl: './home-admin.component.html',
   styleUrls: ['./home-admin.component.css']
 })
@@ -136,11 +137,15 @@ export class HomeAdminComponent implements OnInit, AfterViewInit, OnDestroy {
         this.updateReclamationsChart();
       });
 
-    // Activités récentes
+    // Activités récentes - CORRECTION: Formatage des dates en français
     this.dashboardService.recentActivities$
       .pipe(takeUntil(this.destroy$))
       .subscribe(activities => {
-        this.recentActivities = activities;
+        // Formater les dates des activités en français
+        this.recentActivities = activities.map(activity => ({
+          ...activity,
+          time: this.formatTimeToFrench(activity.time)
+        }));
       });
 
     // Alertes
@@ -156,6 +161,85 @@ export class HomeAdminComponent implements OnInit, AfterViewInit, OnDestroy {
       .subscribe(loading => {
         this.loading = loading;
       });
+  }
+
+  /**
+   * NOUVELLE MÉTHODE: Formate l'heure en français
+   * Convertit les expressions temporelles anglaises en français
+   */
+  formatTimeToFrench(time: string): string {
+    // Si le temps est déjà une date ISO ou un timestamp, on le convertit
+    const date = new Date(time);
+    
+    // Si c'est une date valide
+    if (!isNaN(date.getTime())) {
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+
+      if (diffMins < 1) {
+        return 'À l\'instant';
+      } else if (diffMins < 60) {
+        return `Il y a ${diffMins} minute${diffMins > 1 ? 's' : ''}`;
+      } else if (diffHours < 24) {
+        return `Il y a ${diffHours} heure${diffHours > 1 ? 's' : ''}`;
+      } else if (diffDays < 7) {
+        return `Il y a ${diffDays} jour${diffDays > 1 ? 's' : ''}`;
+      } else {
+        // Format complet en français
+        return date.toLocaleDateString('fr-FR', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+    }
+
+    // Si c'est déjà une chaîne en français, la retourner telle quelle
+    if (time.includes('Il y a') || time.includes('l\'instant')) {
+      return time;
+    }
+
+    // Traduction des expressions anglaises courantes
+    const translations: { [key: string]: string } = {
+      'just now': 'À l\'instant',
+      'a minute ago': 'Il y a 1 minute',
+      'minutes ago': 'minutes',
+      'an hour ago': 'Il y a 1 heure',
+      'hours ago': 'heures',
+      'a day ago': 'Il y a 1 jour',
+      'days ago': 'jours',
+      'a week ago': 'Il y a 1 semaine',
+      'weeks ago': 'semaines',
+      'a month ago': 'Il y a 1 mois',
+      'months ago': 'mois',
+      'a year ago': 'Il y a 1 an',
+      'years ago': 'ans'
+    };
+
+    let translatedTime = time;
+
+    // Remplacer les expressions anglaises
+    for (const [english, french] of Object.entries(translations)) {
+      if (time.toLowerCase().includes(english)) {
+        // Extraire le nombre si présent
+        const numberMatch = time.match(/(\d+)/);
+        if (numberMatch && !english.startsWith('a ')) {
+          const number = numberMatch[1];
+          const unit = french;
+          translatedTime = `Il y a ${number} ${unit}`;
+        } else {
+          translatedTime = french;
+        }
+        break;
+      }
+    }
+
+    return translatedTime;
   }
 
   /**
@@ -470,6 +554,10 @@ export class HomeAdminComponent implements OnInit, AfterViewInit, OnDestroy {
   goToNewPayements() {
     this.router.navigate(['/dashboard/admin/details/new-payment-admin']);
   }
+  
+  goToSouscription(){
+    this.router.navigate(['/dashboard/admin/details/souscription-admin']);
+  }
 
   goToNewEvents() {
     this.router.navigate(['/dashboard/admin/details/new-event-admin']);
@@ -485,5 +573,9 @@ export class HomeAdminComponent implements OnInit, AfterViewInit, OnDestroy {
 
   goToNewUser() {
     this.router.navigate(['/dashboard/admin/details/new-user-admin']);
+  }
+  
+  goToEvents() {
+    this.router.navigate(['/dashboard/admin/details/event-admin']);
   }
 }

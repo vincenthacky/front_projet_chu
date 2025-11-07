@@ -17,7 +17,7 @@
       *ngFor="let doc of documents" 
       class="document-card"
       [nzCover]="coverTemplate"
-[nzActions]="[viewAction]"
+      [nzActions]="[viewAction]"
       nzHoverable
     >
       <!-- Template pour la couverture -->
@@ -28,7 +28,7 @@
             <img 
               [src]="documentService.getDocumentUrl(doc.chemin_fichier)" 
               [alt]="doc.nom_original"
-(error)="onImageError($event)"
+              (error)="onImageError($event)"
             />
           </div>
           
@@ -117,15 +117,17 @@
   </div>
 
   <!-- Pagination -->
-  <div class="pagination-container" *ngIf="totalDocuments > pageSize">
+  <div class="pagination-container" *ngIf="totalDocuments > 0">
     <nz-pagination 
       [(nzPageIndex)]="currentPage"
       [nzTotal]="totalDocuments"
       [nzPageSize]="pageSize"
-      nzShowSizeChanger="false"
+      [nzPageSizeOptions]="pageSizeOptions"
+      [nzShowSizeChanger]="true"
       nzShowQuickJumper="true" 
       nzSize="default"
-      (nzPageIndexChange)="onPageChange($event)">
+      (nzPageIndexChange)="onPageChange($event)"
+      (nzPageSizeChange)="onPageSizeChange($event)">
     </nz-pagination>
   </div>
 </div>
@@ -163,7 +165,7 @@
           [src]="documentUrl" 
           [alt]="selectedDocument.nom_original"
           class="modal-image"
-(error)="onImageError($event)"
+          (error)="onImageError($event)"
         />
       </div>
 

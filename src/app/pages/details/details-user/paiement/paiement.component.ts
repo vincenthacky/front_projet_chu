@@ -2,8 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzTagModule } from 'ng-zorro-antd/tag';
+import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { PaiementsResponse, ApiPaiement } from 'src/app/core/models/paiments';
 import { PayementsService } from 'src/app/core/services/payements.service';
+import { forkJoin, Observable } from 'rxjs';
 
 
 interface Payment {
@@ -11,12 +15,13 @@ interface Payment {
   amount: number;
   numero_mensualite: number;
   mode_paiement: string;
-  reference_paiement?: string | null; // Correspond à l'API
+  reference_paiement?: string | null;
   statut_versement: string;
   montant_prevu: number;
   penalite_appliquee: number;
   date_limite: string;
-  commentaire?: string | null; // Correspond à l'API
+  commentaire?: string | null;
+  id_souscription: number;
 }
 
 interface PaymentStats {
@@ -31,7 +36,7 @@ interface PaymentStats {
 @Component({
   selector: 'app-paiement',
   standalone: true,
-  imports: [CommonModule, NzTableModule, NzTagModule],
+  imports: [CommonModule, NzTableModule, NzTagModule, NzButtonModule, NzSpinModule, NzPaginationModule],
   templateUrl: './paiement.component.html',
   styleUrls: ['./paiement.component.css']
 })
@@ -47,75 +52,180 @@ export class PaiementComponent implements OnInit {
   };
   loading = false;
   paiementsData: PaiementsResponse | null = null;
-  userId: number = 1; // Remplacez par l'ID réel de l'utilisateur connecté (ex: récupérez depuis un service d'authentification ou localStorage, par exemple this.userId = parseInt(localStorage.getItem('userId') || '0');)
+  userId: number = 1;
+  
+  // Pagination locale (pour l'affichage)
+  currentPage = 1;
+  pageSize = 10;
+  totalItems = 0;
 
   constructor(
     private paiementsService: PayementsService
   ) {}
 
   ngOnInit(): void {
-    console.log('🚀 Initialisation - Récupération des paiements pour l\'utilisateur');
+    console.log('🚀 Initialisation - Récupération de TOUS les paiements pour l\'utilisateur');
     this.loadAllUserPayments();
   }
 
-  // Récupérer les paiements de l'utilisateur spécifique
+  get paginatedPayments(): Payment[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    const end = start + this.pageSize;
+    console.log(`📄 Pagination locale - Page: ${this.currentPage}, Taille: ${this.pageSize}, Début: ${start}, Fin: ${end}, Total: ${this.payments.length}`);
+    return this.payments.slice(start, end);
+  }
+
+  onPageChange(page: number): void {
+    console.log(`📄 Changement de page vers: ${page}`);
+    this.currentPage = page;
+  }
+
+  onPageSizeChange(size: number): void {
+    console.log(`📄 Changement de taille de page vers: ${size}`);
+    this.pageSize = size;
+    this.currentPage = 1;
+  }
+
+  /**
+   * CORRECTION MAJEURE: Récupérer TOUS les paiements en gérant la pagination de l'API
+   */
   loadAllUserPayments(): void {
-    console.log('🔍 === CHARGEMENT DES PAIEMENTS POUR L\'UTILISATEUR ===');
+    console.log('🔍 === CHARGEMENT DE TOUS LES PAIEMENTS (TOUTES PAGES) ===');
     
     this.loading = true;
     
-    // Appel API pour récupérer les paiements de l'utilisateur spécifique
+    // Première requête pour connaître le nombre total
     this.paiementsService.getPaiementsForUser({
-      per_page: 1000 // Récupérer un maximum de paiements
+      page: 1,
+      per_page: 100 // Augmenter pour réduire le nombre de requêtes
     }).subscribe({
-      next: (result: PaiementsResponse) => {
-        console.log('📥 Paiements reçus:', result);
+      next: (firstResponse: PaiementsResponse) => {
+        console.log('📥 Première réponse reçue:', firstResponse);
+        console.log('📊 Pagination API:', firstResponse.pagination);
         
-        if (result.success) {
-          this.paiementsData = result;
-          this.mapPaymentsData(result);
-          console.log('✅ Mapping des paiements terminé');
-        } else {
-          console.error('❌ Erreur dans la réponse API:', result);
+        if (!firstResponse.success) {
+          console.error('❌ Erreur dans la réponse API:', firstResponse);
+          this.loading = false;
+          return;
         }
+
+        const totalPages = firstResponse.pagination.last_page;
+        const totalItems = firstResponse.pagination.total;
         
-        this.loading = false;
+        console.log(`📊 Total des paiements: ${totalItems}`);
+        console.log(`📄 Nombre de pages: ${totalPages}`);
+
+        // Si une seule page suffit
+        if (totalPages === 1) {
+          console.log('✅ Une seule page - Mapping direct');
+          this.paiementsData = firstResponse;
+          this.mapPaymentsData(firstResponse);
+          this.totalItems = this.payments.length;
+          this.loading = false;
+          return;
+        }
+
+        // Si plusieurs pages, récupérer toutes les pages restantes
+        console.log(`🔄 Récupération de ${totalPages - 1} pages supplémentaires...`);
+        
+        const requests: Observable<PaiementsResponse>[] = [];
+        
+        // Créer les requêtes pour les pages 2 à N
+        for (let page = 2; page <= totalPages; page++) {
+          requests.push(
+            this.paiementsService.getPaiementsForUser({
+              page: page,
+              per_page: 100
+            })
+          );
+        }
+
+        // Exécuter toutes les requêtes en parallèle
+        forkJoin(requests).subscribe({
+          next: (responses: PaiementsResponse[]) => {
+            console.log(`📥 ${responses.length} pages supplémentaires récupérées`);
+            
+            // Combiner tous les paiements
+            const allPaiements: ApiPaiement[] = [...firstResponse.data];
+            
+            responses.forEach((response, index) => {
+              console.log(`📄 Page ${index + 2}: ${response.data.length} paiements`);
+              allPaiements.push(...response.data);
+            });
+
+            console.log(`✅ Total combiné: ${allPaiements.length} paiements`);
+
+            // Créer une réponse combinée
+            const combinedResponse: PaiementsResponse = {
+              ...firstResponse,
+              data: allPaiements,
+              pagination: {
+                ...firstResponse.pagination,
+                per_page: allPaiements.length,
+                current_page: 1,
+                last_page: 1,
+                from: 1,
+                to: allPaiements.length
+              }
+            };
+
+            this.paiementsData = combinedResponse;
+            this.mapPaymentsData(combinedResponse);
+            this.totalItems = this.payments.length;
+            
+            console.log(`🎉 Chargement terminé - ${this.totalItems} paiements disponibles`);
+            this.loading = false;
+          },
+          error: (error: any) => {
+            console.error('❌ Erreur lors du chargement des pages supplémentaires:', error);
+            // En cas d'erreur, utiliser au moins la première page
+            this.paiementsData = firstResponse;
+            this.mapPaymentsData(firstResponse);
+            this.totalItems = this.payments.length;
+            this.loading = false;
+          }
+        });
       },
       error: (error: any) => {
-        console.error('❌ Erreur lors du chargement des paiements:', error);
+        console.error('❌ Erreur lors du chargement initial:', error);
         this.loading = false;
       }
     });
   }
 
-  // Mapper les données des paiements pour l'affichage
+  /**
+   * Mapper les données des paiements pour l'affichage
+   */
   private mapPaymentsData(paiementsData: PaiementsResponse): void {
-    console.log('🗺️ Mapping des paiements:', paiementsData);
+    console.log('🗺️ Mapping des paiements...');
+    console.log(`🗺️ Nombre d'éléments à mapper: ${paiementsData.data.length}`);
     
-    // Mapper tous les paiements avec types corrects
+    // Mapper tous les paiements
     this.payments = paiementsData.data.map((p: ApiPaiement) => ({
       date: p.est_paye ? this.formatDateFromAPI(p.date_paiement_effectif) : '-',
       amount: this.parseAmountFromAPI(p.montant_paye),
       numero_mensualite: p.numero_mensualite,
       mode_paiement: p.est_paye ? this.getPaymentModeFromAPI(p.mode_paiement) : '-',
-      reference_paiement: p.reference_paiement, // Type: string | null
+      reference_paiement: p.reference_paiement,
       statut_versement: p.statut_versement,
       montant_prevu: this.parseAmountFromAPI(p.montant_versement_prevu),
       penalite_appliquee: this.parseAmountFromAPI(p.penalite_appliquee),
       date_limite: this.formatDateFromAPI(p.date_limite_versement),
-      commentaire: p.commentaire_paiement // Type: string | null
+      commentaire: p.commentaire_paiement,
+      id_souscription: p.id_souscription
     })).sort((a: Payment, b: Payment) => b.numero_mensualite - a.numero_mensualite);
+
+    console.log(`💳 Paiements mappés - Nombre total: ${this.payments.length}`);
 
     // Calculer les statistiques
     this.calculateStats(paiementsData);
     
-    console.log('💳 Paiements mappés:', {
-      nombrePaiements: this.payments.length,
-      stats: this.stats
-    });
+    console.log('📊 Statistiques calculées:', this.stats);
   }
 
-  // Calculer les statistiques des paiements
+  /**
+   * Calculer les statistiques des paiements
+   */
   private calculateStats(paiementsResponse: PaiementsResponse): void {
     const paiements = paiementsResponse.data;
     
@@ -187,6 +297,7 @@ export class PaiementComponent implements OnInit {
 
   // Méthodes pour le template
   formatNumber(amount: number): string {
+    if (isNaN(amount)) return '0 FCFA';
     return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
   }
 
@@ -199,7 +310,7 @@ export class PaiementComponent implements OnInit {
     this.loadAllUserPayments();
   }
 
-  // Méthodes utilitaires pour le template
+  // Méthodes pour les statistiques
   getTotalMensualites(): number {
     return this.stats.totalMensualites;
   }
@@ -272,6 +383,12 @@ export class PaiementComponent implements OnInit {
   debugPaymentsData(): void {
     console.log('🐛 === DEBUG TOUS LES PAIEMENTS ===');
     console.log('💾 Payments array:', this.payments);
+    console.log('💾 Nombre total de paiements:', this.payments.length);
+    console.log('💾 Total items:', this.totalItems);
+    console.log('💾 Page actuelle:', this.currentPage);
+    console.log('💾 Taille de page:', this.pageSize);
+    console.log('💾 Paiements paginés (affichés):', this.paginatedPayments);
+    console.log('💾 Nombre de paiements paginés:', this.paginatedPayments.length);
     console.log('📊 Statistiques:', this.stats);
     console.log('📊 Paiements data:', this.paiementsData);
     console.log('⏳ Loading state:', this.loading);

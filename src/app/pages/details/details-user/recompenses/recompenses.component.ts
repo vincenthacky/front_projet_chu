@@ -3,17 +3,25 @@ import { CommonModule } from '@angular/common';
 import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
+import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzIconModule } from 'ng-zorro-antd/icon';
 import { Subject, takeUntil } from 'rxjs';
 import { Recompense, ApiPagination, RecompensesFilter } from 'src/app/core/models/recompenses';
 import { RecompensesService } from 'src/app/core/services/recompenses.service';
 // Import pour récupérer l'utilisateur connecté (à adapter selon votre système d'auth)
 // import { AuthService } from 'src/app/core/services/auth.service';
 
-
 @Component({
   selector: 'app-recompenses',
   standalone: true,
-  imports: [CommonModule, NzPaginationModule, NzSpinModule, NzEmptyModule],
+  imports: [
+    CommonModule, 
+    NzPaginationModule, 
+    NzSpinModule, 
+    NzEmptyModule,
+    NzButtonModule,
+    NzIconModule
+  ],
   templateUrl: './recompenses.component.html',
   styleUrls: ['./recompenses.component.css']
 })
@@ -31,6 +39,9 @@ export class RecompensesComponent implements OnInit, OnDestroy {
   loading: boolean = false;
   error: string = '';
   hasData: boolean = false;
+
+  // État pour le bouton actualiser
+  isLoadingActualisation: boolean = false;
 
   // ID de l'utilisateur connecté - à récupérer depuis votre service d'auth
   currentUserId: number = 1; // Remplacez par la récupération réelle de l'ID utilisateur
@@ -98,6 +109,19 @@ export class RecompensesComponent implements OnInit, OnDestroy {
           console.error('Erreur chargement:', error);
         }
       });
+  }
+
+  // MÉTHODE ACTUALISER (RELOAD API)
+  actualiser(): void {
+    this.isLoadingActualisation = true;
+    this.currentPage = 1; // Réinitialise la pagination
+
+    this.loadRecompenses(); // Recharge les données via API
+
+    // Fin du loading après un délai (à ajuster selon l'API)
+    setTimeout(() => {
+      this.isLoadingActualisation = false;
+    }, 1000);
   }
 
   setupLocalPagination(): void {

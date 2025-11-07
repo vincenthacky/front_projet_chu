@@ -1,9 +1,12 @@
-// Interfaces pour l'API
+// src/app/core/models/souscription.ts
+
+// Interfaces existantes...
 export interface ApiSouscription {
   id_souscription: number;
   id_utilisateur: number;
   id_terrain: number;
   id_admin: number;
+  origine?: string;
   date_souscription: string;
   nombre_terrains: number;
   montant_mensuel: string;
@@ -20,7 +23,7 @@ export interface ApiSouscription {
   montant_paye: string;
   reste_a_payer: number;
   date_prochain: string | null;
-  utilisateur: {
+  utilisateur?: {
     id_utilisateur: number;
     matricule: string;
     nom: string;
@@ -45,7 +48,8 @@ export interface ApiSouscription {
     prix_unitaire: string;
     description: string;
     statut_terrain: string;
-    coordonnees_gps: string;
+    montant_mensuel: string;
+    coordonnees_gps?: string;
     date_creation: string;
     created_at: string;
     updated_at: string;
@@ -150,7 +154,6 @@ export interface PlanPaiement {
   updated_at: string;
 }
 
-
 export interface Terrain {
   statut: any;
   id_terrain: number;
@@ -172,4 +175,56 @@ export interface TerrainResponse {
   status_code: number;
   message: string;
   data: Terrain[];
+}
+
+// ✅ NOUVEAU : Interfaces pour les souscriptions groupées par utilisateur
+export interface UtilisateurStatistiques {
+  nbr_total_souscriptions: number;
+  montant_total: number;
+  total_deja_paye: number;
+  total_reste_a_payer: number;
+}
+
+export interface UtilisateurAvecSouscriptions {
+  id_utilisateur: number;
+  matricule: string | null;
+  nom: string;
+  prenom: string;
+  email: string;
+  telephone: string;
+  poste: string;
+  type: string;
+  service: string;
+  date_inscription: string;
+  derniere_connexion: string | null;
+  est_administrateur: boolean;
+  statut_utilisateur: string;
+  created_at: string;
+  updated_at: string;
+  statistiques: UtilisateurStatistiques;
+  souscriptions: ApiSouscription[];
+}
+
+export interface StatistiquesGlobales {
+  nbr_total_utilisateurs: number;
+  nbr_total_souscriptions: number;
+  montant_total: number;
+  total_deja_paye: number;
+  total_reste_a_payer: number;
+}
+
+export interface SouscriptionsGroupeesParUtilisateurResponse {
+  success: boolean;
+  status_code: number;
+  message: string;
+  data: UtilisateurAvecSouscriptions[];
+  pagination: {
+    total: number;
+    per_page: number;
+    current_page: number;
+    last_page: number;
+    from: number;
+    to: number;
+  };
+  statistiques_globales: StatistiquesGlobales;
 }

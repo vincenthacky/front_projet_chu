@@ -13,7 +13,6 @@ import { NzTypographyModule } from 'ng-zorro-antd/typography';
 import { ApiDocument } from 'src/app/core/models/documents';
 import { DocumentService } from 'src/app/core/services/documents.service';
 
-
 @Component({
   selector: 'app-mes-documents',
   standalone: true,
@@ -39,8 +38,9 @@ export class DocumentComponent implements OnInit {
 
   // Propriétés pour la pagination
   currentPage: number = 1;
-  pageSize: number = 5;
+  pageSize: number = 6; // Par défaut : 6
   totalDocuments: number = 0;
+  pageSizeOptions = [6, 10, 20, 30, 50]; // Options disponibles
 
   // Propriétés pour le modal
   isModalVisible = false;
@@ -88,6 +88,15 @@ export class DocumentComponent implements OnInit {
   }
 
   /**
+   * Gère le changement de taille de page
+   */
+  onPageSizeChange(size: number): void {
+    this.pageSize = size;
+    this.currentPage = 1; // Revenir à la première page
+    this.chargerMesDocuments();
+  }
+
+  /**
    * Ouvre le modal pour visualiser le document
    */
   onConsulter(document: ApiDocument): void {
@@ -125,6 +134,7 @@ export class DocumentComponent implements OnInit {
       case 'avi':
       case 'mov':
       case 'wmv':
+      case 'webm':
         return 'video-camera';
       case 'doc':
       case 'docx':
@@ -214,12 +224,12 @@ export class DocumentComponent implements OnInit {
     this.documentService.telechargerDocument(doc.id_document).subscribe({
       next: (blob: Blob) => {
         const url = window.URL.createObjectURL(blob);
-        const link = window.document.createElement('a'); // Utiliser window.document
+        const link = window.document.createElement('a');
         link.href = url;
         link.download = doc.nom_original;
-        window.document.body.appendChild(link); // Utiliser window.document
+        window.document.body.appendChild(link);
         link.click();
-        window.document.body.removeChild(link); // Utiliser window.document
+        window.document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
         
         console.log('Document téléchargé:', doc.nom_original);

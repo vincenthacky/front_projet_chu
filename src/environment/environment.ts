@@ -3,5 +3,4 @@ export const environment = {
   apiUrl: 'https://api.elokatecheznous.com/api',
   storageUrl: 'https://api.elokatecheznous.com/public/storage'
   
-  
 };

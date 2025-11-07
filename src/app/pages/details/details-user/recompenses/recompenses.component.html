@@ -2,9 +2,21 @@
 <nz-spin [nzSpinning]="loading" nzTip="Chargement des récompenses...">
   <div class="rewards-container">   
     <div class="header">     
-      <h1 class="main-title">       
-        <i class="fas fa-trophy"></i> Mes Récompenses     
-      </h1>     
+      <div class="header-top" style="display: flex; justify-content: space-between; align-items: center;">
+        <h1 class="main-title" style="margin: 0;">       
+          <i class="fas fa-trophy"></i> Mes Récompenses     
+        </h1>     
+        <button 
+          nz-button 
+          nzType="primary" 
+          (click)="actualiser()" 
+          [nzLoading]="isLoadingActualisation"
+          nz-tooltip="Recharger les données">
+          <span nz-icon nzType="sync" [nzSpin]="isLoadingActualisation"></span>
+          <span *ngIf="!isLoadingActualisation">Actualiser</span>
+          <span *ngIf="isLoadingActualisation">Chargement...</span>
+        </button>
+      </div>
       <p class="subtitle">Découvrez toutes vos réalisations et récompenses méritées</p>   
     </div>
 
@@ -113,9 +125,8 @@
       </nz-empty>
 
       <!-- Pagination Ng-Zorro -->
-      <div *ngIf="hasData && totalItems > pageSize" class="pagination-container">
+      <div *ngIf="hasData && totalItems" class="pagination-container">
         <div class="pagination-info">
-          <!-- <span>{{ totalItems }} récompenses au total - Page {{ currentPage }} sur {{ totalPages }}</span> -->
         </div>
         <nz-pagination 
           [nzPageIndex]="currentPage"

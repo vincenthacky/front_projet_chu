@@ -4,7 +4,16 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
-import { SouscriptionFilters, SouscriptionResponse, SouscriptionSingleResponse, SouscriptionStats, ApiSouscription, TerrainResponse, Terrain } from '../models/souscription';
+import { 
+  SouscriptionFilters, 
+  SouscriptionResponse, 
+  SouscriptionSingleResponse, 
+  SouscriptionStats, 
+  ApiSouscription, 
+  TerrainResponse, 
+  Terrain,
+  SouscriptionsGroupeesParUtilisateurResponse 
+} from '../models/souscription';
 import { PlanPaiement } from '../models/utilisateur';
 
 @Injectable({
@@ -31,7 +40,6 @@ export class SouscriptionService {
       if (filters.superficie) params = params.set('superficie', filters.superficie.toString());
       if (filters.terrain_id) params = params.set('terrain_id', filters.terrain_id.toString());
       if (filters.search) params = params.set('search', filters.search);
-      // Nouveaux paramètres pour la vue admin
       if (filters.all_users) params = params.set('all_users', 'true');
       if (filters.admin_view) params = params.set('admin_view', 'true');
     }
@@ -59,7 +67,6 @@ export class SouscriptionService {
       if (filters.superficie) params = params.set('superficie', filters.superficie.toString());
       if (filters.terrain_id) params = params.set('terrain_id', filters.terrain_id.toString());
       if (filters.search) params = params.set('search', filters.search);
-      // Nouveaux paramètres pour la vue admin
       if (filters.all_users) params = params.set('all_users', 'true');
       if (filters.admin_view) params = params.set('admin_view', 'true');
     }
@@ -70,6 +77,32 @@ export class SouscriptionService {
           console.log('📋 demandes de Souscriptions récupérées:', response);
         })
       );
+  }
+
+  /**
+   * ✅ NOUVEAU : Récupère les souscriptions groupées par utilisateur
+   */
+  getSouscriptionsGroupeesParUtilisateur(filters?: SouscriptionFilters): Observable<SouscriptionsGroupeesParUtilisateurResponse> {
+    let params = new HttpParams();
+    
+    if (filters) {
+      if (filters.page) params = params.set('page', filters.page.toString());
+      if (filters.per_page) params = params.set('per_page', filters.per_page.toString());
+      if (filters.statut) params = params.set('statut', filters.statut);
+      if (filters.date_debut) params = params.set('date_debut', filters.date_debut);
+      if (filters.date_fin) params = params.set('date_fin', filters.date_fin);
+      if (filters.search) params = params.set('search', filters.search);
+    }
+
+    return this.http.get<SouscriptionsGroupeesParUtilisateurResponse>(
+      `${this.API_URL}/souscriptions/groupe-utilisateur`, 
+      { params }
+    ).pipe(
+      tap(response => {
+        console.log('👥 Souscriptions groupées par utilisateur récupérées:', response);
+        console.log('📊 Statistiques globales:', response.statistiques_globales);
+      })
+    );
   }
 
   /**
@@ -295,9 +328,8 @@ export class SouscriptionService {
     }).format(numAmount);
   }
 
-  // ✅ CORRECTION : Calcule le pourcentage de completion d'une souscription
+  // Calcule le pourcentage de completion d'une souscription
   calculateCompletionPercentage(souscription: ApiSouscription): number {
-    // CORRECTION : Utiliser montant_total_souscrit au lieu de prix_total_terrain
     const totalAmount = parseFloat(souscription.montant_total_souscrit?.toString() || '0');
     const paidAmount = this.parseAmount(souscription.montant_paye || '0');
     
@@ -311,21 +343,19 @@ export class SouscriptionService {
     const limite = new Date(dateLimite);
     const diffDays = Math.ceil((limite.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
     
-    if (diffDays < 0) return 'urgent'; // En retard
-    if (diffDays <= 7) return 'proche'; // Dans les 7 jours
+    if (diffDays < 0) return 'urgent';
+    if (diffDays <= 7) return 'proche';
     return 'normal';
   }
 
   /**
-   * ✅ CORRECTION : Détermine le statut d'une souscription selon la logique métier
+   * Détermine le statut d'une souscription selon la logique métier
    */
   calculateSouscriptionStatus(souscription: ApiSouscription): string {
-    // Protection contre les valeurs manquantes
     if (!souscription) {
       return 'en_attente';
     }
 
-    // ✅ CORRECTION : Calculer le reste à payer basé sur montant_total_souscrit
     const montantTotal = parseFloat(souscription.montant_total_souscrit?.toString() || '0');
     const montantPaye = this.parseAmount(souscription.montant_paye || '0');
     const resteAPayer = Math.max(0, montantTotal - montantPaye);
@@ -333,12 +363,10 @@ export class SouscriptionService {
     const dateProchain = souscription.date_prochain;
     const today = new Date();
     
-    // Si plus rien à payer → Terminé
     if (resteAPayer === 0) {
       return 'termine';
     }
     
-    // Si date de prochain paiement dépassée → En retard
     if (dateProchain) {
       try {
         const prochainePaiement = new Date(dateProchain);
@@ -350,12 +378,10 @@ export class SouscriptionService {
       }
     }
     
-    // Si un paiement a été effectué → En cours
     if (montantPaye > 0) {
       return 'en_cours';
     }
     
-    // Par défaut, retourne le statut actuel ou 'en_attente'
     return souscription.statut_souscription || 'en_attente';
   }
 
@@ -374,18 +400,16 @@ export class SouscriptionService {
       case 'resilier': return { status, color: 'gray', label: 'Résilié' }; 
       case 'en_attente': return { status, color: 'cyan', label: 'En attente' }; 
       case 'rejete': return { status, color: 'red', label: 'Rejeté' }; 
-      case 'en_cours':
-        return { status, color: 'primary', label: 'En cours' };
-      case 'en_retard':
-        return { status, color: 'danger', label: 'En retard' };
-      case 'annule':
-        return { status, color: 'secondary', label: 'Annulé' };
-      default:
-        return { status, color: 'info', label: 'Active' };
+      case 'en_cours': return { status, color: 'primary', label: 'En cours' };
+      case 'en_retard': return { status, color: 'danger', label: 'En retard' };
+      case 'annule': return { status, color: 'secondary', label: 'Annulé' };
+      default: return { status, color: 'info', label: 'Active' };
     }
   }
 
-  // Ajouter cette méthode à SouscriptionService
+  /**
+   * Récupère la liste des terrains
+   */
   getTerrains(): Observable<Terrain[]> {
     return this.http.get<TerrainResponse>(`${this.API_URL}/terrains`).pipe(
       map(response => response.data),

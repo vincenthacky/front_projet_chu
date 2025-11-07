@@ -15,25 +15,23 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { NzPaginationModule } from 'ng-zorro-antd/pagination';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 
 import { Router } from '@angular/router';
 import { PayementsService } from 'src/app/core/services/payements.service';
-import { ApiSouscription, SouscriptionFilters, SouscriptionResponse } from 'src/app/core/models/souscription';
+import { 
+  ApiSouscription, 
+  SouscriptionFilters, 
+  UtilisateurAvecSouscriptions,
+  SouscriptionsGroupeesParUtilisateurResponse,
+  StatistiquesGlobales
+} from 'src/app/core/models/souscription';
 import { SouscriptionService } from 'src/app/core/services/souscription.service';
 import { PaymentData, PaymentCreationResponse } from 'src/app/core/models/paiments';
 
-// Interface pour les utilisateurs groupés
-interface GroupedUser {
-  id_utilisateur: number;
-  fullName: string;
-  email: string;
-  initials: string;
-  souscriptions: ApiSouscription[];
-  totalAmount: number;
-  totalInDelay: number;
-}
-
-// Interfaces pour le modal de détails - CORRIGÉE
+// Interface pour le modal de détails
 interface Subscription {
   id: string;
   terrain: string;
@@ -53,7 +51,7 @@ interface Payment {
   amount: number;
   numero_mensualite?: number;
   mode_paiement?: string;
-  reference_paiement?: string | null; // CORRECTION : Permettre null
+  reference_paiement?: string | null;
   statut_versement?: string;
 }
 
@@ -82,29 +80,33 @@ interface SelectedSubscriptionInfo {
     NzDropDownModule,
     NzInputModule,
     NzSelectModule,
-    NzDatePickerModule
+    NzDatePickerModule,
+    NzSpinModule,
+    NzPaginationModule,
+    NzToolTipModule
   ],
   schemas: [NO_ERRORS_SCHEMA],
   templateUrl: './admin-souscription.component.html',
   styleUrls: ['./admin-souscription.component.scss']
 })
 export class AdminSouscriptionComponent implements OnInit, OnDestroy {
-  // Propriétés pour les données
-  souscriptions: ApiSouscription[] = [];
-  groupedUsers: GroupedUser[] = [];
-  totalSouscriptions = 0;
+  // Propriétés pour les données groupées
+  groupedUsers: UtilisateurAvecSouscriptions[] = [];
+  statistiquesGlobales?: StatistiquesGlobales;
   isLoading = false;
   error: string | null = null;
 
   // Propriétés pour la pagination
   currentPage = 1;
-  perPage = 20;
+  perPage = 10;
+  totalItems = 0;
   totalPages = 0;
+  pageSizeOptions = [10, 20, 30, 40, 50, 100];
 
   // Propriétés pour les filtres
   filters: SouscriptionFilters = {
     page: 1,
-    per_page:20
+    per_page: 10
   };
 
   // Variables pour les filtres du template
@@ -147,12 +149,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.loadSouscriptions();
-
-    // Test avec des données mockées après 2 secondes (optionnel maintenant)
-    setTimeout(() => {
-      this.testWithMockData();
-    }, 2000);
+    this.loadSouscriptionsGroupees();
   }
 
   ngOnDestroy(): void {
@@ -162,7 +159,71 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Service de paiements simple intégré
+   * NOUVELLE MÉTHODE : Chargement des souscriptions groupées par utilisateur
+   */
+  loadSouscriptionsGroupees(filters?: SouscriptionFilters): void {
+    console.log('🔄 CHARGEMENT DES SOUSCRIPTIONS GROUPÉES');
+    this.isLoading = true;
+    this.error = null;
+
+    const apiFilters: SouscriptionFilters = {
+      page: this.currentPage,
+      per_page: this.perPage,
+      ...filters
+    };
+
+    if (this.statusFilter) {
+      apiFilters.statut = this.statusFilter;
+    }
+
+    if (this.searchTerm) {
+      apiFilters.search = this.searchTerm;
+    }
+
+    if (this.surfaceFilter) {
+      apiFilters.superficie = this.surfaceFilter;
+    }
+
+    if (this.dateDebut) {
+      apiFilters.date_debut = this.dateDebut;
+    }
+
+    if (this.dateFin) {
+      apiFilters.date_fin = this.dateFin;
+    }
+
+    console.log('📤 Filtres envoyés:', apiFilters);
+
+    this.souscriptionService.getSouscriptionsGroupeesParUtilisateur(apiFilters).subscribe({
+      next: (response: SouscriptionsGroupeesParUtilisateurResponse) => {
+        console.log('📡 Réponse API groupée:', response);
+
+        if (response.success) {
+          this.groupedUsers = response.data;
+          this.statistiquesGlobales = response.statistiques_globales;
+          this.totalItems = response.pagination.total;
+          this.currentPage = response.pagination.current_page;
+          this.totalPages = response.pagination.last_page;
+
+          console.log('✅ Utilisateurs chargés:', this.groupedUsers.length);
+          console.log('📊 Stats globales:', this.statistiquesGlobales);
+        } else {
+          this.error = response.message || 'Erreur lors du chargement';
+        }
+      },
+      error: (error) => {
+        console.error('🚨 Erreur:', error);
+        this.error = 'Impossible de charger les données';
+        this.groupedUsers = [];
+      },
+      complete: () => {
+        this.isLoading = false;
+      }
+    });
+  }
+
+  /**
+   * Service de paiements
    */
   private async effectuerPaiement(paymentData: PaymentData): Promise<PaymentCreationResponse> {
     try {
@@ -211,326 +272,17 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * MÉTHODE CORRIGÉE POUR LE CHARGEMENT DES DONNÉES
-   */
-  loadSouscriptions(filters?: SouscriptionFilters): void {
-    console.log('🔄 DÉBUT DU CHARGEMENT - Vérification des filtres API');
-    this.isLoading = true;
-    this.error = null;
-
-    const apiFilters: SouscriptionFilters = {
-      ...this.filters,
-      ...filters,
-      all_users: true,
-      admin_view: true
-    };
-
-    if (this.statusFilter) {
-      apiFilters.statut = this.statusFilter;
-      console.log('✅ Ajout filtre statut API:', apiFilters.statut);
-    }
-
-    if (this.searchTerm) {
-      apiFilters.search = this.searchTerm;
-      console.log('✅ Ajout filtre recherche API:', apiFilters.search);
-    }
-
-    if (this.surfaceFilter) {
-      apiFilters.superficie = this.surfaceFilter;
-      console.log('✅ Ajout filtre superficie API:', apiFilters.superficie);
-    }
-
-    if (this.dateDebut) {
-      apiFilters.date_debut = this.dateDebut;
-      console.log('✅ Ajout filtre date début API:', apiFilters.date_debut);
-    }
-
-    if (this.dateFin) {
-      apiFilters.date_fin = this.dateFin;
-      console.log('✅ Ajout filtre date fin API:', apiFilters.date_fin);
-    }
-
-    console.log('📤 Paramètres envoyés à l\'API:', apiFilters);
-
-    this.souscriptionService.getAllSouscriptions(apiFilters).subscribe({
-      next: (response: SouscriptionResponse) => {
-        console.log('📡 Réponse complète de l\'API:', response);
-
-        if (response.success) {
-          let localData = response.data;
-
-          console.log('📋 Données extraites:', localData.length, 'éléments');
-
-          localData = this.applyClientSideFilters(localData);
-          console.log('🔧 Après filtrage client:', localData.length, 'éléments');
-
-          this.souscriptions = localData;
-          this.totalSouscriptions = response.pagination.total;
-          this.currentPage = response.pagination.current_page;
-          this.totalPages = response.pagination.last_page;
-
-          this.groupSouscriptionsByUser();
-        } else {
-          console.error('❌ Erreur API:', response.message);
-          this.error = response.message || 'Erreur lors du chargement des souscriptions';
-        }
-      },
-      error: (error) => {
-        console.error('🚨 Erreur lors du chargement:', error);
-        this.error = 'Impossible de charger les souscriptions. Veuillez réessayer.';
-        this.souscriptions = [];
-        this.groupedUsers = [];
-      },
-      complete: () => {
-        this.isLoading = false;
-        console.log('✅ Chargement terminé. Utilisateurs finaux:', this.groupedUsers.length);
-      }
-    });
-  }
-
-  // AJOUT : Méthode applyClientSideFilters pour filtrer côté client (comme dans le premier code)
-  private applyClientSideFilters(souscriptions: ApiSouscription[]): ApiSouscription[] {
-    let filtered = [...souscriptions];
-    console.log('🔍 Début filtrage:', souscriptions.length, 'éléments');
-
-    if (this.statusFilter) {
-      console.log('🎯 Filtrage par statut:', this.statusFilter);
-      filtered = filtered.filter(sub => sub.statut_dynamique === this.statusFilter);
-      console.log('📊 Après filtre statut:', filtered.length, 'éléments');
-    }
-
-    if (this.surfaceFilter) {
-      console.log('🏔️ Filtrage par superficie:', this.surfaceFilter);
-      filtered = filtered.filter(sub => {
-        const surfaceNumber = sub.terrain?.superficie?.split('.')[0] || '0';
-        const match = surfaceNumber === this.surfaceFilter.toString();
-        console.log(`🎯 Surface API: "${sub.terrain?.superficie}" -> Nettoyée: "${surfaceNumber}" vs Filtre: "${this.surfaceFilter}" = ${match ? '✅' : '❌'}`);
-        return match;
-      });
-      console.log('📊 Après filtre superficie:', filtered.length, 'éléments');
-    }
-
-    if (this.searchTerm) {
-      console.log('🔎 Filtrage par recherche:', this.searchTerm);
-      const searchLower = this.searchTerm.toLowerCase();
-      filtered = filtered.filter(sub =>
-        sub.id_souscription.toString().includes(searchLower) ||
-        (sub.terrain?.libelle || '').toLowerCase().includes(searchLower) ||
-        sub.prix_total_terrain.toString().includes(searchLower) ||
-        sub.montant_paye.toString().includes(searchLower)
-      );
-      console.log('📊 Après filtre recherche:', filtered.length, 'éléments');
-    }
-
-    // Filtrage par dates (client-side si non géré par API)
-    if (this.dateDebut || this.dateFin) {
-      console.log('📅 Filtrage par dates:', { dateDebut: this.dateDebut, dateFin: this.dateFin });
-      filtered = filtered.filter(sub => {
-        const subDate = new Date(sub.date_souscription);
-        const start = this.dateDebut ? new Date(this.dateDebut) : new Date(0);
-        const end = this.dateFin ? new Date(this.dateFin) : new Date();
-        return subDate >= start && subDate <= end;
-      });
-      console.log('📊 Après filtre dates:', filtered.length, 'éléments');
-    }
-
-    console.log(`✅ Filtrage terminé: ${souscriptions.length} -> ${filtered.length} résultats`);
-    return filtered;
-  }
-
-  /**
-   * SOLUTION DE TEST: Créer une méthode de test avec des données mockées
-   */
-  testWithMockData(): void {
-    console.log('🧪 TEST AVEC DONNÉES SIMULÉES');
-
-    if (this.souscriptions.length === 0) {
-      console.log('Aucune souscription existante, impossible de créer des données de test');
-      return;
-    }
-
-    const userIds = this.souscriptions.map(s => s.id_utilisateur);
-    const uniqueUserIds = [...new Set(userIds)];
-    console.log('- Nouveaux IDs utilisateurs uniques:', uniqueUserIds);
-
-    this.groupSouscriptionsByUser();
-  }
-
-  /**
-   * MÉTHODE DE DÉBOGAGE AVANCÉ DE L'API
-   */
-  debugAPICall(): void {
-    console.log('🔧 DÉBOGAGE AVANCÉ DE L\'API');
-
-    const testParams = [
-      {},
-      { per_page: 100 },
-      { all_users: true },
-      { admin_view: true, per_page: 100 }
-    ];
-
-    testParams.forEach((params, index) => {
-      console.log(`🧪 Test ${index + 1} avec paramètres:`, params);
-
-      this.souscriptionService.getAllSouscriptions(params).subscribe({
-        next: (response) => {
-          const userIds = response.data.map((s: any) => s.id_utilisateur);
-          const uniqueUserIds = [...new Set(userIds)];
-          console.log(`✅ Test ${index + 1} - Utilisateurs uniques trouvés:`, uniqueUserIds);
-          console.log(`📊 Test ${index + 1} - Nombre de souscriptions:`, response.data.length);
-        },
-        error: (error) => {
-          console.error(`❌ Test ${index + 1} - Erreur:`, error);
-        }
-      });
-    });
-  }
-
-  /**
-   * MÉTHODE CORRIGÉE POUR GROUPER LES UTILISATEURS - AVEC PRIX_TOTAL_TERRAIN
-   */
-  private groupSouscriptionsByUser(): void {
-    console.log('🔥 DÉBUT DU GROUPEMENT - Diagnostic complet');
-    console.log('📊 Nombre de souscriptions reçues:', this.souscriptions.length);
-
-    console.log('📋 ANALYSE DES SOUSCRIPTIONS:');
-    this.souscriptions.forEach((souscription, index) => {
-      console.log(`Souscription ${index + 1}:`, {
-        id_souscription: souscription.id_souscription,
-        id_utilisateur: souscription.id_utilisateur,
-        id_admin: souscription.id_admin,
-        utilisateur: souscription.utilisateur
-          ? {
-              nom: souscription.utilisateur.nom,
-              prenom: souscription.utilisateur.prenom,
-              email: souscription.utilisateur.email
-            }
-          : 'AUCUN UTILISATEUR',
-        admin: souscription.admin
-          ? {
-              nom: souscription.admin.nom,
-              prenom: souscription.admin.prenom,
-              email: souscription.admin.email
-            }
-          : 'AUCUN ADMIN',
-        // CORRECTION ICI : Afficher les deux montants pour comparaison
-        prix_total_terrain: souscription.prix_total_terrain,
-        montant_total_souscrit: souscription.montant_total_souscrit
-      });
-    });
-
-    const idsUtilisateurs = this.souscriptions.map(s => s.id_utilisateur);
-    const idsUniques = [...new Set(idsUtilisateurs)];
-    console.log('🔍 IDs utilisateurs dans les souscriptions:', idsUtilisateurs);
-    console.log('✨ IDs utilisateurs uniques:', idsUniques);
-    console.log('📈 Nombre d\'utilisateurs uniques détectés:', idsUniques.length);
-
-    if (idsUniques.length < 2) {
-      console.warn('⚠️ ATTENTION: Moins de 2 utilisateurs uniques détectés!');
-      console.warn('Vérifiez que vos données contiennent bien des id_utilisateur différents');
-    }
-
-    const userMap = new Map<number, GroupedUser>();
-
-    this.souscriptions.forEach((souscription, index) => {
-      const userId = souscription.id_utilisateur;
-
-      console.log(`\n🔄 Traitement souscription ${index + 1} pour utilisateur ID: ${userId}`);
-
-      if (!userMap.has(userId)) {
-        console.log(`➕ Création d'un NOUVEAU groupe pour l'utilisateur ${userId}`);
-
-        let fullName = 'Utilisateur Inconnu';
-        let email = 'email@inconnu.com';
-        let initials = 'UI';
-
-        if (souscription.utilisateur) {
-          fullName = `${souscription.utilisateur.prenom || ''} ${souscription.utilisateur.nom || ''}`.trim();
-          email = souscription.utilisateur.email || 'email@inconnu.com';
-          const prenomInit = souscription.utilisateur.prenom?.charAt(0) || '';
-          const nomInit = souscription.utilisateur.nom?.charAt(0) || '';
-          initials = (prenomInit + nomInit).toUpperCase() || 'UI';
-        } else if (souscription.admin) {
-          fullName = `${souscription.admin.prenom || ''} ${souscription.admin.nom || ''}`.trim();
-          email = souscription.admin.email || 'email@inconnu.com';
-          const prenomInit = souscription.admin.prenom?.charAt(0) || '';
-          const nomInit = souscription.admin.nom?.charAt(0) || '';
-          initials = (prenomInit + nomInit).toUpperCase() || 'UI';
-        }
-
-        const newUser: GroupedUser = {
-          id_utilisateur: userId,
-          fullName,
-          email,
-          initials,
-          souscriptions: [],
-          totalAmount: 0,
-          totalInDelay: 0
-        };
-
-        userMap.set(userId, newUser);
-        console.log(`✅ Utilisateur créé:`, {
-          id: newUser.id_utilisateur,
-          nom: newUser.fullName,
-          email: newUser.email,
-          initiales: newUser.initials
-        });
-      } else {
-        console.log(`📝 Ajout à un groupe EXISTANT pour l'utilisateur ${userId}`);
-      }
-
-      const user = userMap.get(userId)!;
-      user.souscriptions.push(souscription);
-      
-      // CORRECTION PRINCIPALE : Utiliser prix_total_terrain au lieu de montant_total_souscrit
-      const prixTotalTerrain = souscription.prix_total_terrain || 0;
-      user.totalAmount += prixTotalTerrain;
-
-      if (this.isDatePassed(souscription.date_prochain)) {
-        user.totalInDelay++;
-      }
-
-      console.log(`📊 Utilisateur ${userId} a maintenant ${user.souscriptions.length} souscription(s)`);
-      console.log(`💰 Prix total terrain ajouté: ${prixTotalTerrain}, nouveau total: ${user.totalAmount}`);
-    });
-
-    this.groupedUsers = Array.from(userMap.values());
-
-    console.log('\n🎯 RÉSULTAT FINAL DU GROUPEMENT:');
-    console.log('👥 Nombre d\'utilisateurs groupés:', this.groupedUsers.length);
-
-    this.groupedUsers.forEach((user, index) => {
-      console.log(`Utilisateur ${index + 1}:`, {
-        id_utilisateur: user.id_utilisateur,
-        fullName: user.fullName,
-        email: user.email,
-        initials: user.initials,
-        nombreSouscriptions: user.souscriptions.length,
-        montantTotal: user.totalAmount, // Maintenant basé sur prix_total_terrain
-        enRetard: user.totalInDelay
-      });
-    });
-
-    if (this.groupedUsers.length === 0) {
-      console.error('🚨 ERREUR CRITIQUE: Aucun utilisateur groupé !');
-      console.error('Vérifiez que this.souscriptions contient des données valides');
-    } else if (this.groupedUsers.length === 1) {
-      console.log('ℹ️ INFO: Un seul utilisateur groupé détecté');
-      console.log('Ceci est normal si toutes les souscriptions appartiennent au même utilisateur');
-    } else {
-      console.log('✅ SUCCÈS: Plusieurs utilisateurs groupés correctement');
-    }
-
-    console.log('🔥 FIN DU GROUPEMENT\n');
-  }
-
-  /**
    * Voir les détails d'une souscription
    */
   viewDetails(souscriptionId: number): void {
     console.log('🔍 Ouverture modal pour ID:', souscriptionId);
 
-    const souscription = this.souscriptions.find(s => s.id_souscription === souscriptionId);
+    // Trouver la souscription dans tous les groupedUsers
+    let souscription: ApiSouscription | undefined;
+    for (const user of this.groupedUsers) {
+      souscription = user.souscriptions.find(s => s.id_souscription === souscriptionId);
+      if (souscription) break;
+    }
 
     if (!souscription) {
       console.error('❌ Souscription non trouvée:', souscriptionId);
@@ -542,11 +294,9 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Convertir ApiSouscription vers le format Subscription - CORRIGÉ POUR TRI DÉCROISSANT
+   * Convertir ApiSouscription vers le format Subscription
    */
   private convertToSubscriptionFormat(apiSouscription: ApiSouscription): Subscription {
-    console.log('🔄 Conversion de ApiSouscription vers Subscription:', apiSouscription);
-
     let statut: 'en-cours' | 'en-retard' | 'termine' = 'en-cours';
     const statusDisplay = this.getStatusDisplay(apiSouscription);
 
@@ -563,9 +313,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
         break;
     }
 
-    // CORRECTION : Récupérer et trier les paiements par date décroissante (plus récent en premier)
-    // D'abord, mapper avec les dates originales pour le tri précis
-    const paymentsWithOriginalDate: { date: string; dateFormatted: string; amount: number; numero_mensualite?: number; mode_paiement?: string; reference_paiement?: string | null; statut_versement?: string; }[] = (apiSouscription.planpaiements || [])
+    const paymentsWithOriginalDate = (apiSouscription.planpaiements || [])
       .filter(plan => {
         const montantPaye = this.souscriptionService.parseAmount(plan.montant_paye);
         return montantPaye > 0 && plan.date_paiement_effectif;
@@ -573,8 +321,8 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
       .map(plan => {
         const montantPaye = this.souscriptionService.parseAmount(plan.montant_paye);
         return {
-          date: plan.date_paiement_effectif, // Date ISO originale pour tri précis
-          dateFormatted: this.formatDate(plan.date_paiement_effectif), // Date formatée pour affichage
+          date: plan.date_paiement_effectif,
+          dateFormatted: this.formatDate(plan.date_paiement_effectif),
           amount: montantPaye,
           numero_mensualite: plan.numero_mensualite,
           mode_paiement: plan.mode_paiement || 'Non spécifié',
@@ -582,15 +330,12 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
           statut_versement: plan.statut_versement || 'validé'
         };
       })
-      // TRI PAR DATE DÉCROISSANTE : plus récent (date plus grande) en premier
       .sort((a, b) => {
         const dateA = new Date(a.date);
         const dateB = new Date(b.date);
-        // Si dateB > dateA, retourne négatif pour placer b avant a (décroissant)
         return dateB.getTime() - dateA.getTime();
       });
 
-    // Mapper vers le format final avec date formatée (ordre préservé)
     const payments: Payment[] = paymentsWithOriginalDate.map(payment => ({
       date: payment.dateFormatted || 'Date non disponible',
       amount: payment.amount,
@@ -600,9 +345,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
       statut_versement: payment.statut_versement
     }));
 
-    console.log('💳 Paiements triés par date décroissante (plus récent en premier):', payments);
-
-    const subscription: Subscription = {
+    return {
       id: apiSouscription.id_souscription.toString(),
       terrain: apiSouscription.terrain?.libelle || 'Terrain non défini',
       surface: apiSouscription.terrain?.superficie || '0m²',
@@ -615,36 +358,13 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
       progression: this.getCompletionPercentage(apiSouscription),
       payments
     };
-
-    console.log('✅ Subscription convertie avec paiements triés:', subscription);
-    return subscription;
   }
 
   /**
-   * Afficher le modal de détails - CORRIGÉ POUR ORDRE DÉCROISSANT
+   * Afficher le modal de détails
    */
   showModal(subscription: Subscription): void {
-    console.log('🔍 Ouverture modal pour:', subscription.id);
-    console.log('💳 Paiements triés par date décroissante (plus récent en premier):', subscription.payments);
-
-    if (subscription.payments && Array.isArray(subscription.payments)) {
-      // Les paiements sont déjà triés par date décroissante dans convertToSubscriptionFormat
-      // On prend les 5 premiers (les plus récents)
-      this.lastFivePayments = subscription.payments.slice(0, 5).map(payment => ({
-        date: payment.date,
-        amount: payment.amount,
-        numero_mensualite: payment.numero_mensualite,
-        mode_paiement: payment.mode_paiement,
-        reference_paiement: payment.reference_paiement,
-        statut_versement: payment.statut_versement
-      }));
-
-      console.log('📋 5 derniers paiements (ordre décroissant - plus récent en premier):', this.lastFivePayments);
-    } else {
-      this.lastFivePayments = [];
-      console.log('⚠️ Aucun paiement trouvé pour cette souscription');
-    }
-
+    this.lastFivePayments = subscription.payments.slice(0, 5);
     this.selectedSubscriptionId = subscription.id;
     this.selectedSubscriptionInfo = {
       terrain: subscription.terrain,
@@ -654,7 +374,6 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
       resteAPayer: subscription.resteAPayer,
       statut: subscription.statut
     };
-
     this.isVisible = true;
   }
 
@@ -662,7 +381,6 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
    * Fermer le modal de détails
    */
   handleCancel(): void {
-    console.log('❌ Fermeture du modal');
     this.isVisible = false;
     this.selectedSubscriptionId = null;
     this.selectedSubscriptionInfo = null;
@@ -678,8 +396,6 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
 
     if (this.selectedSubscriptionId) {
       const numericId = this.selectedSubscriptionId.replace('SUB', '').replace(/^0+/, '');
-      console.log('🔗 Navigation vers détails paiement admin:', numericId);
-
       this.router.navigate(['/dashboard/admin/details/paiement-details-admin', numericId]);
     }
 
@@ -688,27 +404,26 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Effectuer un paiement - Ouvre le modal
+   * Effectuer un paiement
    */
   makePayment(souscriptionId: number): void {
-    console.log('Ouverture modal de paiement pour la souscription:', souscriptionId);
-    
-    // Trouver la souscription dans les données
-    const souscription = this.souscriptions.find(s => s.id_souscription === souscriptionId);
+    let souscription: ApiSouscription | undefined;
+    for (const user of this.groupedUsers) {
+      souscription = user.souscriptions.find(s => s.id_souscription === souscriptionId);
+      if (souscription) break;
+    }
     
     if (!souscription) {
-      console.error('Souscription non trouvée:', souscriptionId);
       this.message.error('Souscription non trouvée');
       return;
     }
 
-    // Préparer le formulaire avec l'ID de la souscription
     this.selectedSouscriptionForPayment = souscription;
     this.paymentForm = {
       id_souscription: souscriptionId,
       mode_paiement: '',
       montant_paye: 64400,
-      date_paiement_effectif: new Date().toISOString().split('T')[0], // Date d'aujourd'hui par défaut
+      date_paiement_effectif: new Date().toISOString().split('T')[0],
       reference_paiement: '',
       commentaire_paiement: ''
     };
@@ -729,14 +444,13 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
    * Soumettre le paiement
    */
   async submitPayment(): Promise<void> {
-    // Validation des champs requis
     if (!this.paymentForm.mode_paiement) {
       this.message.error('Mode de paiement requis');
       return;
     }
 
     if (!this.paymentForm.montant_paye || this.paymentForm.montant_paye <= 0) {
-      this.message.error('Montant de paiement requis et doit être supérieur à 0');
+      this.message.error('Montant de paiement requis');
       return;
     }
 
@@ -745,50 +459,33 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Validation supplémentaire
     const validation = this.validatePaymentData(this.paymentForm);
     if (!validation.valid) {
       validation.errors.forEach(error => this.message.error(error));
       return;
     }
 
-    // Vérifier que le montant ne dépasse pas le reste à payer
     const montantRestant = this.getMontantRestant(this.selectedSouscriptionForPayment!);
     if (this.paymentForm.montant_paye > montantRestant) {
       this.message.error(`Le montant ne peut pas dépasser le reste à payer (${this.formatCurrency(montantRestant)})`);
       return;
     }
 
-    console.log('Soumission du paiement:', this.paymentForm);
     this.isProcessingPayment = true;
 
     try {
-      // Appel à l'API pour effectuer le paiement
       const response: PaymentCreationResponse = await this.effectuerPaiement(this.paymentForm);
-      
-      console.log('Paiement effectué avec succès:', response);
       
       if (response.success) {
         this.message.success('Paiement enregistré avec succès!');
-        
-        // Fermer le modal
         this.isPaymentModalVisible = false;
         this.resetPaymentForm();
-        
-        // Actualiser les données
-        this.loadSouscriptions();
+        this.loadSouscriptionsGroupees();
       } else {
         this.message.error(response.message || 'Erreur lors de l\'enregistrement du paiement');
       }
     } catch (error: any) {
-      console.error('Erreur lors du paiement:', error);
-      
-      let errorMessage = 'Erreur lors de l\'enregistrement du paiement';
-      if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      this.message.error(errorMessage);
+      this.message.error(error.message || 'Erreur lors de l\'enregistrement du paiement');
     } finally {
       this.isProcessingPayment = false;
     }
@@ -809,26 +506,12 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Obtenir le montant restant à payer pour une souscription
-   */
-  getMontantRestant(souscription: ApiSouscription): number {
-    return souscription.reste_a_payer || 0;
-  }
-
-  /**
-   * Obtenir le nom du terrain pour une souscription
-   */
-  getTerrainName(souscription: ApiSouscription): string {
-    return souscription.terrain?.libelle || 'Terrain non défini';
-  }
-
-  /**
    * Pagination - Changer de page
    */
   onPageChange(page: number): void {
-    this.filters.page = page;
     this.currentPage = page;
-    this.loadSouscriptions();
+    this.filters.page = page;
+    this.loadSouscriptionsGroupees();
   }
 
   /**
@@ -837,9 +520,9 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   onPageSizeChange(size: number): void {
     this.perPage = size;
     this.filters.per_page = size;
-    this.filters.page = 1;
     this.currentPage = 1;
-    this.loadSouscriptions();
+    this.filters.page = 1;
+    this.loadSouscriptionsGroupees();
   }
 
   /**
@@ -848,9 +531,9 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   filterByStatus(statut: string): void {
     this.statusFilter = statut;
     this.filters.statut = statut === '' ? undefined : statut;
+    this.currentPage = 1;
     this.filters.page = 1;
-    this.loadSouscriptions();
-    console.log('Filtre statut appliqué:', statut);
+    this.loadSouscriptionsGroupees();
   }
 
   /**
@@ -861,8 +544,9 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
     this.dateFin = dateFin || '';
     this.filters.date_debut = dateDebut;
     this.filters.date_fin = dateFin;
+    this.currentPage = 1;
     this.filters.page = 1;
-    this.loadSouscriptions();
+    this.loadSouscriptionsGroupees();
   }
 
   /**
@@ -871,9 +555,9 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   filterBySuperficie(superficie?: number): void {
     this.surfaceFilter = superficie || '';
     this.filters.superficie = superficie;
+    this.currentPage = 1;
     this.filters.page = 1;
-    this.loadSouscriptions();
-    console.log('Filtre superficie appliqué:', superficie);
+    this.loadSouscriptionsGroupees();
   }
 
   /**
@@ -882,80 +566,17 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   onSearch(searchTerm: string): void {
     this.searchTerm = searchTerm;
     this.filters.search = searchTerm;
+    this.currentPage = 1;
     this.filters.page = 1;
-    this.loadSouscriptions();
-    console.log('Recherche appliquée:', searchTerm);
+    this.loadSouscriptionsGroupees();
   }
 
   /**
    * Rafraîchir les données
    */
   refresh(): void {
-    console.log('🔄 ACTUALISATION COMPLÈTE DÉMARRÉE');
-    this.isLoading = true;
-    this.souscriptions = [];
-    this.groupedUsers = [];
-    this.totalSouscriptions = 0;
-    this.totalPages = 0;
-    this.currentPage = 1;
-
-    console.log('🧹 Données vidées, rechargement depuis l\'API...');
-
-    const forceRefreshFilters: SouscriptionFilters = {
-      page: this.currentPage,
-      per_page: this.perPage,
-      all_users: true,
-      admin_view: true
-    };
-
-    if (this.statusFilter) {
-      forceRefreshFilters.statut = this.statusFilter;
-      console.log('🎯 Maintien du filtre statut:', this.statusFilter);
-    }
-    if (this.searchTerm) {
-      forceRefreshFilters.search = this.searchTerm;
-      console.log('🔍 Maintien de la recherche:', this.searchTerm);
-    }
-    if (this.surfaceFilter) {
-      forceRefreshFilters.superficie = this.surfaceFilter;
-      console.log('🏔️ Maintien du filtre superficie:', this.surfaceFilter);
-    }
-    if (this.dateDebut) {
-      forceRefreshFilters.date_debut = this.dateDebut;
-      console.log('📅 Maintien du filtre date début:', this.dateDebut);
-    }
-    if (this.dateFin) {
-      forceRefreshFilters.date_fin = this.dateFin;
-      console.log('📅 Maintien du filtre date fin:', this.dateFin);
-    }
-
-    this.souscriptionService.getAllSouscriptions(forceRefreshFilters).subscribe({
-      next: (response: SouscriptionResponse) => {
-        console.log('✅ Données fraîches reçues de l\'API:', response);
-        if (response.success) {
-          let localData = response.data;
-          localData = this.applyClientSideFilters(localData);
-
-          this.souscriptions = localData;
-          this.totalSouscriptions = response.pagination.total;
-          this.currentPage = response.pagination.current_page;
-          this.totalPages = response.pagination.last_page;
-
-          this.groupSouscriptionsByUser();
-        } else {
-          this.error = response.message || 'Erreur lors du chargement des souscriptions';
-        }
-        this.isLoading = false;
-        console.log('🎉 ACTUALISATION TERMINÉE - Nouvelles données chargées');
-      },
-      error: (error) => {
-        console.error('❌ Erreur lors de l\'actualisation forcée:', error);
-        this.isLoading = false;
-        this.error = 'Impossible de charger les souscriptions. Veuillez réessayer.';
-      }
-    });
-
-    console.log('🚀 Processus d\'actualisation lancé');
+    console.log('🔄 ACTUALISATION');
+    this.loadSouscriptionsGroupees();
   }
 
   /**
@@ -971,120 +592,56 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
     this.surfaceFilter = '';
     this.dateDebut = '';
     this.dateFin = '';
-    this.loadSouscriptions();
+    this.currentPage = 1;
+    this.loadSouscriptionsGroupees();
   }
 
   /**
-   * Formater le montant
+   * Méthodes utilitaires
    */
+  getMontantRestant(souscription: ApiSouscription): number {
+    return souscription.reste_a_payer || 0;
+  }
+
+  getTerrainName(souscription: ApiSouscription): string {
+    return souscription.terrain?.libelle || 'Terrain non défini';
+  }
+
   formatCurrency(amount: string | number): string {
     return this.souscriptionService.formatCurrency(amount);
   }
 
-  /**
-   * Calculer le pourcentage de completion
-   */
   getCompletionPercentage(souscription: ApiSouscription): number {
     return this.souscriptionService.calculateCompletionPercentage(souscription);
   }
 
-  /**
-   * Obtenir le statut avec couleur
-   */
   getStatusDisplay(souscription: ApiSouscription): { status: string; color: string; label: string } {
-    const calculatedStatus = this.souscriptionService.calculateSouscriptionStatus(souscription);
-    const apiStatus = souscription.statut_dynamique; // CORRECTION: Utiliser statut_dynamique au lieu de statut_souscription
-
-    let finalStatus = calculatedStatus || apiStatus || 'en_attente';
-
-    if (!finalStatus || typeof finalStatus !== 'string') {
-      finalStatus = 'en_attente';
-    }
-
-    const statusLowerCase = finalStatus.toLowerCase();
-
-    switch (statusLowerCase) {
+    // Utiliser statut_dynamique au lieu de statut_souscription
+    const statut = (souscription as any).statut_dynamique || souscription.statut_souscription;
+    
+    switch(statut.toLowerCase()) {
+      case 'terminee':
       case 'termine':
-      case 'terminé':
-        return { status: finalStatus, color: 'green', label: 'Terminé' };
+        return { status: statut, color: 'green', label: 'Terminé' };
       case 'en_retard':
-        return { status: finalStatus, color: 'red', label: 'En retard' };
+        return { status: statut, color: 'red', label: 'En retard' };
+      case 'en_cour':
       case 'en_cours':
-        return { status: finalStatus, color: 'blue', label: 'En cours' };
-      case 'suspendu':
-      case 'suspendue':
-        return { status: finalStatus, color: 'orange', label: 'Suspendu' };
-      case 'annule':
-      case 'annulé':
-      case 'resillee':
-        return { status: finalStatus, color: 'default', label: 'Annulé' };
+        return { status: statut, color: 'blue', label: 'En cours' };
       case 'en_attente':
-        return { status: finalStatus, color: 'cyan', label: 'En attente' };
-      case 'rejete':
-        return { status: finalStatus, color: 'red', label: 'Rejeté' };
+        return { status: statut, color: 'orange', label: 'En attente' };
       case 'active':
-        return { status: finalStatus, color: 'blue', label: 'Active' };
+        return { status: statut, color: 'cyan', label: 'Active' };
+      case 'suspendu':
+      case 'supendu':
+        return { status: statut, color: 'volcano', label: 'Suspendu' };
+      case 'resilier':
+        return { status: statut, color: 'default', label: 'Résilié' };
       default:
-        return { status: finalStatus, color: 'default', label: finalStatus || 'Non défini' };
+        return { status: statut, color: 'default', label: statut };
     }
   }
 
-  /**
-   * Exporter les données
-   */
-  exportData(format: 'pdf' | 'excel'): void {
-    this.souscriptionService.exporterSouscriptions(format, this.filters).subscribe({
-      next: (blob: Blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `souscriptions.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
-        link.click();
-        window.URL.revokeObjectURL(url);
-      },
-      error: (error) => {
-        console.error('Erreur export:', error);
-      }
-    });
-  }
-
-  /**
-   * Calculer le montant total de toutes les souscriptions - CORRIGÉ
-   * Utilise maintenant prix_total_terrain au lieu de montant_total_souscrit
-   */
-  calculateTotalAmount(): number {
-    return this.souscriptions.reduce((total, souscription) => {
-      // CORRECTION : Utiliser prix_total_terrain au lieu de parseAmount(montant_total_souscrit)
-      const prixTotalTerrain = souscription.prix_total_terrain || 0;
-      return total + prixTotalTerrain;
-    }, 0);
-  }
-
-  /**
-   * Calculer le montant total payé - MAINTENU TEL QUEL
-   * Cette méthode reste correcte car elle utilise bien montant_paye
-   */
-  calculateTotalPaid(): number {
-    return this.souscriptions.reduce((total, souscription) => {
-      const montantPaye = this.souscriptionService.parseAmount(souscription.montant_paye);
-      return total + montantPaye;
-    }, 0);
-  }
-
-  /**
-   * Calculer le montant total restant - MAINTENU TEL QUEL
-   * Cette méthode reste correcte car elle utilise bien reste_a_payer
-   */
-  calculateTotalRemaining(): number {
-    return this.souscriptions.reduce((total, souscription) => {
-      const resteAPayer = souscription.reste_a_payer || 0;
-      return total + resteAPayer;
-    }, 0);
-  }
-
-  /**
-   * Obtenir le nom complet de l'utilisateur
-   */
   getUserFullName(souscription: ApiSouscription): string {
     if (souscription.utilisateur) {
       return `${souscription.utilisateur.prenom} ${souscription.utilisateur.nom}`;
@@ -1095,29 +652,8 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
     return `Utilisateur ${souscription.id_utilisateur}`;
   }
 
-  /**
-   * Obtenir les initiales de l'utilisateur
-   */
-  getUserInitials(souscription: ApiSouscription): string {
-    if (souscription.utilisateur) {
-      const prenom = souscription.utilisateur.prenom?.charAt(0) || '';
-      const nom = souscription.utilisateur.nom?.charAt(0) || '';
-      return (prenom + nom).toUpperCase();
-    }
-    if (souscription.admin) {
-      const prenom = souscription.admin.prenom?.charAt(0) || '';
-      const nom = souscription.admin.nom?.charAt(0) || '';
-      return (prenom + nom).toUpperCase();
-    }
-    return `U${souscription.id_utilisateur.toString().slice(-1)}`;
-  }
-
-  /**
-   * Formater une date
-   */
   formatDate(dateString: string | null): string {
     if (!dateString) return 'Non définie';
-
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR', {
       day: '2-digit',
@@ -1126,88 +662,30 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Vérifier si une date est passée
-   */
-  isDatePassed(dateString: string | null): boolean {
-    if (!dateString) return false;
-    const date = new Date(dateString);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return date < today;
-  }
-
-  /**
-   * Vérifier si une date est urgente
-   */
-  isDateUrgent(dateString: string | null): boolean {
-    if (!dateString) return false;
-    const date = new Date(dateString);
-    const today = new Date();
-    const diffTime = date.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays <= 7 && diffDays >= 0;
-  }
-
-  /**
-   * TrackBy function pour optimiser les performances
-   */
-  trackByFn(index: number, item: GroupedUser): number {
+  trackByFn(index: number, item: UtilisateurAvecSouscriptions): number {
     return item.id_utilisateur;
   }
 
-  /**
-   * Modifier une souscription
-   */
-  editSouscription(souscription: ApiSouscription): void {
-    console.log('Modifier souscription:', souscription);
-  }
-
-  /**
-   * Voir le plan de paiement
-   */
-  viewPaymentPlan(souscriptionId: number): void {
-    console.log('Plan de paiement pour:', souscriptionId);
-  }
-
-  /**
-   * Ajouter une nouvelle souscription
-   */
   AddNewSouscription(): void {
     this.router.navigate(['/dashboard/admin/details/create-souscription-admin']);
   }
 
-  /**
-   * Gestionnaire de changement de terme de recherche avec debounce
-   */
   onSearchChange(): void {
-    console.log('Recherche changée:', this.searchTerm);
     clearTimeout(this.searchTimeout);
     this.searchTimeout = setTimeout(() => {
       this.onSearch(this.searchTerm);
     }, 500);
   }
 
-  /**
-   * Gestionnaire de changement de filtre de statut
-   */
   onStatusFilterChange(): void {
-    console.log('Filtre statut changé:', this.statusFilter);
     this.filterByStatus(this.statusFilter);
   }
 
-  /**
-   * Gestionnaire de changement de filtre de surface
-   */
   onSurfaceFilterChange(): void {
-    console.log('Filtre surface changé vers:', this.surfaceFilter);
     const surface = this.surfaceFilter === '' ? undefined : Number(this.surfaceFilter);
     this.filterBySuperficie(surface);
   }
 
-  /**
-   * Méthodes pour le modal
-   */
   getStatusColor(statut: string): string {
     switch (statut.toLowerCase()) {
       case 'termine':
@@ -1267,9 +745,9 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
       case 'paye_a_temps':
         return 'green';
       case 'paye_en_retard':
-        return 'orange'; // Jaune est souvent représenté par 'orange' ou 'gold' dans ng-zorro, mais 'orange' est plus courant pour les retards
+        return 'orange';
       case 'paiement_partiel':
-        return 'blue'; // Choix pour paiement partiel
+        return 'blue';
       default:
         return 'default';
     }

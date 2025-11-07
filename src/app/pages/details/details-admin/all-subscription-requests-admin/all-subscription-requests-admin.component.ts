@@ -23,10 +23,10 @@ import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 
-
 import { HttpClient } from '@angular/common/http';
 import { ApiSouscription, SouscriptionFilters, SouscriptionResponse } from 'src/app/core/models/souscription';
 import { SouscriptionService } from 'src/app/core/services/souscription.service';
+import { environment } from '@/environment';
 
 @Component({
   selector: 'app-all-subscription-requests-admin',
@@ -77,8 +77,7 @@ export class AllSubscriptionRequestsAdminComponent implements OnInit, OnDestroy 
 
   // Variables pour les filtres du template
   searchTerm = '';
-  statusFilter = '';
-  surfaceFilter: number | '' = '';
+  statusFilter: string = '';
   dateDebut: string = '';
   dateFin: string = '';
 
@@ -89,7 +88,7 @@ export class AllSubscriptionRequestsAdminComponent implements OnInit, OnDestroy 
   private searchTimeout: any;
 
   // API URL pour les actions administrateur
-  private readonly API_URL = 'http://192.168.252.75:8000/api';
+  private readonly API_URL = environment.apiUrl;
 
   constructor(
     private souscriptionService: SouscriptionService,
@@ -105,6 +104,13 @@ export class AllSubscriptionRequestsAdminComponent implements OnInit, OnDestroy 
     if (this.searchTimeout) {
       clearTimeout(this.searchTimeout);
     }
+  }
+
+  /**
+   * TrackBy function pour optimiser les performances
+   */
+  trackByDemande(index: number, demande: ApiSouscription): number {
+    return demande.id_souscription;
   }
 
   /**
@@ -133,6 +139,11 @@ export class AllSubscriptionRequestsAdminComponent implements OnInit, OnDestroy 
           this.totalPages = response.pagination.last_page;
           
           console.log('✅ Demandes chargées:', this.demandeSouscriptions.length);
+          console.log('📊 Pagination:', {
+            total: this.totalDemandes,
+            page: this.currentPage,
+            perPage: this.perPage
+          });
         } else {
           console.error('❌ Erreur API:', response.message);
           this.error = response.message || 'Erreur lors du chargement des demandes';
@@ -181,6 +192,8 @@ export class AllSubscriptionRequestsAdminComponent implements OnInit, OnDestroy 
    * Pagination - Changer de page
    */
   onPageChange(page: number): void {
+    console.log('📄 Changement de page:', page);
+    this.currentPage = page;
     this.filters.page = page;
     this.loadSouscriptions();
   }
@@ -189,9 +202,11 @@ export class AllSubscriptionRequestsAdminComponent implements OnInit, OnDestroy 
    * Changement de taille de page
    */
   onPageSizeChange(size: number): void {
+    console.log('📏 Changement de taille de page:', size);
     this.perPage = size;
     this.filters.per_page = size;
     this.filters.page = 1;
+    this.currentPage = 1;
     this.loadSouscriptions();
   }
 
@@ -199,63 +214,67 @@ export class AllSubscriptionRequestsAdminComponent implements OnInit, OnDestroy 
    * Filtrage par statut
    */
   filterByStatus(statut: string): void {
-    this.filters.statut = statut === '' ? undefined : statut;
+    console.log('🔍 Filtre statut:', statut);
+    
+    // Si statut est vide ou null, on supprime le filtre
+    if (!statut || statut === '') {
+      delete this.filters.statut;
+    } else {
+      this.filters.statut = statut;
+    }
+    
     this.filters.page = 1;
+    this.currentPage = 1;
+    
+    console.log('📤 Filtres après application du statut:', this.filters);
     this.loadSouscriptions();
-    console.log('Filtre statut appliqué:', statut);
-  }
-
-  /**
-   * Filtrage par période
-   */
-  filterByPeriod(dateDebut?: string, dateFin?: string): void {
-    this.filters.date_debut = dateDebut;
-    this.filters.date_fin = dateFin;
-    this.filters.page = 1;
-    this.loadSouscriptions();
-  }
-
-  /**
-   * Filtrage par superficie
-   */
-  filterBySuperficie(superficie?: number): void {
-    this.filters.superficie = superficie;
-    this.filters.page = 1;
-    this.loadSouscriptions();
-    console.log('Filtre superficie appliqué:', superficie);
   }
 
   /**
    * Recherche globale
    */
   onSearch(searchTerm: string): void {
-    this.filters.search = searchTerm;
+    console.log('🔍 Recherche:', searchTerm);
+    
+    if (!searchTerm || searchTerm.trim() === '') {
+      delete this.filters.search;
+    } else {
+      this.filters.search = searchTerm.trim();
+    }
+    
     this.filters.page = 1;
+    this.currentPage = 1;
+    
+    console.log('📤 Filtres après recherche:', this.filters);
     this.loadSouscriptions();
-    console.log('Recherche appliquée:', searchTerm);
   }
 
   /**
    * Rafraîchir les données
    */
   refresh(): void {
+    console.log('🔄 Actualisation des données...');
     this.loadSouscriptions();
-    console.log('Actualisation des données...');
   }
 
   /**
    * Réinitialiser les filtres
    */
   resetFilters(): void {
+    console.log('🔄 Réinitialisation des filtres');
+    
     this.filters = {
       page: 1,
-      per_page: 10
+      per_page: this.perPage
     };
+    
     this.searchTerm = '';
     this.statusFilter = '';
-    this.surfaceFilter = '';
     this.dateDebut = '';
     this.dateFin = '';
+    this.currentPage = 1;
+    
+    console.log('📤 Filtres réinitialisés:', this.filters);
     this.loadSouscriptions();
   }
 
@@ -326,7 +345,6 @@ export class AllSubscriptionRequestsAdminComponent implements OnInit, OnDestroy 
     return date < today;
   }
 
-
   /**
    * Gestionnaire de changement de terme de recherche avec debounce
    */
@@ -344,15 +362,8 @@ export class AllSubscriptionRequestsAdminComponent implements OnInit, OnDestroy 
    * Gestionnaire de changement de filtre de statut
    */
   onStatusFilterChange(): void {
+    console.log('🔄 Changement de filtre statut:', this.statusFilter);
     this.filterByStatus(this.statusFilter);
-  }
-
-  /**
-   * Gestionnaire de changement de filtre de surface
-   */
-  onSurfaceFilterChange(): void {
-    const surface = this.surfaceFilter === '' ? undefined : Number(this.surfaceFilter);
-    this.filterBySuperficie(surface);
   }
 
   /**

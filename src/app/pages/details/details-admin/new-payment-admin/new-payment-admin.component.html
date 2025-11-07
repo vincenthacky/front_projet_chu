@@ -97,6 +97,40 @@
     </nz-card>
   </div>
 
+  <!-- Section header avec recherche et actions -->
+  <div class="section-header-inline">
+    <h3 class="section-title">
+      <i class="fas fa-users"></i>
+      Paiements par Utilisateur <span *ngIf="!loading">({{ totalItems }} utilisateur{{ totalItems > 1 ? 's' : '' }})</span>
+    </h3>
+    
+    <div class="header-actions-inline">
+      <!-- Barre de recherche -->
+      <nz-input-group [nzPrefix]="searchIcon" class="search-input-inline">
+        <input 
+          #searchInput
+          nz-input 
+          placeholder="Rechercher par nom, prénom, email..." 
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onSearchInput($event)"
+        />
+      </nz-input-group>
+      <ng-template #searchIcon>
+        <i class="fas fa-search"></i>
+      </ng-template>
+      
+      <button nz-button nzType="default" (click)="resetFilters()" *ngIf="searchTerm && !loading" class="clear-button">
+        <i class="fas fa-times"></i>
+        Effacer
+      </button>
+      
+      <button nz-button nzType="primary" (click)="refresh()" [nzLoading]="loading" class="refresh-button">
+        <i class="fas fa-sync-alt" *ngIf="!loading"></i>
+        Actualiser
+      </button>
+    </div>
+  </div>
+
   <!-- Loading State -->
   <div *ngIf="loading" class="loading-container">
     <nz-spin nzSize="large">
@@ -115,18 +149,7 @@
   </div>
 
   <!-- Accordéon des paiements par utilisateur -->
-  <div *ngIf="!loading && !error" class="payments-accordion">
-    <div class="section-header">
-      <h3 class="section-title">
-        <i class="fas fa-users"></i>
-        Paiements par Utilisateur
-      </h3>
-      <button nz-button nzType="default" (click)="refresh()">
-        <i class="fas fa-sync-alt"></i>
-        Actualiser
-      </button>
-    </div>
-
+  <div *ngIf="!loading && !error && groupedPaymentsByUser.length > 0" class="payments-accordion">
     <nz-collapse [nzAccordion]="true" [nzBordered]="false" class="user-accordion">
       <nz-collapse-panel 
         *ngFor="let group of groupedPaymentsByUser; trackBy: trackByUser" 
@@ -134,33 +157,46 @@
         [nzHeader]="userHeaderTemplate">
         
         <ng-template #userHeaderTemplate>
-          <div class="user-header-content">
-            <div class="user-info-section">
+          <div class="user-header-table">
+            <!-- Colonne Avatar + Info -->
+            <div class="header-col user-info-col">
               <nz-avatar 
                 class="user-avatar" 
                 [nzText]="getUserInitials(group)" 
                 nzSize="large">
               </nz-avatar>
               <div class="user-details">
-                <div class="user-name">{{ group.utilisateur }}</div>
-                <div class="user-email">{{ group.email }}</div>
+                <div class="user-name" [title]="group.utilisateur">
+                  {{ group.utilisateur }}
+                </div>
+                <div class="user-email" [title]="group.email">
+                  {{ group.email }}
+                </div>
               </div>
             </div>
-            <div class="user-stats">
-              <div class="stat-item">
-                <span class="stat-value">{{ group.nombrePaiements }}</span>
-                <span class="stat-text">PAIEMENTS</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-value">{{ formatCurrency(group.totalPaye) }}</span>
-                <span class="stat-text">PAYÉ</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-value">{{ formatCurrency(group.totalPenalites) }}</span>
-                <span class="stat-text">PÉNALITÉS</span>
-              </div>
+
+            <!-- Colonne Nombre de paiements -->
+            <div class="header-col stat-col">
+              <div class="stat-value">{{ group.nombrePaiements }}</div>
+              <div class="stat-label">PAIEMENTS</div>
             </div>
-            <i class="fas fa-chevron-up panel-arrow"></i>
+
+            <!-- Colonne Total payé -->
+            <div class="header-col stat-col">
+              <div class="stat-value">{{ formatCurrency(group.totalPaye) }}</div>
+              <div class="stat-label">TOTAL PAYÉ</div>
+            </div>
+
+            <!-- Colonne Pénalités -->
+            <div class="header-col stat-col">
+              <div class="stat-value penalty-value">{{ formatCurrency(group.totalPenalites) }}</div>
+              <div class="stat-label">PÉNALITÉS</div>
+            </div>
+
+            <!-- Colonne Flèche -->
+            <div class="header-col arrow-col">
+              <i class="fas fa-chevron-down panel-arrow"></i>
+            </div>
           </div>
         </ng-template>
 
@@ -186,7 +222,7 @@
                 <th>MODE</th>
                 <th>RÉFÉRENCE</th>
                 <th>PÉNALITÉ</th>
-                <th style="font-size: 12px;">COMMENTAIRE</th>
+                <th>COMMENTAIRE</th>
                 <th>STATUT</th>
               </tr>
             </thead>
@@ -200,9 +236,9 @@
                   </div>
                 </td>
                 <td>
-                  <div class="terrain-cell">
+                  <div class="terrain-cell" [title]="getTerrainName(paiement)">
                     <i class="fas fa-map"></i>
-                    <span>{{ getTerrainName(paiement) }}</span>
+                    <span class="truncate-text">{{ getTerrainName(paiement) }}</span>
                   </div>
                 </td>
                 <td>
@@ -224,7 +260,7 @@
                   </ng-template>
                 </td>
                 <td>
-                  <span class="amount-cell paye" style="font-size: 12px;">
+                  <span class="amount-cell paye">
                     {{ formatCurrency(paiement.montant_paye) }}
                   </span>
                 </td>
@@ -234,7 +270,9 @@
                   </span>
                 </td>
                 <td>
-                  <span class="reference-cell" *ngIf="paiement.reference_paiement; else noRefTemplate">
+                  <span class="reference-cell" 
+                        *ngIf="paiement.reference_paiement; else noRefTemplate"
+                        [title]="paiement.reference_paiement">
                     {{ paiement.reference_paiement }}
                   </span>
                   <ng-template #noRefTemplate>
@@ -242,12 +280,14 @@
                   </ng-template>
                 </td>
                 <td>
-                  <span class="penalty-cell" [class.has-penalty]="parseFloat(paiement.penalite_appliquee) > 0" style="font-size: 12px;">
+                  <span class="penalty-cell" [class.has-penalty]="parseFloat(paiement.penalite_appliquee) > 0">
                     {{ formatCurrency(paiement.penalite_appliquee) }}
                   </span>
                 </td>
                 <td>
-                  <span class="comment-cell" *ngIf="paiement.commentaire_paiement; else noCommentTemplate">
+                  <span class="comment-cell" 
+                        *ngIf="paiement.commentaire_paiement; else noCommentTemplate"
+                        [title]="paiement.commentaire_paiement">
                     {{ paiement.commentaire_paiement }}
                   </span>
                   <ng-template #noCommentTemplate>
@@ -255,7 +295,6 @@
                   </ng-template>
                 </td>
                 <td>
-                  <!-- Tag de statut avec classe spécifique pour petite taille -->
                   <nz-tag 
                     [nzColor]="getStatusColor(paiement.statut_versement)"
                     class="status-tag status-tag-table">
@@ -268,12 +307,30 @@
         </div>
       </nz-collapse-panel>
     </nz-collapse>
+
+    <!-- Pagination améliorée en bas -->
+    <div class="pagination-bottom" *ngIf="totalItems > 0">
+      <nz-pagination 
+        [nzPageIndex]="currentPage" 
+        [nzTotal]="totalItems" 
+        [nzPageSize]="pageSize" 
+        [nzShowSizeChanger]="true"
+        [nzShowQuickJumper]="true"
+        [nzPageSizeOptions]="pageSizeOptions" 
+        (nzPageIndexChange)="onPageChange($event)" 
+        (nzPageSizeChange)="onPageSizeChange($event)"
+        [nzShowTotal]="totalTemplate">
+      </nz-pagination>
+      <ng-template #totalTemplate let-total let-range="range">
+        {{ range[0] }}-{{ range[1] }} sur {{ total }} utilisateurs
+      </ng-template>
+    </div>
   </div>
 
   <!-- Empty State -->
   <div *ngIf="!loading && !error && groupedPaymentsByUser.length === 0" class="empty-state">
     <i class="fas fa-inbox"></i>
-    <h3>Aucun paiement trouvé</h3>
-    <p>Aucun paiement n'a été enregistré pour le moment.</p>
+    <h3>Aucun paiement trouvé </h3>
+    <p *ngIf="searchTerm">Aucun résultat pour  ce utilisateur "{{ searchTerm }}"</p>
   </div>
 </div>

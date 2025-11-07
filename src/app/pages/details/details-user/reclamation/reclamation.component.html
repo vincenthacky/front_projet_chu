@@ -1,8 +1,13 @@
-<h2 class="reclamation-title">Mes réclamations</h2>
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+  <h2 class="reclamation-title">Mes réclamations</h2>
+  <button nz-button nzType="primary" (click)="actualiser()" [nzLoading]="isLoadingReclamations" style="margin-right: 30px;">
+    <span *ngIf="!isLoadingReclamations">Actualiser</span>
+    <span *ngIf="isLoadingReclamations">Actualisation...</span>
+  </button>
+</div>
 
 <div class="reclamation-grid">
   <div class="reclamation-col reclamation-col-list">
-    <!-- Liste des réclamations sous forme de cartes -->
     <div class="reclamation-card-list">
       <div class="reclamation-card" *ngFor="let r of reclamations">
         <div class="reclamation-card-header">
@@ -39,81 +44,114 @@
           <div class="reclamation-resol" *ngIf="r.date_resolution">
             <b>Date de résolution :</b> {{ r.date_resolution | date:'dd/MM/yyyy' }}
           </div>
-          <div class="reclamation-sat" *ngIf="r.satisfaction_client">
+          <div class="nzsat" *ngIf="r.satisfaction_client">
             <b>Satisfaction :</b> <span class="satisfaction">{{ r.satisfaction_client }}/5</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Message si pas de réclamations -->
- <!-- Message si pas de réclamations - VERSION AMÉLIORÉE -->
-<div *ngIf="reclamations.length === 0 && !isLoadingReclamations" class="no-data">
-  <nz-empty 
-  nzNotFoundImage="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
-  nzNotFoundContent="Aucune réclamation trouvé">
-</nz-empty>
-</div>
+    <div *ngIf="reclamations.length === 0 && !isLoadingReclamations" class="no-data">
+      <nz-empty 
+        nzNotFoundImage="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
+        nzNotFoundContent="Aucune réclamation trouvée">
+      </nz-empty>
+    </div>
 
-<!-- État de chargement -->
-<div *ngIf="isLoadingReclamations" class="loading-state">
-  <div class="loading-content">
-    <nz-spin nzSize="large">
-      <div class="loading-text">Chargement de vos réclamations...</div>
-    </nz-spin>
-  </div>
-</div>
+    <div *ngIf="isLoadingReclamations" class="loading-state">
+      <div class="loading-content">
+        <nz-spin nzSize="large">
+          <div class="loading-text">Chargement de vos réclamations...</div>
+        </nz-spin>
+      </div>
+    </div>
 
-    <!-- Pagination -->
-    <div class="pagination-container" *ngIf="totalReclamations > pageSize">
-      <nz-pagination 
+    <!-- Pagination avec 5 dans les options -->
+    <div class="pagination-container" *ngIf="totalReclamations > 0" style="margin-top: 20px; display: flex; justify-content: center;">
+      <nz-pagination
         [(nzPageIndex)]="currentPage"
         [nzTotal]="totalReclamations"
         [nzPageSize]="pageSize"
-        nzShowSizeChanger="false"
-        nzShowQuickJumper="false" 
-        nzSize="small"
-        (nzPageIndexChange)="onPageChange($event)">
+        [nzPageSizeOptions]="pageSizeOptions"
+        [nzShowSizeChanger]="true"
+        (nzPageIndexChange)="onPageChange($event)"
+        (nzPageSizeChange)="onPageSizeChange($event)">
       </nz-pagination>
     </div>
   </div>
   
   <div class="reclamation-col reclamation-col-form">
-    <!-- Formulaire de nouvelle réclamation -->
     <div class="reclamation-form">
       <h4>Nouvelle réclamation</h4>
       <form [formGroup]="form" (ngSubmit)="handleOk()" nz-form>
         <div class="form-group">
-          <label for="souscription">Souscription</label>
-          <nz-select formControlName="souscription" id="souscription" nzPlaceHolder="Sélectionner une souscription">
+          <label for="souscription"><span style="color: red;">*</span> Souscription</label>
+          <nz-select formControlName="souscription" id="souscription" nzPlaceHolder="Sélectionner une souscription"
+                     [nzStatus]="form.get('souscription')?.invalid && form.get('souscription')?.touched ? 'error' : ''">
             <nz-option *ngFor="let s of souscription" [nzValue]="s.id_souscription" [nzLabel]="s.terrain.libelle"></nz-option>
           </nz-select>
+          <div *ngIf="form.get('souscription')?.invalid && form.get('souscription')?.touched" 
+               style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">Veuillez sélectionner une souscription</div>
         </div>
+        
         <div class="form-group">
-          <label for="titre">Titre</label>
-          <input nz-input formControlName="titre" id="titre" maxlength="255" required placeholder="Sujet de la réclamation" />
+          <label for="titre"><span style="color: red;">*</span> Titre</label>
+          <input nz-input formControlName="titre" id="titre" maxlength="255" 
+                 placeholder="Sujet de la réclamation (min. 3 caractères)"
+                 [nzStatus]="form.get('titre')?.invalid && form.get('titre')?.touched ? 'error' : ''" />
+          <div *ngIf="form.get('titre')?.invalid && form.get('titre')?.touched" 
+               style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+            <span *ngIf="form.get('titre')?.hasError('required')">Le titre est obligatoire</span>
+            <span *ngIf="form.get('titre')?.hasError('minlength')">Le titre doit contenir au moins 3 caractères</span>
+          </div>
         </div>
+        
         <div class="form-group">
-          <label for="type_reclamation">Type de réclamation</label>
-          <nz-select formControlName="type_reclamation" id="type_reclamation" nzPlaceHolder="Type de réclamation">
+          <label for="type_reclamation"><span style="color: red;">*</span> Type de réclamation</label>
+          <nz-select formControlName="type_reclamation" id="type_reclamation" nzPlaceHolder="Sélectionner un type"
+                     [nzStatus]="form.get('type_reclamation')?.invalid && form.get('type_reclamation')?.touched ? 'error' : ''">
             <nz-option *ngFor="let t of typeOptions" [nzValue]="t.value" [nzLabel]="t.label"></nz-option>
           </nz-select>
+          <div *ngIf="form.get('type_reclamation')?.invalid && form.get('type_reclamation')?.touched" 
+               style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">Veuillez sélectionner un type de réclamation</div>
         </div>
+        
         <div class="form-group">
-          <label for="description">Description</label>
-          <textarea nz-input formControlName="description" id="description" rows="4" required placeholder="Décrivez votre problème"></textarea>
+          <label for="description"><span style="color: red;">*</span> Description</label>
+          <textarea nz-input formControlName="description" id="description" rows="4" 
+                    placeholder="Décrivez votre problème en détail (min. 10 caractères)"
+                    [nzStatus]="form.get('description')?.invalid && form.get('description')?.touched ? 'error' : ''"></textarea>
+          <div *ngIf="form.get('description')?.invalid && form.get('description')?.touched" 
+               style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+            <span *ngIf="form.get('description')?.hasError('required')">La description est obligatoire</span>
+            <span *ngIf="form.get('description')?.hasError('minlength')">La description doit contenir au moins 10 caractères</span>
+          </div>
         </div>
+        
         <div class="form-group">
           <label for="priorite">Priorité</label>
           <nz-select formControlName="priorite" id="priorite">
             <nz-option *ngFor="let p of prioriteOptions" [nzValue]="p.value" [nzLabel]="p.label"></nz-option>
           </nz-select>
         </div>
+        
         <div class="form-group">
-          <label for="document">Document</label>
-          <input type="file" id="document" (change)="onFileSelected($event)" accept=".pdf,.doc,.docx,.jpg,.png" />
+          <label for="document">Document (optionnel)</label>
+          <input type="file" id="document" (change)="onFileSelected($event)" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+          <small style="color: #8c8c8c; display: block; margin-top: 4px;">
+            Formats acceptés : PDF, DOC, DOCX, JPG, PNG (max 10 MB)
+          </small>
+          <div *ngIf="selectedFile" style="color: #52c41a; font-size: 12px; margin-top: 4px;">
+            Fichier sélectionné : {{ selectedFile.name }}
+          </div>
         </div>
-        <button nz-button nzType="primary" class="btn" type="submit">Envoyer la réclamation</button>
+        
+        <div style="display: flex; gap: 8px; margin-top: 16px;">
+          <button nz-button nzType="primary" class="btn" type="submit"
+                  [nzLoading]="isSubmittingForm" [disabled]="isSubmittingForm" style="flex: 1;">
+            {{ isSubmittingForm ? 'Envoi en cours...' : 'Envoyer la réclamation' }}
+          </button>
+        </div>
       </form>
     </div>
   </div>

@@ -61,6 +61,9 @@
         <i class="fas fa-exclamation-circle"></i>
         Paiements en retard - Attention à la régularité
       </nz-tag>
+      <button nz-button nzType="primary" class="refresh-button" [nzLoading]="loading" (click)="refresh()">
+        Actualiser
+      </button>
       <nz-tag nzColor="red" class="status-tag" *ngIf="getEnAttente() > 0">
         <i class="fas fa-times-circle"></i>
         Paiements non conformes - Non éligible aux récompenses
@@ -96,21 +99,24 @@
     <div class="table-header">
       <h3 class="table-title">
         <i class="fas fa-table"></i>
-        Détail des paiements ({{ getNombrePaiements() }} paiements)
+        Détail des paiements pour toutes les souscriptions ({{ totalItems }} paiements)
       </h3>
     </div>
     
     <div class="responsive-table-container">
       <nz-table 
-        [nzData]="payments" 
+        [nzData]="paginatedPayments" 
         [nzBordered]="true" 
         [nzSize]="'small'" 
         [nzScroll]="{ x: '800px' }"
-        [nzLoading]="loading">
+        [nzLoading]="loading"
+        [nzFrontPagination]="false"
+        [nzShowPagination]="false">
         <thead>
           <tr>
             <th nzWidth="50px">#</th>
             <th nzWidth="120px">Montant prévu</th>
+            <th nzWidth="120px">Souscription</th>
             <th nzWidth="100px">Date limite</th>
             <th nzWidth="100px">Date paiement</th>
             <th nzWidth="120px">Montant payé</th>
@@ -122,7 +128,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let payment of payments; trackBy: trackByPayment; let i = index"
+          <tr *ngFor="let payment of paginatedPayments; trackBy: trackByPayment; let i = index"
               [class]="getRowClass(payment)">
             <td>
               <div class="cell-content">
@@ -133,6 +139,11 @@
               <div class="cell-content amount-cell">
                 <i class="fas fa-coins cell-icon"></i>
                 {{ formatNumber(payment.montant_prevu) }}
+              </div>
+            </td>
+            <td>
+              <div class="cell-content">
+                {{ payment.id_souscription }}
               </div>
             </td>
             <td>
@@ -195,6 +206,24 @@
         </tbody>
       </nz-table>
     </div>
+    
+    <!-- Pagination -->
+    <nz-pagination 
+      style="margin-top: 20px; display: flex; justify-content: center;"
+      [nzPageIndex]="currentPage"
+      [nzTotal]="totalItems"
+      [nzPageSize]="pageSize"
+      [nzShowSizeChanger]="true"
+      [nzShowTotal]="totalTemplate"
+      [nzPageSizeOptions]="[10, 20, 30, 40, 50]"
+      (nzPageIndexChange)="onPageChange($event)"
+      (nzPageSizeChange)="onPageSizeChange($event)">
+    </nz-pagination>
+
+    <!-- Template pour afficher le total -->
+    <ng-template #totalTemplate let-total>
+      Total: {{ total }} paiements
+    </ng-template>
   </div>
 </div>
 

@@ -1,31 +1,42 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Injectable } from '@angular/core';
+import { map } from 'rxjs/operators';
 
-import { PaymentData, PaymentCreationResponse, PaiementsFilters, PaiementsResponse, ApiPaiement } from '../models/paiments';
+import { 
+  PaymentData, 
+  PaymentCreationResponse, 
+  PaymentUpdateResponse,
+  PaymentUpdateData,
+  PaiementsFilters, 
+  PaiementsResponse, 
+  PaiementsGroupesResponse,
+  PaiementsGroupesFilters,
+  ApiPaiement,
+  ApiUtilisateurAvecPaiements,
+  StatistiquesUtilisateur
+} from '../models/paiments';
 import { environment } from '@/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PayementsService {
-  //private apiUrl = 'http://192.168.252.75:8000/api/paiements'; 
   private apiUrl = `${environment.apiUrl}/paiements`;
 
   constructor(private http: HttpClient) {}
 
   /**
-   * Créer un nouveau paiement (corrigé pour inclure les champs optionnels)
+   * Créer un nouveau paiement
    */
   createPaiement(paymentData: PaymentData): Observable<PaymentCreationResponse> {
     const payload: any = {
       id_souscription: paymentData.id_souscription,
       mode_paiement: paymentData.mode_paiement,
-      montant_paye: paymentData.montant_paye.toString(), // Convertir en string si l'API attend une string
+      montant_paye: paymentData.montant_paye.toString(),
       date_paiement_effectif: paymentData.date_paiement_effectif
     };
 
-    // Ajout des champs optionnels s'ils sont fournis
     if (paymentData.reference_paiement && paymentData.reference_paiement.trim() !== '') {
       payload.reference_paiement = paymentData.reference_paiement;
     }
@@ -37,6 +48,26 @@ export class PayementsService {
     console.log('🔗 URL:', this.apiUrl);
 
     return this.http.post<PaymentCreationResponse>(this.apiUrl, payload);
+  }
+
+  /**
+   * ✅ Mettre à jour un paiement existant
+   */
+  updatePaiement(idPlanPaiement: number, paymentData: PaymentUpdateData): Observable<PaymentUpdateResponse> {
+    const url = `${this.apiUrl}/${idPlanPaiement}`;
+    
+    const payload = {
+      mode_paiement: paymentData.mode_paiement,
+      montant_paye: paymentData.montant_paye.toString(),
+      date_paiement_effectif: paymentData.date_paiement_effectif,
+      reference_paiement: paymentData.reference_paiement || null,
+      commentaire_paiement: paymentData.commentaire_paiement || null
+    };
+
+    console.log('📤 Mise à jour paiement API:', payload);
+    console.log('🔗 URL:', url);
+
+    return this.http.put<PaymentUpdateResponse>(url, payload);
   }
 
   /**
@@ -88,6 +119,81 @@ export class PayementsService {
   }
 
   /**
+   * ✅ Récupérer les paiements groupés par utilisateur
+   * Endpoint: /api/paiements-groupes
+   */
+  getPaiementsGroupesParUtilisateur(filters?: PaiementsGroupesFilters): Observable<PaiementsGroupesResponse> {
+    const url = `${environment.apiUrl}/paiement-groupes`;
+    
+    let params = new HttpParams();
+    
+    if (filters) {
+      if (filters.page) params = params.set('page', filters.page.toString());
+      if (filters.per_page) params = params.set('per_page', filters.per_page.toString());
+      if (filters.search) params = params.set('search', filters.search);
+      if (filters.statut_versement) params = params.set('statut_versement', filters.statut_versement);
+      if (filters.mode_paiement) params = params.set('mode_paiement', filters.mode_paiement);
+      if (filters.date_debut) params = params.set('date_debut', filters.date_debut);
+      if (filters.date_fin) params = params.set('date_fin', filters.date_fin);
+      if (filters.statut_utilisateur) params = params.set('statut_utilisateur', filters.statut_utilisateur);
+    }
+
+    console.log('📤 Appel API getPaiementsGroupesParUtilisateur avec filtres:', filters);
+    console.log('🔗 URL complète:', `${url}?${params.toString()}`);
+
+    return this.http.get<PaiementsGroupesResponse>(url, { params });
+  }
+
+  /**
+   * ✅ Récupérer les statistiques d'un utilisateur spécifique
+   */
+  getStatistiquesUtilisateur(idUtilisateur: number): Observable<StatistiquesUtilisateur> {
+    return this.getPaiementsGroupesParUtilisateur().pipe(
+      map((response: PaiementsGroupesResponse) => {
+        const utilisateur = response.data.find(u => u.id_utilisateur === idUtilisateur);
+        
+        if (!utilisateur) {
+          return {
+            id_utilisateur: idUtilisateur,
+            nom_complet: 'Utilisateur non trouvé',
+            total_paiements: 0,
+            montant_total_paye: 0,
+            nombre_mensualites_payees: 0,
+            paiements_en_retard: 0,
+            paiements_a_temps: 0,
+            derniere_date_paiement: null
+          };
+        }
+
+        const paiements = utilisateur.paiements || [];
+        const montantTotalPaye = paiements.reduce((sum, p) => sum + this.parseAmount(p.montant_paye), 0);
+        const paiementsEnRetard = paiements.filter(p => p.statut_versement === 'paye_en_retard').length;
+        const paiementsATemps = paiements.filter(p => p.statut_versement === 'paye_a_temps').length;
+        
+        // Trouver la date du dernier paiement
+        const derniereDate = paiements.length > 0
+          ? paiements.reduce((latest, p) => {
+              const currentDate = new Date(p.date_paiement_effectif);
+              const latestDate = new Date(latest);
+              return currentDate > latestDate ? p.date_paiement_effectif : latest;
+            }, paiements[0].date_paiement_effectif)
+          : null;
+
+        return {
+          id_utilisateur: utilisateur.id_utilisateur,
+          nom_complet: `${utilisateur.prenom} ${utilisateur.nom}`,
+          total_paiements: paiements.length,
+          montant_total_paye: montantTotalPaye,
+          nombre_mensualites_payees: paiements.length,
+          paiements_en_retard: paiementsEnRetard,
+          paiements_a_temps: paiementsATemps,
+          derniere_date_paiement: derniereDate
+        };
+      })
+    );
+  }
+
+  /**
    * Récupérer les paiements d'une souscription spécifique
    */
   getPaiementsBySubscription(idSouscription: number, filters?: Omit<PaiementsFilters, 'id_souscription'>): Observable<PaiementsResponse> {
@@ -99,6 +205,18 @@ export class PayementsService {
     console.log('📤 Appel API getPaiementsBySubscription pour souscription:', idSouscription);
     
     return this.getMesPaiements(subscriptionFilters);
+  }
+
+  /**
+   * ✅ Récupérer un paiement spécifique par son ID
+   */
+  getPaiementById(idPlanPaiement: number): Observable<{ success: boolean; data: ApiPaiement }> {
+    const url = `${this.apiUrl}/${idPlanPaiement}`;
+    
+    console.log('📤 Appel API getPaiementById:', idPlanPaiement);
+    console.log('🔗 URL:', url);
+    
+    return this.http.get<{ success: boolean; data: ApiPaiement }>(url);
   }
 
   /**
@@ -141,33 +259,65 @@ export class PayementsService {
   // Obtenir la couleur du statut de paiement
   getPaymentStatusColor(status: string): string {
     switch(status?.toLowerCase()) {
-      case 'paye_a_temps': return '#10b981'; // Vert
-      case 'paye_en_retard': return '#f59e0b'; // Orange
-      case 'paiement_partiel': return '#3b82f6'; // Bleu 
-      default: return '#6b7280'; // Gris
+      case 'paye':
+      case 'paye_a_temps': 
+        return '#10b981'; // Vert
+      case 'paye_en_retard': 
+        return '#f59e0b'; // Orange
+      case 'paye_avance':
+        return '#3b82f6'; // Bleu
+      case 'paiement_partiel': 
+        return '#8b5cf6'; // Violet
+      case 'non_paye':
+        return '#ef4444'; // Rouge
+      case 'en_attente':
+        return '#6b7280'; // Gris
+      default: 
+        return '#6b7280'; // Gris
     }
   }
 
   // Obtenir le label du statut de paiement
   getPaymentStatusLabel(status: string): string {
     switch(status?.toLowerCase()) {
-      case 'paye_a_temps': return 'Payé à temps';
-      case 'paye_en_retard': return 'Payé en retard';
-      case 'paiement_partiel': return 'paiement_partiel';
-      default: return status || 'Inconnu';
+      case 'paye':
+        return 'Payé';
+      case 'paye_a_temps': 
+        return 'Payé à temps';
+      case 'paye_en_retard': 
+        return 'Payé en retard';
+      case 'paye_avance':
+        return 'Payé en avance';
+      case 'paiement_partiel': 
+        return 'Paiement partiel';
+      case 'non_paye':
+        return 'Non payé';
+      case 'en_attente':
+        return 'En attente';
+      default: 
+        return status || 'Inconnu';
     }
   }
 
   // Obtenir le label du mode de paiement
   getPaymentModeLabel(mode: string): string {
     switch(mode?.toLowerCase()) {
-      case 'cheque': return 'Chèque';
-      case 'especes': return 'Espèces';
-      case 'virement': return 'Virement bancaire';
-      case 'carte': return 'Carte bancaire';
-      case 'mobile_money': return 'Paiement mobile';
-      case 'mandat': return 'Mandat';
-      default: return mode || 'Non spécifié';
+      case 'cheque': 
+        return 'Chèque';
+      case 'especes': 
+        return 'Espèces';
+      case 'virement': 
+        return 'Virement bancaire';
+      case 'carte': 
+        return 'Carte bancaire';
+      case 'mobile_money': 
+        return 'Paiement mobile';
+      case 'mobile':
+        return 'Mobile Money';
+      case 'mandat': 
+        return 'Mandat';
+      default: 
+        return mode || 'Non spécifié';
     }
   }
 
@@ -190,5 +340,74 @@ export class PayementsService {
       montantMoyen: paiements.length > 0 ? totalPaye / paiements.length : 0,
       penalitesTotales
     };
+  }
+
+  /**
+   * ✅ Calculer les statistiques globales des paiements groupés
+   */
+  calculateGlobalStats(utilisateurs: ApiUtilisateurAvecPaiements[]): {
+    nombreUtilisateurs: number;
+    totalPaiements: number;
+    montantTotalPaye: number;
+    montantMoyenParUtilisateur: number;
+    utilisateurAvecPlusDePaiements: string;
+    utilisateurAvecMoinsDePaiements: string;
+  } {
+    const totalPaiements = utilisateurs.reduce((sum, u) => sum + (u.paiements?.length || 0), 0);
+    const montantTotalPaye = utilisateurs.reduce((sum, u) => {
+      return sum + (u.paiements?.reduce((pSum, p) => pSum + this.parseAmount(p.montant_paye), 0) || 0);
+    }, 0);
+
+    // Trouver l'utilisateur avec le plus de paiements
+    const userAvecMax = utilisateurs.reduce((max, u) => 
+      (u.paiements?.length || 0) > (max.paiements?.length || 0) ? u : max
+    , utilisateurs[0] || { prenom: '', nom: '', paiements: [] });
+
+    // Trouver l'utilisateur avec le moins de paiements
+    const userAvecMin = utilisateurs.reduce((min, u) => 
+      (u.paiements?.length || 0) < (min.paiements?.length || 0) ? u : min
+    , utilisateurs[0] || { prenom: '', nom: '', paiements: [] });
+
+    return {
+      nombreUtilisateurs: utilisateurs.length,
+      totalPaiements,
+      montantTotalPaye,
+      montantMoyenParUtilisateur: utilisateurs.length > 0 ? montantTotalPaye / utilisateurs.length : 0,
+      utilisateurAvecPlusDePaiements: `${userAvecMax.prenom} ${userAvecMax.nom} (${userAvecMax.paiements?.length || 0} paiements)`,
+      utilisateurAvecMoinsDePaiements: `${userAvecMin.prenom} ${userAvecMin.nom} (${userAvecMin.paiements?.length || 0} paiements)`
+    };
+  }
+
+  /**
+   * ✅ Rechercher des utilisateurs par nom/prénom
+   */
+  rechercherUtilisateursAvecPaiements(searchTerm: string, page: number = 1, perPage: number = 15): Observable<PaiementsGroupesResponse> {
+    return this.getPaiementsGroupesParUtilisateur({
+      search: searchTerm,
+      page: page,
+      per_page: perPage
+    });
+  }
+
+  /**
+   * ✅ Filtrer les paiements par statut
+   */
+  filtrerPaiementsParStatut(statut: string, page: number = 1, perPage: number = 15): Observable<PaiementsGroupesResponse> {
+    return this.getPaiementsGroupesParUtilisateur({
+      statut_versement: statut,
+      page: page,
+      per_page: perPage
+    });
+  }
+
+  /**
+   * ✅ Filtrer les paiements par mode de paiement
+   */
+  filtrerPaiementsParMode(mode: string, page: number = 1, perPage: number = 15): Observable<PaiementsGroupesResponse> {
+    return this.getPaiementsGroupesParUtilisateur({
+      mode_paiement: mode,
+      page: page,
+      per_page: perPage
+    });
   }
 }

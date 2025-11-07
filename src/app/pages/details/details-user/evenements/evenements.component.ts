@@ -10,6 +10,7 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
+import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { isPlatformBrowser } from '@angular/common';
 import { Inject, PLATFORM_ID } from '@angular/core';
 import { EvenementOrganise, ApiEvenement, TypeEvenement } from 'src/app/core/models/evenements';
@@ -63,6 +64,9 @@ export class EvenementsComponent implements OnInit, AfterViewInit  {
   statistiques: any = null;
   loading: boolean = false;
   
+  // État pour le bouton actualiser
+  isLoadingActualisation: boolean = false;
+  
   // Propriétés de pagination
   currentPage: number = 1;
   pageSize: number = 3;
@@ -92,6 +96,7 @@ export class EvenementsComponent implements OnInit, AfterViewInit  {
     @Inject(PLATFORM_ID) private platformId: Object, 
     private evenementsService: EvenementsService,
     private documentService: DocumentService,
+    private notification: NzNotificationService
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
   }
@@ -545,9 +550,6 @@ export class EvenementsComponent implements OnInit, AfterViewInit  {
     // Logique pour afficher plus de détails
   }
 
-  // MÉTHODE SUPPRIMÉE - REDONDANTE AVEC getEventImages
-  // getEventPhotos était en conflit avec getEventImages
-  
   // Animation des barres de progression
   private animateProgressBars(): void {
     if (!this.isBrowser) return;
@@ -630,6 +632,7 @@ export class EvenementsComponent implements OnInit, AfterViewInit  {
       },
       error: (err) => {
         console.error('Erreur lors du chargement des événements:', err);
+        this.notification.error('Erreur', 'Impossible de charger les événements');
         this.loading = false;
       }
     });
@@ -698,5 +701,20 @@ export class EvenementsComponent implements OnInit, AfterViewInit  {
     if (percentage < 50) return '#fd7e14';
     if (percentage < 75) return '#ffc107';
     return '#28a745';
+  }
+
+  // MÉTHODE ACTUALISER (RELOAD API)
+  actualiser(): void {
+    this.isLoadingActualisation = true;
+    this.currentPage = 1; // Réinitialise la pagination
+
+    this.chargerMesEvenements(); // Recharge les données via API
+
+    // Fin du loading (géré dans chargerMesEvenements)
+    // Mais on force ici en cas de besoin
+    setTimeout(() => {
+      this.isLoadingActualisation = false;
+      this.notification.success('Actualisé', 'Les données ont été rechargées avec succès');
+    }, 1000); // Ajuste selon le temps réel de l'API
   }
 }

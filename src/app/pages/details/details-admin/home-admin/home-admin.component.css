@@ -341,7 +341,7 @@ body {
 
 .btn-sm:hover {
   background: var(--primary-color);
-  color: white;
+  color: rgb(73, 140, 241);
 }
 
 /* Bottom Section - Responsives */

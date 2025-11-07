@@ -39,16 +39,15 @@ interface Subscription {
   styleUrls: ['./payement-details.component.css']
 })
 export class PayementDetailsComponent implements OnInit {
-  
   subscription: Subscription | null = null;
   apiData: ApiSouscription | null = null; // Exposer les données API brutes
   loading = false;
   subscriptionId: string | null = null;
 
-  // Pagination variables
-  currentPage: number = 1;
-  pageSize: number = 5;
-  totalPayments: number = 0;
+  // Pagination
+  currentPage = 1;
+  pageSize = 10;
+  totalItems = 0;
 
   constructor(
     private route: ActivatedRoute,
@@ -73,6 +72,21 @@ export class PayementDetailsComponent implements OnInit {
     });
   }
 
+  get paginatedPayments(): any[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    const end = start + this.pageSize;
+    return this.getValidPayments().slice(start, end);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize = size;
+    this.currentPage = 1;
+  }
+
   // ✅ Méthode principale utilisant le service existant
   loadSubscriptionDetails(): void {
     if (!this.subscriptionId) return;
@@ -95,11 +109,9 @@ export class PayementDetailsComponent implements OnInit {
           this.apiData = response.data;
           // Mapper les données vers notre interface locale
           this.subscription = this.mapApiDataToSubscription(response.data);
+          this.totalItems = this.getValidPaymentsCount();
           console.log('✅ Souscription mappée:', this.subscription);
           console.log('📊 Progression calculée:', this.subscription.progression + '%');
-          // Mise à jour de la pagination
-          this.totalPayments = this.getValidPayments().length;
-          this.currentPage = 1; // Réinitialiser à la première page
         } else {
           console.error('❌ Réponse API invalide:', response);
           this.router.navigate(['/dashboard/user/subscriptions']);
@@ -227,12 +239,12 @@ export class PayementDetailsComponent implements OnInit {
     console.log('📊 Données finales:', {
       id: result.id,
       terrain: result.terrain,
-      prixTotal: `${this.formatNumber(result.prixTotal)} (raw: ${result.prixTotal})`,
-      montantPaye: `${this.formatNumber(result.montantPaye)} (raw: ${result.montantPaye})`,
-      resteAPayer: `${this.formatNumber(result.resteAPayer)} (raw: ${result.resteAPayer})`,
-      progression: `${result.progression}% (raw: ${result.progression})`,
+      prixTotal: `${this.formatNumber(result.prixTotal)} (${result.prixTotal})`,
+      montantPaye: `${this.formatNumber(result.montantPaye)} (${result.montantPaye})`,
+      resteAPayer: `${this.formatNumber(result.resteAPayer)} (${result.resteAPayer})`,
+      progression: `${result.progression}%`,
       statut: result.statut,
-      dateDebut: result.dateDebut,
+      totalPayments: result.payments.length,
       prochainPaiement: result.prochainPaiement
     });
 
@@ -411,7 +423,7 @@ export class PayementDetailsComponent implements OnInit {
   // Navigation de retour
   goBack(): void {
     console.log('🔙 Retour vers les souscriptions');
-    this.router.navigate(['/dashboard/admin/details/souscription-admin']);
+    this.router.navigate(['/dashboard/user/details/subscription']);
   }
 
   // Rafraîchir les données
@@ -422,13 +434,62 @@ export class PayementDetailsComponent implements OnInit {
     }
   }
 
-  // Exposer la méthode de debug pour la console
-  ngAfterViewInit(): void {
-    if (typeof window !== 'undefined') {
-      (window as any).debugPaymentDetails = () => this.debugSubscriptionData();
-      console.log('🛠️ Méthode de debug disponible: debugPaymentDetails()');
-      console.log('💡 Pour tester: Ouvrez la console et tapez debugPaymentDetails()');
+  // Méthode de debug améliorée
+  debugSubscriptionData(): void {
+    console.log('🐛 === DEBUG PAYMENT DETAILS COMPLET ===');
+    console.log('📋 Subscription ID:', this.subscriptionId);
+    console.log('⏳ État loading:', this.loading);
+    console.log('💾 Données subscription:', JSON.stringify(this.subscription, null, 2));
+    
+    if (this.subscription) {
+      console.log('📊 === STATISTIQUES DÉTAILLÉES ===');
+      console.log('   ID:', this.subscription.id);
+      console.log('   Terrain:', this.subscription.terrain);
+      console.log('   Surface:', this.subscription.surface);
+      console.log('   Prix total (montant_total_souscrit):', `${this.formatNumber(this.subscription.prixTotal)} (raw: ${this.subscription.prixTotal})`);
+      console.log('   Montant payé:', `${this.formatNumber(this.subscription.montantPaye)} (raw: ${this.subscription.montantPaye})`);
+      console.log('   Reste à payer (calculé):', `${this.formatNumber(this.subscription.resteAPayer)} (raw: ${this.subscription.resteAPayer})`);
+      console.log('   Progression:', `${this.subscription.progression}% (raw: ${this.subscription.progression})`);
+      console.log('   Statut:', this.subscription.statut);
+      console.log('   Date début:', this.subscription.dateDebut);
+      console.log('   Prochain paiement:', this.subscription.prochainPaiement);
+      console.log('   Nombre paiements:', this.subscription.payments.length);
+      
+      // Recalcul de vérification
+      const verification = this.calculateProgressPercentage(
+        this.subscription.prixTotal, 
+        this.subscription.montantPaye
+      );
+      console.log('🔍 === VÉRIFICATION CALCUL ===');
+      console.log('   Progression recalculée:', verification + '%');
+      console.log('   Correspond:', Math.abs(verification - this.subscription.progression) < 0.01);
+      
+      if (this.subscription.payments.length > 0) {
+        console.log('💳 === PAIEMENTS (5 premiers) ===');
+        this.subscription.payments.slice(0, 5).forEach((payment, i) => {
+          console.log(`   ${i + 1}. Mensualité ${payment.numero_mensualite}:`, {
+            date: payment.date,
+            amount: `${this.formatNumber(payment.amount)} (raw: ${payment.amount})`,
+            mode: payment.mode_paiement,
+            statut: payment.statut_versement,
+            reference: payment.reference_paiement
+          });
+        });
+        
+        // Vérification somme paiements
+        const sommePaiements = this.subscription.payments.reduce((sum, p) => sum + p.amount, 0);
+        console.log('💰 === VÉRIFICATION SOMME PAIEMENTS ===');
+        console.log('   Somme calculée:', sommePaiements);
+        console.log('   Montant total API:', this.subscription.montantPaye);
+        console.log('   Écart:', Math.abs(sommePaiements - this.subscription.montantPaye));
+        console.log('   Cohérent:', Math.abs(sommePaiements - this.subscription.montantPaye) < 1);
+      } else {
+        console.log('ℹ️ Aucun paiement à afficher');
+      }
+    } else {
+      console.log('❌ Aucune donnée de souscription disponible');
     }
+    console.log('🐛 === FIN DEBUG ===');
   }
 
   // ✅ Méthodes utilitaires pour l'affichage des paiements
@@ -447,13 +508,6 @@ export class PayementDetailsComponent implements OnInit {
     ).sort((a, b) => b.numero_mensualite - a.numero_mensualite);
   }
 
-  // Obtenir les paiements paginés
-  getPaginatedPayments(): any[] {
-    const validPayments = this.getValidPayments();
-    const startIndex = (this.currentPage - 1) * this.pageSize;
-    return validPayments.slice(startIndex, startIndex + this.pageSize);
-  }
-
   // Compter les paiements valides
   getValidPaymentsCount(): number {
     return this.getValidPayments().length;
@@ -466,7 +520,7 @@ export class PayementDetailsComponent implements OnInit {
       'cheque': 'Chèque',
       'virement': 'Virement bancaire',
       'carte': 'Carte bancaire',
-      'mobile_money': 'Paiement mobile',
+      'mobile': 'Paiement mobile',
       'orange_money': 'Orange Money',
       'mtn_money': 'MTN Money',
       'moov_money': 'Moov Money',
@@ -476,7 +530,7 @@ export class PayementDetailsComponent implements OnInit {
     return modes[mode?.toLowerCase()] || mode || 'Non spécifié';
   }
 
-  // Formater les dates de paiement
+  // Formater les dates de paiement en texte lisible
   formatPaymentDate(dateString: string): string {
     if (!dateString) {
       return 'Date non disponible';
@@ -488,13 +542,26 @@ export class PayementDetailsComponent implements OnInit {
         return 'Date invalide';
       }
       
-      return date.toLocaleDateString('fr-FR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
+      const hours = date.getHours();
+      const minutes = date.getMinutes();
+      
+      if (hours === 0 && minutes === 0) {
+        // Afficher seulement la date si l'heure est 00:00
+        return date.toLocaleDateString('fr-FR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
+      } else {
+        // Afficher date et heure si l'heure n'est pas 00:00
+        return date.toLocaleDateString('fr-FR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
     } catch (error) {
       return 'Date non disponible';
     }
@@ -557,66 +624,12 @@ export class PayementDetailsComponent implements OnInit {
     return `${payment.id_plan_paiement}-${payment.numero_mensualite}-${payment.montant_paye}`;
   }
 
-  // Méthode de debug améliorée
-  debugSubscriptionData(): void {
-    console.log('🐛 === DEBUG PAYMENT DETAILS COMPLET ===');
-    console.log('📋 Subscription ID:', this.subscriptionId);
-    console.log('⏳ État loading:', this.loading);
-    console.log('💾 Données subscription:', JSON.stringify(this.subscription, null, 2));
-    
-    if (this.subscription) {
-      console.log('📊 === STATISTIQUES DÉTAILLÉES ===');
-      console.log('   ID:', this.subscription.id);
-      console.log('   Terrain:', this.subscription.terrain);
-      console.log('   Surface:', this.subscription.surface);
-      console.log('   Prix total (montant_total_souscrit):', `${this.formatNumber(this.subscription.prixTotal)} (raw: ${this.subscription.prixTotal})`);
-      console.log('   Montant payé:', `${this.formatNumber(this.subscription.montantPaye)} (raw: ${this.subscription.montantPaye})`);
-      console.log('   Reste à payer (calculé):', `${this.formatNumber(this.subscription.resteAPayer)} (raw: ${this.subscription.resteAPayer})`);
-      console.log('   Progression:', `${this.subscription.progression}% (raw: ${this.subscription.progression})`);
-      console.log('   Statut:', this.subscription.statut);
-      console.log('   Date début:', this.subscription.dateDebut);
-      console.log('   Prochain paiement:', this.subscription.prochainPaiement);
-      console.log('   Nombre paiements:', this.subscription.payments.length);
-      
-      // Recalcul de vérification
-      const verification = this.calculateProgressPercentage(
-        this.subscription.prixTotal, 
-        this.subscription.montantPaye
-      );
-      console.log('🔍 === VÉRIFICATION CALCUL ===');
-      console.log('   Progression recalculée:', verification + '%');
-      console.log('   Correspond:', Math.abs(verification - this.subscription.progression) < 0.01);
-      
-      if (this.subscription.payments.length > 0) {
-        console.log('💳 === PAIEMENTS (5 premiers) ===');
-        this.subscription.payments.slice(0, 5).forEach((payment, i) => {
-          console.log(`   ${i + 1}. Mensualité ${payment.numero_mensualite}:`, {
-            date: payment.date,
-            amount: `${this.formatNumber(payment.amount)} (raw: ${payment.amount})`,
-            mode: payment.mode_paiement,
-            statut: payment.statut_versement,
-            reference: payment.reference_paiement
-          });
-        });
-        
-        // Vérification somme paiements
-        const sommePaiements = this.subscription.payments.reduce((sum, p) => sum + p.amount, 0);
-        console.log('💰 === VÉRIFICATION SOMME PAIEMENTS ===');
-        console.log('   Somme calculée:', sommePaiements);
-        console.log('   Montant total API:', this.subscription.montantPaye);
-        console.log('   Écart:', Math.abs(sommePaiements - this.subscription.montantPaye));
-        console.log('   Cohérent:', Math.abs(sommePaiements - this.subscription.montantPaye) < 1);
-      } else {
-        console.log('ℹ️ Aucun paiement à afficher');
-      }
-    } else {
-      console.log('❌ Aucune donnée de souscription disponible');
+  // Exposer la méthode de debug pour la console
+  ngAfterViewInit(): void {
+    if (typeof window !== 'undefined') {
+      (window as any).debugPaymentDetails = () => this.debugSubscriptionData();
+      console.log('🛠️ Méthode de debug disponible: debugPaymentDetails()');
+      console.log('💡 Pour tester: Ouvrez la console et tapez debugPaymentDetails()');
     }
-    console.log('🐛 === FIN DEBUG ===');
-  }
-
-  // Pagination handler
-  onPageChange(page: number): void {
-    this.currentPage = page;
   }
 }

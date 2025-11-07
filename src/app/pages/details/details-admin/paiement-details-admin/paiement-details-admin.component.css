@@ -902,3 +902,90 @@
       font-size: 0.85rem;
     }
   }
+
+
+  /* ✅ Styles pour le header des paiements avec bouton modifier */
+.payment-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  /* ✅ Bouton modifier le paiement */
+  .edit-payment-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+  }
+  
+  .edit-payment-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+  }
+  
+  .edit-payment-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+  }
+  
+  .edit-payment-btn i {
+    font-size: 0.9em;
+  }
+  
+  /* ✅ Box d'informations dans le modal */
+  .payment-info-box {
+    animation: slideInDown 0.3s ease;
+  }
+  
+  @keyframes slideInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* ✅ Responsive pour le bouton modifier */
+  @media (max-width: 768px) {
+    .payment-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    
+    .payment-actions {
+      width: 100%;
+      justify-content: space-between;
+    }
+    
+    .edit-payment-btn {
+      padding: 5px 10px;
+      font-size: 0.8em;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .edit-payment-btn {
+      padding: 4px 8px;
+      font-size: 0.75em;
+      gap: 4px;
+    }
+    
+    .edit-payment-btn i {
+      font-size: 0.85em;
+    }
+  }

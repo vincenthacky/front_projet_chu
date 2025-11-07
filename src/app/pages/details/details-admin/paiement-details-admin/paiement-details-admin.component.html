@@ -105,7 +105,7 @@
       </div>
       
       <div class="payment-list">
-        <div class="payment-item-enhanced" *ngFor="let payment of getValidPayments(); trackBy: trackByPaymentEnhanced">
+        <div class="payment-item-enhanced" *ngFor="let payment of paginatedPayments; trackBy: trackByPaymentEnhanced">
           <div class="payment-card">
             <!-- En-tête du paiement -->
             <div class="payment-header">
@@ -113,8 +113,15 @@
                 <i class="fas fa-calendar-check"></i>
                 <span class="mensualite-badge">Mensualité #{{ payment.numero_mensualite }}</span>
               </div>
-              <div class="payment-status" [ngClass]="getPaymentStatusClass(payment.statut_versement)">
-                {{ getPaymentStatusText(payment.statut_versement) }}
+              <div class="payment-actions">
+                <div class="payment-status" [ngClass]="getPaymentStatusClass(payment.statut_versement)">
+                  {{ getPaymentStatusText(payment.statut_versement) }}
+                </div>
+                <!-- ✅ Bouton Modifier -->
+                <button class="edit-payment-btn" (click)="openEditPaymentModal(payment)" title="Modifier ce paiement">
+                  <i class="fas fa-edit"></i>
+                  Modifier
+                </button>
               </div>
             </div>
             
@@ -190,6 +197,192 @@
           </div>
         </nz-empty>
       </div>
+      
+      <nz-pagination 
+        [nzPageIndex]="currentPage" 
+        [nzTotal]="totalItems" 
+        [nzPageSize]="pageSize" 
+        [nzShowSizeChanger]="true" 
+        [nzPageSizeOptions]="[10, 20, 30, 40, 50]" 
+        (nzPageIndexChange)="onPageChange($event)" 
+        (nzPageSizeChange)="onPageSizeChange($event)"
+        style="margin-top: 24px; text-align: center;">
+      </nz-pagination>
     </div>
   </div>
 </div>
+
+<!-- ✅ Modal de modification de paiement -->
+<nz-modal
+  [(nzVisible)]="isEditPaymentModalVisible"
+  nzTitle="Modifier le paiement"
+  [nzOkText]="'Enregistrer les modifications'"
+  nzCancelText="Annuler"
+  [nzOkDisabled]="!editPaymentForm.mode_paiement || !editPaymentForm.montant_paye || editPaymentForm.montant_paye <= 0 || !editPaymentForm.date_paiement_effectif"
+  [nzOkLoading]="isSubmittingEdit"
+  (nzOnCancel)="handleEditPaymentModalCancel()"
+  (nzOnOk)="submitEditPayment()"
+  nzWidth="650px"
+>
+  <ng-container *nzModalContent>
+    <div class="payment-modal-content" *ngIf="selectedPaymentForEdit">
+      
+      <!-- Informations sur le paiement -->
+      <div class="payment-info-box" style="background: #f8f9fa; padding: 16px; border-radius: 6px; margin-bottom: 24px; border: 1px solid #e9ecef;">
+        <h4 style="margin: 0 0 12px 0; color: #1f2937; font-size: 16px; font-weight: 600;">
+          <span nz-icon nzType="info-circle" style="margin-right: 8px; color: #1890ff;"></span>
+          Informations du paiement
+        </h4>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; font-size: 14px;">
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #6b7280; font-weight: 500;">Mensualité :</span>
+            <span style="color: #1f2937; font-weight: 600;">#{{ selectedPaymentForEdit.numero_mensualite }}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #6b7280; font-weight: 500;">Montant prévu :</span>
+            <span style="color: #1f2937; font-weight: 600;">{{ formatCurrency(selectedPaymentForEdit.montant_versement_prevu) }}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #6b7280; font-weight: 500;">Statut actuel :</span>
+            <span [style.color]="getPaymentStatusColor(selectedPaymentForEdit.statut_versement)" style="font-weight: 600;">
+              {{ getPaymentStatusText(selectedPaymentForEdit.statut_versement) }}
+            </span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #6b7280; font-weight: 500;">Date limite :</span>
+            <span style="color: #1f2937; font-weight: 600;">{{ formatPaymentDate(selectedPaymentForEdit.date_limite_versement) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formulaire de modification -->
+      <form class="payment-form">
+        
+        <!-- Mode de paiement -->
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151; font-size: 14px;">
+            <span nz-icon nzType="credit-card" style="margin-right: 6px; color: #1890ff;"></span>
+            Mode de paiement <span style="color: #ef4444;">*</span>
+          </label>
+          <select
+            [(ngModel)]="editPaymentForm.mode_paiement"
+            name="mode_paiement"
+            style="width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; background-color: white; transition: border-color 0.2s;"
+            [style.border-color]="editPaymentForm.mode_paiement ? '#10b981' : '#d1d5db'"
+          >
+            <option value="">Sélectionner un mode de paiement</option>
+            <option value="especes">Espèces</option>
+            <option value="virement">Virement bancaire</option>
+            <option value="cheque">Chèque</option>
+            <option value="mobile_money">Mobile Money</option>
+            <option value="carte">Carte bancaire</option>
+          </select>
+        </div>
+
+        <!-- Montant du paiement -->
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151; font-size: 14px;">
+            <span nz-icon nzType="dollar" style="margin-right: 6px; color: #1890ff;"></span>
+            Montant du paiement (FCFA) <span style="color: #ef4444;">*</span>
+          </label>
+          <input
+            type="number"
+            [(ngModel)]="editPaymentForm.montant_paye"
+            name="montant_paye"
+            min="0"
+            placeholder="Entrez le montant"
+            style="width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; transition: border-color 0.2s;"
+            [style.border-color]="editPaymentForm.montant_paye > 0 ? '#10b981' : '#d1d5db'"
+          />
+        </div>
+
+        <!-- Référence du paiement -->
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151; font-size: 14px;">
+            <span nz-icon nzType="tag" style="margin-right: 6px; color: #1890ff;"></span>
+            Référence du paiement
+          </label>
+          <input
+            type="text"
+            [(ngModel)]="editPaymentForm.reference_paiement"
+            name="reference_paiement"
+            placeholder="Entrez la référence (optionnel)"
+            style="width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; transition: border-color 0.2s;"
+            [style.border-color]="editPaymentForm.reference_paiement ? '#10b981' : '#d1d5db'"
+          />
+        </div>
+
+        <!-- Date de paiement -->
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151; font-size: 14px;">
+            <span nz-icon nzType="calendar" style="margin-right: 6px; color: #1890ff;"></span>
+            Date de paiement effectif <span style="color: #ef4444;">*</span>
+          </label>
+          <input
+            type="date"
+            [(ngModel)]="editPaymentForm.date_paiement_effectif"
+            name="date_paiement_effectif"
+            style="width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; transition: border-color 0.2s;"
+            [style.border-color]="editPaymentForm.date_paiement_effectif ? '#10b981' : '#d1d5db'"
+          />
+        </div>
+
+        <!-- Commentaire du paiement -->
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151; font-size: 14px;">
+            <span nz-icon nzType="message" style="margin-right: 6px; color: #1890ff;"></span>
+            Commentaire
+          </label>
+          <textarea
+            [(ngModel)]="editPaymentForm.commentaire_paiement"
+            name="commentaire_paiement"
+            rows="3"
+            placeholder="Ajoutez un commentaire optionnel"
+            style="width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; resize: vertical; transition: border-color 0.2s;"
+            [style.border-color]="editPaymentForm.commentaire_paiement ? '#10b981' : '#d1d5db'"
+          ></textarea>
+        </div>
+
+        <!-- Récapitulatif -->
+        <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); padding: 16px; border-radius: 8px; border-left: 4px solid #3b82f6; margin-top: 20px;">
+          <h5 style="margin: 0 0 12px 0; color: #1e40af; font-size: 15px; font-weight: 600;">
+            <span nz-icon nzType="file-text" style="margin-right: 6px;"></span>
+            Récapitulatif des modifications
+          </h5>
+          <div style="font-size: 14px; color: #1f2937;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding: 4px 0;">
+              <span style="color: #6b7280;">Mode de paiement :</span>
+              <span style="font-weight: 500; color: #1f2937;">
+                {{ getPaymentModeText(editPaymentForm.mode_paiement) || 'Non sélectionné' }}
+              </span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding: 4px 0;">
+              <span style="color: #6b7280;">Montant :</span>
+              <span style="font-weight: 600; color: #059669; font-size: 15px;">
+                {{ editPaymentForm.montant_paye ? formatCurrency(editPaymentForm.montant_paye) : '0 FCFA' }}
+              </span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding: 4px 0;" *ngIf="editPaymentForm.reference_paiement">
+              <span style="color: #6b7280;">Référence :</span>
+              <span style="font-weight: 500; color: #1f2937;">{{ editPaymentForm.reference_paiement }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 4px 0;" *ngIf="editPaymentForm.date_paiement_effectif">
+              <span style="color: #6b7280;">Date :</span>
+              <span style="font-weight: 500; color: #1f2937;">{{ formatDateForDisplay(editPaymentForm.date_paiement_effectif) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Validation visuelle -->
+        <div *ngIf="editPaymentForm.mode_paiement && editPaymentForm.montant_paye > 0 && editPaymentForm.date_paiement_effectif" 
+             style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; padding: 12px; margin-top: 16px;">
+          <div style="display: flex; align-items: center; color: #0369a1;">
+            <span nz-icon nzType="check-circle" style="color: #10b981; margin-right: 8px; font-size: 16px;"></span>
+            <span style="font-size: 14px; font-weight: 500;">Formulaire complété - Prêt pour la modification</span>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </ng-container>
+</nz-modal>

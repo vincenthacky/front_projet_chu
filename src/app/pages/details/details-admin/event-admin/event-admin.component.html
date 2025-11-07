@@ -5,7 +5,7 @@
     <div class="header-section">
       <h6 class="evenements-title">
         <i class="fas fa-map-marked-alt"></i>
-        Suivi du Projet & Avancement des Terrains
+        Événements 
       </h6>
       <button 
         nz-button 
@@ -28,15 +28,15 @@
     <div class="souscription-section" *ngIf="!loading">
       <div class="section-header">
         <div class="section-title">
-          <i class="fas fa-user-check"></i> Mes Souscriptions
+          <i class="fas fa-user-check"></i> Événements de souscription
         </div>
-        <div class="section-subtitle">Suivi personnalisé de vos terrains</div>
+        <div class="section-subtitle">Suivi des étapes du projet</div>
       </div>
 
       <div class="timeline" *ngIf="evenementsSouscription.length > 0">
         <!-- Label de date pour les souscriptions -->
         <div class="time-label blue">
-          <span>{{ getDateRangeLabel(evenementsSouscription) }} - Mes Projets</span>
+          <span>Mai 2024 à Mai 2026 - Tous les événements liés au projet</span>
         </div>
 
         <!-- Boucle sur les événements de souscription paginés -->

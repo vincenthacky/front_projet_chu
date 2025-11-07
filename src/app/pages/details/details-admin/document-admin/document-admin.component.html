@@ -198,7 +198,7 @@
   </div>
 
   <!-- PAGINATION CORRIGÉE -->
-  <div class="pagination-container" *ngIf="!loading && !error && totalDocuments > pageSize">
+  <div class="pagination-container" *ngIf="!loading && !error && totalDocuments">
     <nz-pagination 
       [(nzPageIndex)]="currentPage"
       [nzTotal]="totalDocuments"

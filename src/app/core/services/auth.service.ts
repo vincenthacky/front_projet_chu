@@ -19,8 +19,9 @@ export class AuthService {
   
   private inactivityTimer?: number;
   private lastActivityTime: number = 0;
-  private readonly INACTIVITY_TIMEOUT = 30 * 60 * 1000;
-  private activityListeners: (() => void)[] = [];
+  private readonly INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+  // ✅ CORRECTION : Stocker les références exactes des listeners
+  private activityListeners: Array<{ event: string; listener: EventListener }> = [];
   
   private isBrowser: boolean;
 
@@ -32,7 +33,6 @@ export class AuthService {
     
     if (this.isBrowser) {
       this.checkAuthStatus();
-      this.setupInactivityDetection();
     }
   }
 
@@ -265,6 +265,8 @@ export class AuthService {
     this.currentUserSubject.next(decodedUser);
     this.isAuthenticatedSubject.next(true);
     
+    // ✅ CORRECTION : Configuration ET démarrage
+    this.setupInactivityDetection();
     this.startInactivityDetection();
   }
 
@@ -300,6 +302,9 @@ export class AuthService {
           console.log('✅ Session valide - Utilisateur connecté (décodé):', userData);
           this.currentUserSubject.next(userData);
           this.isAuthenticatedSubject.next(true);
+          
+          // ✅ CORRECTION : Configuration ET démarrage de la détection
+          this.setupInactivityDetection();
           this.startInactivityDetection();
         } catch (error) {
           console.error('❌ Erreur lors du parsing des données utilisateur:', error);
@@ -364,13 +369,11 @@ export class AuthService {
     );
   }
 
-  // CORRECTION: Méthode pour mettre à jour son propre profil
   updateProfile(userData: Partial<User>): Observable<{ user: User }> {
     return this.http.put<{ user: User }>(`${this.API_URL}/profile`, userData)
       .pipe(
         map(response => this.decodeUnicodeInObject(response) as { user: User }),
         tap(response => {
-          // Pour le profil personnel, on peut toujours mettre à jour les données locales
           if (response && response.user && this.isBrowser) {
             const currentUser = this.getCurrentUser();
             if (currentUser) {
@@ -420,8 +423,18 @@ export class AuthService {
     );
   }
 
+  // ============================================
+  // MÉCANISME D'INACTIVITÉ - CORRIGÉ
+  // ============================================
+
+  /**
+   * ✅ CORRECTION : Configuration des listeners avec références exactes
+   */
   private setupInactivityDetection(): void {
     if (!this.isBrowser) return;
+    
+    // Nettoyer les anciens listeners avant d'en ajouter de nouveaux
+    this.stopInactivityDetection();
     
     const activityEvents = [
       'mousedown', 'mousemove', 'keypress', 'scroll', 
@@ -430,54 +443,135 @@ export class AuthService {
     
     activityEvents.forEach(event => {
       const listener = () => this.resetInactivityTimer();
+      
+      // ✅ CORRECTION : Stocker la référence exacte pour pouvoir la supprimer
+      this.activityListeners.push({ event, listener });
       document.addEventListener(event, listener, true);
-      this.activityListeners.push(() => {
-        document.removeEventListener(event, listener, true);
-      });
     });
     
-    console.log('👂 Détection d\'activité configurée');
+    console.log('👂 Détection d\'activité configurée avec', this.activityListeners.length, 'listeners');
   }
 
+  /**
+   * ✅ AMÉLIORATION : Vérifier la session au démarrage
+   */
   private startInactivityDetection(): void {
     if (!this.isBrowser) return;
+    
+    // ✅ AMÉLIORATION : Vérifier si la session n'était pas déjà inactive
+    const expiry = localStorage.getItem('authExpiry');
+    if (expiry) {
+      const expiryTime = parseInt(expiry, 10);
+      const now = Date.now();
+      
+      if (now >= expiryTime) {
+        console.log('⏰ Session déjà expirée au démarrage');
+        this.forceLogout();
+        return;
+      }
+    }
+    
     this.lastActivityTime = Date.now();
     this.resetInactivityTimer();
+    
     console.log('⏰ Surveillance d\'inactivité démarrée (30 minutes)');
+    console.log('⏰ Prochaine déconnexion automatique à:', 
+      new Date(Date.now() + this.INACTIVITY_TIMEOUT).toLocaleTimeString()
+    );
   }
 
+  /**
+   * Réinitialise le timer d'inactivité à chaque activité détectée
+   */
   private resetInactivityTimer(): void {
     if (!this.isBrowser || !this.isAuthenticated()) return;
     
     this.lastActivityTime = Date.now();
     
+    // Nettoyer le timer existant
     if (this.inactivityTimer) {
       clearTimeout(this.inactivityTimer);
     }
     
+    // Créer un nouveau timer
     this.inactivityTimer = window.setTimeout(() => {
       this.handleInactivityTimeout();
     }, this.INACTIVITY_TIMEOUT);
   }
 
+  /**
+   * ✅ AMÉLIORATION : Logs plus informatifs
+   */
   private handleInactivityTimeout(): void {
-    console.log('⏰ Déconnexion pour inactivité (30 minutes sans activité)');
+    const inactiveTime = Date.now() - this.lastActivityTime;
+    const inactiveMinutes = Math.floor(inactiveTime / 60000);
+    
+    console.log(`⏰ Déconnexion pour inactivité (${inactiveMinutes} minutes sans activité)`);
+    console.log('⏰ Dernière activité détectée à:', new Date(this.lastActivityTime).toLocaleTimeString());
+    
     this.forceLogout();
   }
 
+  /**
+   * ✅ CORRECTION : Suppression correcte des listeners
+   */
   private stopInactivityDetection(): void {
     if (!this.isBrowser) return;
     
+    // Nettoyer le timer
     if (this.inactivityTimer) {
       clearTimeout(this.inactivityTimer);
       this.inactivityTimer = undefined;
     }
     
-    this.activityListeners.forEach(removeListener => removeListener());
+    // ✅ CORRECTION : Supprimer avec les bonnes références
+    this.activityListeners.forEach(({ event, listener }) => {
+      document.removeEventListener(event, listener, true);
+    });
+    
+    // Vider le tableau
     this.activityListeners = [];
     
     console.log('🛑 Surveillance d\'inactivité arrêtée');
   }
+
+  /**
+   * Obtient le temps restant avant déconnexion (en secondes)
+   */
+  public getTimeUntilInactivityLogout(): number {
+    if (!this.isBrowser || !this.isAuthenticated()) return 0;
+    
+    const timeElapsed = Date.now() - this.lastActivityTime;
+    const timeRemaining = this.INACTIVITY_TIMEOUT - timeElapsed;
+    
+    return Math.max(0, Math.ceil(timeRemaining / 1000));
+  }
+
+  /**
+   * ✅ NOUVEAU : Obtenir le temps restant formaté
+   */
+  public getTimeUntilInactivityLogoutFormatted(): string {
+    const seconds = this.getTimeUntilInactivityLogout();
+    
+    if (seconds === 0) return 'Expiré';
+    
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    
+    return `${minutes}min ${remainingSeconds}s`;
+  }
+
+  /**
+   * ✅ NOUVEAU : Vérifier si proche de l'expiration (5 minutes)
+   */
+  public isCloseToInactivityLogout(): boolean {
+    const seconds = this.getTimeUntilInactivityLogout();
+    return seconds > 0 && seconds <= 300; // 5 minutes
+  }
+
+  // ============================================
+  // FIN MÉCANISME D'INACTIVITÉ
+  // ============================================
 
   public isSessionValid(): boolean {
     if (!this.isBrowser) return false;
@@ -535,15 +629,6 @@ export class AuthService {
     if (now >= expiryTime) return null;
     
     return token;
-  }
-
-  getTimeUntilInactivityLogout(): number {
-    if (!this.isBrowser || !this.isAuthenticated()) return 0;
-    
-    const timeElapsed = Date.now() - this.lastActivityTime;
-    const timeRemaining = this.INACTIVITY_TIMEOUT - timeElapsed;
-    
-    return Math.max(0, Math.ceil(timeRemaining / 1000));
   }
 
   redirectAfterLogin(): void {
@@ -666,7 +751,6 @@ export class AuthService {
     );
   }
 
-  // CORRECTION: Méthode corrigée pour la modification d'autres utilisateurs
   updateUserProfile(userId: number, userData: Partial<User>): Observable<UserUpdateResponse> {
     const token = this.getToken();
     if (!token) {
@@ -695,11 +779,9 @@ export class AuthService {
         return decoded;
       }),
       tap(decodedResponse => {
-        // CORRECTION: Ne mettre à jour les données locales que si c'est l'utilisateur connecté
         if (decodedResponse.success && decodedResponse.data && this.isBrowser) {
           const currentUser = this.getCurrentUser();
           
-          // Vérifier si c'est l'utilisateur connecté qui a été modifié
           if (currentUser && currentUser.id_utilisateur === userId) {
             const updatedUser = { ...currentUser, ...decodedResponse.data };
             localStorage.setItem('user', JSON.stringify(updatedUser));
@@ -720,7 +802,6 @@ export class AuthService {
     );
   }
 
-  // CORRECTION: Méthode corrigée pour l'API POST utilisateurs/{id}/update
   updateUserWithFormData(userId: number, formData: FormData): Observable<UserUpdateResponse> {
     const token = this.getToken();
     if (!token) {
@@ -730,7 +811,6 @@ export class AuthService {
 
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${token}`
-      // Note: On ne met pas Content-Type pour FormData, le navigateur le gère automatiquement
     });
 
     console.log('🔄 Mise à jour du profil utilisateur avec FormData:', {
@@ -748,11 +828,9 @@ export class AuthService {
         return decoded;
       }),
       tap(decodedResponse => {
-        // CORRECTION: Ne mettre à jour les données locales que si c'est l'utilisateur connecté
         if (decodedResponse.success && decodedResponse.data && this.isBrowser) {
           const currentUser = this.getCurrentUser();
           
-          // Vérifier si c'est l'utilisateur connecté qui a été modifié
           if (currentUser && currentUser.id_utilisateur === userId) {
             const updatedUser = { ...currentUser, ...decodedResponse.data };
             localStorage.setItem('user', JSON.stringify(updatedUser));
@@ -785,7 +863,6 @@ export class AuthService {
       'Authorization': `Bearer ${token}`
     });
 
-    // CORRECTION: Ajout de params pour forcer per_page=50 afin de récupérer tous les utilisateurs (total=30 < 50)
     const params = new HttpParams().set('per_page', '50');
 
     return this.http.get<UsersResponse>(`${this.API_URL}/utilisateurs`, { headers, params }).pipe(
@@ -795,7 +872,7 @@ export class AuthService {
       map(response => {
         const decoded = this.decodeUnicodeInObject(response) as UsersResponse;
         console.log('📋 Réponse décodée récupération utilisateurs:', decoded);
-        return decoded.data;  // data contiendra maintenant les 30 utilisateurs
+        return decoded.data;
       }),
       catchError(error => {
         console.error('❌ Erreur récupération utilisateurs:', error);
@@ -900,7 +977,6 @@ export class AuthService {
     );
   }
 
-  // Méthode pour mettre à jour le currentUser (pour la méthode updateCurrentUser manquante)
   updateCurrentUser(data: User): void {
     if (this.isBrowser) {
       localStorage.setItem('user', JSON.stringify(data));
@@ -909,7 +985,16 @@ export class AuthService {
     }
   }
 
+  /**
+   * ✅ AMÉLIORATION : Nettoyage complet au destroy
+   */
   ngOnDestroy(): void {
     this.stopInactivityDetection();
+    
+    // Compléter les observables
+    this.currentUserSubject.complete();
+    this.isAuthenticatedSubject.complete();
+    
+    console.log('🗑️ Service AuthService détruit, nettoyage effectué');
   }
 }
