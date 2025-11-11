@@ -88,7 +88,7 @@ export class NewPaymentAdminComponent implements OnInit, OnDestroy {
   payeATemps = 0;
   enRetard = 0;
   enAttente = 0;
-  montantTotalPaye = 0;
+  montantTotalPayeGlobal = 0; // ✅ Montant global depuis l'API
   totalPenalites = 0;
 
   constructor(private payementsService: PayementsService) {}
@@ -137,12 +137,12 @@ export class NewPaymentAdminComponent implements OnInit, OnDestroy {
           this.utilisateursAvecPaiements = response.data || [];
           this.totalItems = response.pagination?.total || 0;
           
-          // Mettre à jour les statistiques
+          // ✅ Mettre à jour les statistiques avec montant_paye_global
           if (response.statistiques) {
             this.updateStatsFromAPI(response.statistiques);
           }
           
-          // Mapper vers l'interface locale
+          // Mapper vers l'interface locale et calculer les pénalités
           this.mapToGroupedPayments();
           
           console.log('✅ Paiements groupés chargés:', this.groupedPaymentsByUser.length, 'utilisateurs');
@@ -151,6 +151,7 @@ export class NewPaymentAdminComponent implements OnInit, OnDestroy {
             total: response.pagination?.total,
             perPage: response.pagination?.per_page
           });
+          console.log('💰 Montant total payé global:', this.montantTotalPayeGlobal);
         } else {
           this.error = response.message || 'Erreur lors du chargement des paiements';
           console.error('❌ Erreur API:', response.message);
@@ -180,32 +181,31 @@ export class NewPaymentAdminComponent implements OnInit, OnDestroy {
     this.enRetard = statistiques.total_en_retard || 0;
     this.enAttente = statistiques.total_en_attente || 0;
 
-    // Calculer montants depuis les données des utilisateurs
-    this.montantTotalPaye = this.utilisateursAvecPaiements.reduce((sum, user) => {
-      return sum + (user.paiements?.reduce((pSum, p) => 
-        pSum + this.payementsService.parseAmount(p.montant_paye), 0) || 0);
-    }, 0);
-    
-    this.totalPenalites = this.utilisateursAvecPaiements.reduce((sum, user) => {
-      return sum + (user.paiements?.reduce((pSum, p) => 
-        pSum + this.payementsService.parseAmount(p.penalite_appliquee), 0) || 0);
-    }, 0);
+    // ✅ Utiliser montant_paye_global au lieu de montant_paye_page_courante
+    this.montantTotalPayeGlobal = this.payementsService.parseAmount(
+      statistiques.montant_paye_global || statistiques.montant_paye_page_courante || 0
+    );
 
     console.log('📊 Statistiques mises à jour depuis l\'API:', {
       totalMensualites: this.totalMensualites,
       payeATemps: this.payeATemps,
       enRetard: this.enRetard,
       enAttente: this.enAttente,
-      montantTotalPaye: this.montantTotalPaye,
-      totalPenalites: this.totalPenalites
+      montantTotalPayeGlobal: this.montantTotalPayeGlobal
     });
   }
 
   /**
-   * ✅ Mapper les données API vers l'interface locale
+   * ✅ Mapper les données API vers l'interface locale et calculer les pénalités
    */
   private mapToGroupedPayments(): void {
     console.log('🔄 Mapping des utilisateurs vers l\'interface locale...');
+    
+    // ✅ Calculer le total des pénalités depuis tous les utilisateurs
+    this.totalPenalites = this.utilisateursAvecPaiements.reduce((sum, user) => {
+      return sum + (user.paiements?.reduce((pSum, p) => 
+        pSum + Math.abs(this.payementsService.parseAmount(p.penalite_appliquee)), 0) || 0);
+    }, 0);
     
     this.groupedPaymentsByUser = this.utilisateursAvecPaiements.map(user => {
       const paiements = user.paiements || [];
@@ -224,7 +224,7 @@ export class NewPaymentAdminComponent implements OnInit, OnDestroy {
         sum + this.payementsService.parseAmount(p.montant_versement_prevu), 0);
       
       const totalPenalites = paiements.reduce((sum, p) => 
-        sum + this.payementsService.parseAmount(p.penalite_appliquee), 0);
+        sum + Math.abs(this.payementsService.parseAmount(p.penalite_appliquee)), 0);
 
       return {
         utilisateur: `${user.prenom} ${user.nom}`,
@@ -242,6 +242,7 @@ export class NewPaymentAdminComponent implements OnInit, OnDestroy {
     });
 
     console.log('✅ Mapping terminé:', this.groupedPaymentsByUser.length, 'utilisateurs mappés');
+    console.log('💸 Total pénalités calculé:', this.totalPenalites);
   }
 
   /**
@@ -311,12 +312,14 @@ export class NewPaymentAdminComponent implements OnInit, OnDestroy {
     return this.enAttente;
   }
 
+  // ✅ Retourner le montant global depuis l'API
   getMontantTotalPaye(): string {
-    return this.payementsService.formatCurrency(this.montantTotalPaye);
+    return this.payementsService.formatCurrency(this.montantTotalPayeGlobal);
   }
 
+  // ✅ Retourner les pénalités sans décimales
   getTotalPenalites(): string {
-    return this.payementsService.formatCurrency(this.totalPenalites);
+    return this.payementsService.formatCurrencyInteger(this.totalPenalites);
   }
 
   // Formatage des montants
@@ -324,6 +327,13 @@ export class NewPaymentAdminComponent implements OnInit, OnDestroy {
     const numAmount = typeof amount === 'string' ? 
       this.payementsService.parseAmount(amount) : amount;
     return this.payementsService.formatCurrency(numAmount);
+  }
+
+  // ✅ Formatage des pénalités sans décimales
+  formatPenalty(amount: string | number): string {
+    const numAmount = typeof amount === 'string' ? 
+      this.payementsService.parseAmount(amount) : amount;
+    return this.payementsService.formatCurrencyInteger(Math.abs(numAmount));
   }
 
   // Formatage des dates

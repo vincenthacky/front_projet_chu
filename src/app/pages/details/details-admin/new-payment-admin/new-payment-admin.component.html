@@ -74,7 +74,7 @@
       </div>
       <div class="summary-content">
         <nz-statistic 
-          [nzValue]="montantTotalPaye" 
+          [nzValue]="montantTotalPayeGlobal" 
           [nzValueStyle]="{ color: '#10b981', fontSize: '28px', fontWeight: '800', marginTop: '-15px' }"
           [nzTitle]="'Montant total payé'"
           [nzSuffix]="'FCFA'">
@@ -87,12 +87,10 @@
         <i class="fas fa-ban"></i>
       </div>
       <div class="summary-content">
-        <nz-statistic 
-          [nzValue]="totalPenalites" 
-          [nzValueStyle]="{ color: '#ef4444', fontSize: '28px', fontWeight: '800', marginTop: '-15px' }"
-          [nzTitle]="'Total pénalités'"
-          [nzSuffix]="'FCFA'">
-        </nz-statistic>
+        <div class="custom-statistic">
+          <div class="statistic-title">Total pénalités</div>
+          <div class="statistic-value-penalty">{{ getTotalPenalites() }}</div>
+        </div>
       </div>
     </nz-card>
   </div>
@@ -189,7 +187,7 @@
 
             <!-- Colonne Pénalités -->
             <div class="header-col stat-col">
-              <div class="stat-value penalty-value">{{ formatCurrency(group.totalPenalites) }}</div>
+              <div class="stat-value penalty-value">{{ formatPenalty(group.totalPenalites) }}</div>
               <div class="stat-label">PÉNALITÉS</div>
             </div>
 
@@ -281,7 +279,7 @@
                 </td>
                 <td>
                   <span class="penalty-cell" [class.has-penalty]="parseFloat(paiement.penalite_appliquee) > 0">
-                    {{ formatCurrency(paiement.penalite_appliquee) }}
+                    {{ formatPenalty(paiement.penalite_appliquee) }}
                   </span>
                 </td>
                 <td>

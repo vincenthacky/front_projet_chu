@@ -1170,3 +1170,26 @@
   font-weight: 600 !important;
   text-align: center;
 }
+
+/* Styles pour la statistique personnalisée des pénalités */
+.custom-statistic {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.statistic-title {
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statistic-value-penalty {
+  color: #ef4444;
+  font-size: 28px;
+  font-weight: 800;
+  margin-top: -15px;
+  line-height: 1.2;
+}

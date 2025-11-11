@@ -237,6 +237,14 @@ export class PayementsService {
     return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
   }
 
+  // Formater un montant en devise sans décimales (pour les pénalités)
+  formatCurrencyInteger(amount: number): string {
+    return new Intl.NumberFormat('fr-FR', { 
+      maximumFractionDigits: 0,
+      minimumFractionDigits: 0
+    }).format(Math.abs(amount)) + ' FCFA';
+  }
+
   // Formater une date
   formatDate(dateString: string): string {
     if (!dateString) return 'Date non disponible';
