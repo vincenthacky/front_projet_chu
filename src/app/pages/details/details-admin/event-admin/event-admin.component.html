@@ -1,27 +1,87 @@
-<!-- event-admin.component.html - Version corrigée avec modals fonctionnels -->
+<!-- event-admin.component.html - Version sans heures -->
 <section class="content">
   <div class="container-fluid">
-    <!-- Header avec bouton d'ajout -->
+    <!-- Header avec boutons d'ajout et d'actualisation -->
     <div class="header-section">
       <h6 class="evenements-title">
         <i class="fas fa-map-marked-alt"></i>
         Événements 
       </h6>
-      <button 
-        nz-button 
-        nzType="primary" 
-        nzSize="large"
-        class="add-event-btn"
-        (click)="navigateToCreateEvent()">
-        <i nz-icon nzType="plus"></i>
-        Ajouter un nouvel événement
-      </button>
+      <div class="header-buttons">
+        <button 
+          nz-button 
+          nzType="default" 
+          nzSize="large"
+          class="refresh-btn"
+          (click)="actualiserDonnees()"
+          [nzLoading]="refreshing"
+          [disabled]="refreshing">
+          <i nz-icon nzType="reload" *ngIf="!refreshing"></i>
+          Actualiser
+        </button>
+        <button 
+          nz-button 
+          nzType="primary" 
+          nzSize="large"
+          class="add-event-btn"
+          (click)="navigateToCreateEvent()">
+          <i nz-icon nzType="plus"></i>
+          Ajouter un nouvel événement
+        </button>
+      </div>
     </div>
 
-    <!-- Loading indicator -->
+    <!-- CARTES STATISTIQUES - 4 sur une ligne -->
+    <div class="stats-cards-container">
+      <!-- Carte Total Événements -->
+      <div class="stat-card total-card">
+        <div class="stat-icon">
+          <i class="fas fa-calendar-alt"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ getTotalEvenements() }}</div>
+          <div class="stat-label">Total</div>
+        </div>
+      </div>
+
+      <!-- Carte Planifiés -->
+      <div class="stat-card planifie-card">
+        <div class="stat-icon">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ getEvenementsPlanifies() }}</div>
+          <div class="stat-label">Planifiés</div>
+        </div>
+      </div>
+
+      <!-- Carte En cours -->
+      <div class="stat-card en-cours-card">
+        <div class="stat-icon">
+          <i class="fas fa-spinner"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ getEvenementsEnCours() }}</div>
+          <div class="stat-label">En cours</div>
+        </div>
+      </div>
+
+      <!-- Carte Terminés -->
+      <div class="stat-card termine-card">
+        <div class="stat-icon">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ getEvenementsTermines() }}</div>
+          <div class="stat-label">Terminés</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading indicator principal -->
     <div *ngIf="loading" class="text-center p-4">
-      <nz-spin nzSimple></nz-spin>
-      <p style="margin-top: 10px;">Chargement des événements...</p>
+      <nz-spin nzSimple [nzSize]="'large'"></nz-spin>
+      <p style="margin-top: 10px; font-weight: 600; color: #3b82f6;">Chargement des événements...</p>
     </div>
 
     <!-- Section Mes Souscriptions -->
@@ -31,6 +91,14 @@
           <i class="fas fa-user-check"></i> Événements de souscription
         </div>
         <div class="section-subtitle">Suivi des étapes du projet</div>
+      </div>
+
+      <!-- Spinner lors de l'actualisation -->
+      <div *ngIf="refreshing" class="refresh-overlay">
+        <div class="refresh-spinner-container">
+          <nz-spin nzSimple [nzSize]="'large'"></nz-spin>
+          <p>Actualisation en cours...</p>
+        </div>
       </div>
 
       <div class="timeline" *ngIf="evenementsSouscription.length > 0">
@@ -49,13 +117,13 @@
           <div class="timeline-item">
             <span class="time">
               <i class="fas fa-clock"></i> 
-              <span class="status-badge" [ngClass]="getStatusClass(getEventStatus(event))" [style.color]="getStatusColor(getEventStatus(event))">
+              <span class="status-badge" [ngClass]="getStatusClass(getEventStatus(event))">
                 {{ getEventStatus(event) }}
               </span>
             </span>
             
             <h3 class="timeline-header">
-              <a href="#" (click)="onEventClick(event)">{{ event.titre }}</a>
+              <a href="#" (click)="onEventClick(event); $event.preventDefault()">{{ event.titre }}</a>
               <span *ngIf="event.lieu"> - {{ event.lieu }}</span>
             </h3>
 
@@ -115,15 +183,15 @@
               </span>
               <span class="tag etape" *ngIf="event.etape_actuelle">{{ event.etape_actuelle }}</span>
               <span class="tag">{{ event.lieu }}</span>
-              <span class="tag status-tag" [ngClass]="getStatusClass(getEventStatus(event))" [style.background-color]="getStatusColor(getEventStatus(event))">
+              <span class="tag status-tag" [ngClass]="getStatusClass(getEventStatus(event))">
                 {{ getEventStatus(event) }}
               </span>
             </div>
 
             <div class="evenement-dates">
-              <strong>Date début :</strong> {{ event.date_debut_evenement | date:'dd/MM/yyyy HH:mm' }}
+              <strong>Date début :</strong> {{ event.date_debut_evenement | date:'dd/MM/yyyy' }}
               <span *ngIf="event.date_debut_evenement !== event.date_fin_evenement">
-                <br><strong>Date fin :</strong> {{ event.date_fin_evenement | date:'dd/MM/yyyy HH:mm' }}
+                <br><strong>Date fin :</strong> {{ event.date_fin_evenement | date:'dd/MM/yyyy' }}
               </span>
             </div>
 
@@ -145,7 +213,7 @@
               </div>
               <div class="progress-text">
                 <span class="progress-percentage" [style.color]="getStatusColor(getEventStatus(event))">
-                  {{ getEventProgress(event) === 100 ? 'Terminé avec succès ✓' : getEventProgress(event) + '% - ' + getEventStatus(event) }}
+                  {{ getEventProgress(event) }}% - {{ getEventStatus(event) }}
                 </span>
               </div>
             </div>
@@ -174,19 +242,23 @@
         </div>
       </div>
 
-      <!-- Pagination -->
+      <!-- Pagination améliorée avec spinner -->
       <div class="pagination-container" *ngIf="evenementsSouscription.length > 0">
         <div class="pagination-info">
+          <nz-spin *ngIf="paginationLoading" nzSimple [nzSize]="'small'" style="margin-right: 10px;"></nz-spin>
           Affichage de {{ getPaginationInfo() }} événements
         </div>
         <nz-pagination 
           [(nzPageIndex)]="currentPage"
           [nzTotal]="evenementsSouscription.length"
-          [nzPageSize]="pageSize"
-          [nzShowSizeChanger]="false"
-          [nzShowQuickJumper]="false"
+          [(nzPageSize)]="pageSize"
+          [nzPageSizeOptions]="[3, 10, 20, 30, 40, 50, 100]"
+          [nzShowSizeChanger]="true"
+          [nzShowQuickJumper]="true"
           [nzSimple]="false"
-          (nzPageIndexChange)="onPageChange($event)">
+          [nzDisabled]="paginationLoading"
+          (nzPageIndexChange)="onPageChange($event)"
+          (nzPageSizeChange)="onPageSizeChange($event)">
         </nz-pagination>
       </div>
 

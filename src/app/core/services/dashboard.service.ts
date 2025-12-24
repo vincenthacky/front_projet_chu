@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
-import { environment } from '@/environment';
+import { environment } from 'src/assets/environment/environment';
 
 // Interfaces pour les réponses API du dashboard
 export interface DashboardStats {

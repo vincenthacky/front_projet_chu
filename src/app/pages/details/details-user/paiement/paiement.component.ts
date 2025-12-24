@@ -297,8 +297,11 @@ export class PaiementComponent implements OnInit {
 
   // Méthodes pour le template
   formatNumber(amount: number): string {
-    if (isNaN(amount)) return '0 FCFA';
-    return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
+    if (amount === null || amount === undefined || isNaN(amount)) return '0 FCFA';
+    
+    // Arrondir à l'entier le plus proche et formater sans décimales
+    const integerAmount = Math.round(amount);
+    return new Intl.NumberFormat('fr-FR').format(integerAmount) + ' FCFA';
   }
 
   trackByPayment(index: number, payment: Payment): string {

@@ -18,7 +18,7 @@ import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { NzProgressModule } from 'ng-zorro-antd/progress';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { AuthService } from 'src/app/core/services/auth.service';
-import { environment } from '@/environment';
+import { environment } from 'src/assets/environment/environment';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 // Interface pour les documents

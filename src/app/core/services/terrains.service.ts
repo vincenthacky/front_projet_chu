@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { TerrainResponse, Terrain } from '../models/souscription';
 import { TerrainSingleResponse } from '../models/terrain';
-import { environment } from '@/environment';
+import { environment } from 'src/assets/environment/environment';
 
 @Injectable({
   providedIn: 'root'

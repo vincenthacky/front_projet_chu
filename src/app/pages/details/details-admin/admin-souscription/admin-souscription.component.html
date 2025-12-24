@@ -131,9 +131,10 @@
                 <th class="table-header-cell terrain-column">Terrain</th>
                 <th class="table-header-cell price-column">Prix total</th>
                 <th class="table-header-cell paid-column">Montant payé</th>
-                <th class="table-header-cell remaining-column">Reste à payer</th>
+                <th class="table-header-cell remaining-column">Total restant à payer</th>
                 <th class="table-header-cell progress-column">Date Début</th>
                 <th class="table-header-cell payment-column">Prochain paiement</th>
+                <th class="table-header-cell payment-column">Retard de paiement</th>
                 <th class="table-header-cell status-column">Statut</th>
                 <th class="table-header-cell action-column">Actions</th>
               </tr>
@@ -172,6 +173,26 @@
                   <span class="next-payment-date">
                     {{ souscription.statut_souscription === 'terminee' ? '--/--/--' : formatDate(souscription.date_prochain) }}
                   </span>
+                </td>
+                <!-- ✅ COLONNE CORRIGÉE : État de paiement -->
+                <td class="table-data-cell">
+                  <div class="payment-status-container">
+                    <nz-tag
+                      [nzColor]="getPaymentStatusDisplay(souscription).color"
+                      [nz-tooltip]="getPaymentStatusDisplay(souscription).tooltip"
+                      nzTooltipPlacement="top"
+                      style="margin-bottom: 4px; font-weight: 500;"
+                    >
+                      {{ getPaymentStatusDisplay(souscription).label }}
+                    </nz-tag>
+                    <div 
+                      *ngIf="getPaymentStatusDisplay(souscription).montant > 0"
+                      style="font-size: 12px; font-weight: 600;"
+                      [style.color]="getPaymentStatusDisplay(souscription).statut === 'en_avance' ? '#52c41a' : '#ff4d4f'"
+                    >
+                      {{ formatCurrency(getPaymentStatusDisplay(souscription).montant) }}
+                    </div>
+                  </div>
                 </td>
                 <td class="table-data-cell">
                   <nz-tag

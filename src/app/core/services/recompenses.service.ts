@@ -4,7 +4,7 @@ import { Observable, BehaviorSubject } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 import { Recompense, ApiPagination, RecompensesFilter, RecompensesApiResponse, TypeRecompense } from '../models/recompenses';
-import { environment } from '@/environment';
+import { environment } from 'src/assets/environment/environment';
 
 
 @Injectable({

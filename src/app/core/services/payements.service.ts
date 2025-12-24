@@ -16,7 +16,7 @@ import {
   ApiUtilisateurAvecPaiements,
   StatistiquesUtilisateur
 } from '../models/paiments';
-import { environment } from '@/environment';
+import { environment } from 'src/assets/environment/environment';
 
 @Injectable({
   providedIn: 'root'

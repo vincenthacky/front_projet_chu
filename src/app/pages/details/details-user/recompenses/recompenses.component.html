@@ -58,7 +58,7 @@
           (mouseleave)="onCardLeave($event)"     
         >       
           <div class="reward-icon" [ngClass]="getStatusClass(reward.statut_recompense)">         
-            <i class="fas" [ngClass]="getRewardIcon(reward.type_recompense?.libelle_type_recompense || '')"></i>       
+            <i  style="color: black;" class="fas" [ngClass]="getRewardIcon(reward.type_recompense?.libelle_type_recompense || '')"></i>       
           </div>              
 
           <div class="reward-header">         
@@ -68,7 +68,7 @@
           </div>        
 
           <div class="reward-details">         
-            <div class="detail-item">           
+            <div class="detail-item">         
               <div class="detail-icon">             
                 <i class="fas fa-bullseye"></i>           
               </div>           

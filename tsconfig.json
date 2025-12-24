@@ -25,7 +25,7 @@
     ],
     "baseUrl": "./",
     "paths": {
-      "@/environment": ["src/environment/environment.ts"],
+      "@/environment": ["src/assets/environment/environment.ts"],
       // ... autres alias si besoin ...
     }
   },

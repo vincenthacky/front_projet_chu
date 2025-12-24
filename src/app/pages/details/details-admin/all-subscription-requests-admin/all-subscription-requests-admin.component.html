@@ -290,15 +290,4 @@
       nzCloseable>
     </nz-alert>
   </div>
-  
-  <!-- Empty state -->
-  <div *ngIf="!isLoading && demandeSouscriptions.length === 0 && !error" class="empty-state">
-    <nz-empty 
-      [nzNotFoundContent]="emptyTemplate"
-      [nzNotFoundImage]="'simple'">
-    </nz-empty>
-    <ng-template #emptyTemplate>
-      <span>Aucune demande de souscription trouvée</span>
-    </ng-template>
-  </div>
 </div>

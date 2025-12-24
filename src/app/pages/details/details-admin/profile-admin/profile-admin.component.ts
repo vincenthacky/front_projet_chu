@@ -17,7 +17,7 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { NzProgressModule } from 'ng-zorro-antd/progress';
 import { AuthService } from 'src/app/core/services/auth.service';
-import { environment } from '@/environment';
+import { environment } from 'src/assets/environment/environment';
 
 
 // Import du service d'authentification

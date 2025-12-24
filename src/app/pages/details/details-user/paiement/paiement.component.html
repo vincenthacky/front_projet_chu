@@ -114,9 +114,8 @@
         [nzShowPagination]="false">
         <thead>
           <tr>
-            <th nzWidth="50px">#</th>
-            <th nzWidth="120px">Montant prévu</th>
             <th nzWidth="120px">Souscription</th>
+            <th nzWidth="120px">Montant prévu</th>
             <th nzWidth="100px">Date limite</th>
             <th nzWidth="100px">Date paiement</th>
             <th nzWidth="120px">Montant payé</th>
@@ -130,20 +129,16 @@
         <tbody>
           <tr *ngFor="let payment of paginatedPayments; trackBy: trackByPayment; let i = index"
               [class]="getRowClass(payment)">
-            <td>
-              <div class="cell-content">
-                <span class="mensualite-badge">{{ payment.numero_mensualite }}</span>
-              </div>
-            </td>
+
+              <td>
+                <div class="cell-content">
+                  {{ payment.id_souscription }}
+                </div>
+              </td>
             <td>
               <div class="cell-content amount-cell">
                 <i class="fas fa-coins cell-icon"></i>
                 {{ formatNumber(payment.montant_prevu) }}
-              </div>
-            </td>
-            <td>
-              <div class="cell-content">
-                {{ payment.id_souscription }}
               </div>
             </td>
             <td>
@@ -189,8 +184,7 @@
             </td>
             <td>
               <div class="cell-content penalty-cell">
-                <span class="penalty-amount" *ngIf="payment.penalite_appliquee > 0">
-                  <i class="fas fa-exclamation-triangle"></i>
+                <span  style="font-size: 12px;" class="penalty-amount" *ngIf="payment.penalite_appliquee">
                   {{ formatNumber(payment.penalite_appliquee) }}
                 </span>
                 <span class="muted-text" *ngIf="payment.penalite_appliquee === 0">-</span>

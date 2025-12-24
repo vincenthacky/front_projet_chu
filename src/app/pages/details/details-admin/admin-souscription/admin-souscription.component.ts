@@ -223,6 +223,75 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * ✅ NOUVELLE MÉTHODE : Obtenir le statut de paiement avec couleur
+   */
+  getPaymentStatusDisplay(souscription: ApiSouscription): { 
+    statut: string; 
+    montant: number; 
+    label: string; 
+    color: string;
+    tooltip: string;
+  } {
+    const etatPaiement = (souscription as any).etat_paiement;
+    
+    if (!etatPaiement) {
+      return { 
+        statut: 'inconnu', 
+        montant: 0, 
+        label: 'Non défini', 
+        color: 'default',
+        tooltip: 'État de paiement non disponible'
+      };
+    }
+
+    const statut = etatPaiement.statut?.toLowerCase() || '';
+
+    switch(statut) {
+      case 'en_avance':
+        const montantAvance = etatPaiement.avance?.montant_avance || 0;
+        const moisAvance = etatPaiement.avance?.mois_avance || 0;
+        return {
+          statut: 'en_avance',
+          montant: montantAvance,
+          label: 'En avance de',
+          color: 'green',
+          tooltip: `${moisAvance} mois d'avance • Avance de ${this.formatCurrency(montantAvance)}`
+        };
+
+      case 'en_retard':
+        const montantRetard = etatPaiement.retard?.montant_restant || 0;
+        const moisRetard = etatPaiement.retard?.mois_non_payes || 0;
+        return {
+          statut: 'en_retard',
+          montant: montantRetard,
+          label: 'En retard de',
+          color: 'red',
+          tooltip: moisRetard > 0 
+            ? `${moisRetard} mois de retard • Montant restant: ${this.formatCurrency(montantRetard)}`
+            : `Montant en retard: ${this.formatCurrency(montantRetard)}`
+        };
+
+      case 'a_jour':
+        return {
+          statut: 'a_jour',
+          montant: 0,
+          label: 'À jour',
+          color: 'blue',
+          tooltip: 'Paiements à jour selon l\'échéancier'
+        };
+
+      default:
+        return {
+          statut: 'inconnu',
+          montant: 0,
+          label: statut || 'Non défini',
+          color: 'default',
+          tooltip: 'État de paiement: ' + (statut || 'inconnu')
+        };
+    }
+  }
+
+  /**
    * Service de paiements
    */
   private async effectuerPaiement(paymentData: PaymentData): Promise<PaymentCreationResponse> {
@@ -277,7 +346,6 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   viewDetails(souscriptionId: number): void {
     console.log('🔍 Ouverture modal pour ID:', souscriptionId);
 
-    // Trouver la souscription dans tous les groupedUsers
     let souscription: ApiSouscription | undefined;
     for (const user of this.groupedUsers) {
       souscription = user.souscriptions.find(s => s.id_souscription === souscriptionId);
@@ -300,7 +368,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
     let statut: 'en-cours' | 'en-retard' | 'termine' = 'en-cours';
     const statusDisplay = this.getStatusDisplay(apiSouscription);
 
-    switch (statusDisplay.status.toLowerCase()) {
+    switch(statusDisplay.status.toLowerCase()) {
       case 'termine':
       case 'terminé':
         statut = 'termine';
@@ -422,7 +490,7 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
     this.paymentForm = {
       id_souscription: souscriptionId,
       mode_paiement: '',
-      montant_paye: 64400,
+      montant_paye: 0,
       date_paiement_effectif: new Date().toISOString().split('T')[0],
       reference_paiement: '',
       commentaire_paiement: ''
@@ -616,7 +684,6 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
   }
 
   getStatusDisplay(souscription: ApiSouscription): { status: string; color: string; label: string } {
-    // Utiliser statut_dynamique au lieu de statut_souscription
     const statut = (souscription as any).statut_dynamique || souscription.statut_souscription;
     
     switch(statut.toLowerCase()) {

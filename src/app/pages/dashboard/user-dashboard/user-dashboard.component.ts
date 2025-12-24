@@ -12,7 +12,7 @@ import { PLATFORM_ID } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { User, UserProfileResponse } from 'src/app/core/models/auth';
 import { AuthService } from 'src/app/core/services/auth.service';
-import { environment } from '@/environment';
+import { environment } from 'src/assets/environment/environment';
 
 
 @Component({

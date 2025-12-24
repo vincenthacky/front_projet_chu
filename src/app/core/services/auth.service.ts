@@ -2,7 +2,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, tap, catchError, throwError, map, of } from 'rxjs';
 import { isPlatformBrowser } from '@angular/common';
-import { environment } from '@/environment';
+import { environment } from 'src/assets/environment/environment';
 import { Inject, Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { User, LoginResponse, LogoutResponse, ForgotPasswordResponse, ResetPasswordResponse, UserProfileResponse, UserUpdateResponse, UsersResponse } from '../models/auth';
 
@@ -863,7 +863,7 @@ export class AuthService {
       'Authorization': `Bearer ${token}`
     });
 
-    const params = new HttpParams().set('per_page', '50');
+    const params = new HttpParams().set('per_page', '1000000');
 
     return this.http.get<UsersResponse>(`${this.API_URL}/utilisateurs`, { headers, params }).pipe(
       tap(response => {

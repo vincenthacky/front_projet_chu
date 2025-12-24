@@ -4,7 +4,7 @@ import { Observable, BehaviorSubject } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 import { UtilisateurWithSouscriptions, UtilisateursSouscriptionsApiResponse, SouscriptionWithPlans } from '../models/utilisateur';
-import { environment } from '@/environment';
+import { environment } from 'src/assets/environment/environment';
 
 @Injectable({
   providedIn: 'root'

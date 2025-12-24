@@ -26,7 +26,7 @@ import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { HttpClient } from '@angular/common/http';
 import { ApiSouscription, SouscriptionFilters, SouscriptionResponse } from 'src/app/core/models/souscription';
 import { SouscriptionService } from 'src/app/core/services/souscription.service';
-import { environment } from '@/environment';
+import { environment } from 'src/assets/environment/environment';
 
 @Component({
   selector: 'app-all-subscription-requests-admin',

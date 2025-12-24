@@ -1,783 +1,784 @@
 <div class="container">
-    <!-- Section des statistiques -->
-    <div nz-row [nzGutter]="16" class="stats-section">
-      <div nz-col nzXs="24" nzSm="8" nzMd="8">
-        <nz-card class="stat-card total-users">
-          <nz-statistic
-            nzTitle="Total Utilisateurs"
-            [nzValue]="totalUsers"
-            nzPrefix="👥"
-            [nzValueStyle]="{ color: '#1890ff' }"
-          ></nz-statistic>
-        </nz-card>
-      </div>
-      <div nz-col nzXs="24" nzSm="8" nzMd="8">
-        <nz-card class="stat-card total-admins">
-          <nz-statistic
-            nzTitle="Administrateurs"
-            [nzValue]="totalAdmins"
-            nzPrefix="🛡️"
-            [nzValueStyle]="{ color: '#52c41a' }"
-          ></nz-statistic>
-        </nz-card>
-      </div>
-      <div nz-col nzXs="24" nzSm="8" nzMd="8">
-        <nz-card class="stat-card total-regular-users">
-          <nz-statistic
-            nzTitle="Utilisateurs Standards"
-            [nzValue]="totalRegularUsers"
-            nzPrefix="👤"
-            [nzValueStyle]="{ color: '#fa8c16' }"
-          ></nz-statistic>
-        </nz-card>
-      </div>
+  <!-- Section des statistiques -->
+  <div nz-row [nzGutter]="16" class="stats-section">
+    <div nz-col nzXs="24" nzSm="8" nzMd="8">
+      <nz-card class="stat-card total-users">
+        <nz-statistic
+          nzTitle="Total Utilisateurs"
+          [nzValue]="totalUsers"
+          nzPrefix="👥"
+          [nzValueStyle]="{ color: '#1890ff' }"
+        ></nz-statistic>
+      </nz-card>
     </div>
-  
-    <!-- Section des contrôles -->
-    <nz-card class="controls-section">
-      <div class="controls-header">
-        <h3>Gestion des Utilisateurs</h3>
-        <nz-space>
-          <button *nzSpaceItem nz-button nzType="primary" (click)="refresh()" [nzLoading]="loading">
-            <span nz-icon nzType="reload"></span>
-            Actualiser
-          </button>
-        </nz-space>
-      </div>
-      
-      <div class="filter-container">
-        <nz-input-group [nzPrefix]="prefixIconSearch" [nzSuffix]="suffixIconClear">
-          <input
-            nz-input
-            placeholder="Rechercher par nom, prénom, email, matricule ou téléphone..."
-            [(ngModel)]="searchTerm"
-            (ngModelChange)="onSearchChange($event)"
-            class="search-input"
-          />
-        </nz-input-group>
-        <ng-template #prefixIconSearch>
-          <span nz-icon nzType="search"></span>
-        </ng-template>
-        <ng-template #suffixIconClear>
-          <span 
-            nz-icon 
-            nzType="close-circle" 
-            *ngIf="searchTerm" 
-            (click)="clearSearch()"
-            class="clear-icon"
-          ></span>
-        </ng-template>
-      </div>
-    </nz-card>
-  
-    <!-- Tableau des utilisateurs -->
-    <nz-card class="table-section">
-      <nz-table
-        #userTable
-        [nzData]="getPaginatedUsers()"
-        [nzLoading]="loading"
-        [nzFrontPagination]="false"
-        [nzTotal]="totalItems"
-        [nzPageSize]="pageSize"
-        [nzPageIndex]="currentPage"
-        (nzPageIndexChange)="onPageChange($event)"
-        [nzPageSizeOptions]="[5, 10, 20, 50]"
-        [nzShowSizeChanger]="true"
-        (nzPageSizeChange)="onPageSizeChange($event)"
-        nzSize="middle"
-        nzBordered
-        [nzScroll]="{ x: '1280px' }"
-      >
-        <thead>
-          <tr>
-            <th nzWidth="80px">Photo</th>
-            <th nzWidth="120px">Nom</th>
-            <th nzWidth="120px">Prénom</th>
-            <th nzWidth="200px">Email</th>
-            <th nzWidth="160px">Téléphone</th>
-            <th nzWidth="120px">Poste</th>
-            <th nzWidth="130px">Service</th>
-            <th nzWidth="120px">Type</th>
-            <th nzWidth="100px">Statut</th>
-            <th nzWidth="140px">Inscription</th>
-            <th nzWidth="140px">Dernière Connexion</th>
-            <th nzWidth="80px">Admin</th>
-            <th nzWidth="70px" nzRight>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let user of userTable.data; trackBy: trackByUserId">
-            <td class="text-center">
-              <div class="user-avatar-container">
-                <nz-avatar 
-                  [nzSize]="40" 
-                  [nzSrc]="getUserPhotoUrl(user)"
-                  [nzIcon]="'user'"
-                  [nzShape]="'circle'"
-                  class="user-avatar"
-                  (click)="viewUserPhoto(user)"
-                  [style.cursor]="getUserPhotoUrl(user) ? 'pointer' : 'default'"
-                >
-                </nz-avatar>
-              </div>
-            </td>
-            <td>
-              <strong>{{ user.nom }}</strong>
-            </td>
-            <td>{{ user.prenom }}</td>
-            <td>
-              <a [href]="'mailto:' + user.email">{{ user.email }}</a>
-            </td>
-            <td>
-              <span *ngIf="user.telephone; else noPhone">
-                <a [href]="'tel:' + user.telephone">{{ user.telephone }}</a>
-              </span>
-              <ng-template #noPhone>
-                <span class="text-muted">-</span>
-              </ng-template>
-            </td>
-            <td>
-              <span *ngIf="user.poste; else noPoste">{{ user.poste }}</span>
-              <ng-template #noPoste>
-                <span class="text-muted">-</span>
-              </ng-template>
-            </td>
-            <td>
-              <span *ngIf="user.service; else noService">{{ user.service }}</span>
-              <ng-template #noService>
-                <span class="text-muted">-</span>
-              </ng-template>
-            </td>
-            <td>
-              <nz-tag [nzColor]="getUserTypeColor(user.type)">
-                {{ getUserTypeLabel(user.type) }}
-              </nz-tag>
-            </td>
-            <td>
-              <nz-tag [nzColor]="getStatusColor(user.statut_utilisateur)">
-                {{ getStatusLabel(user.statut_utilisateur) }}
-              </nz-tag>
-            </td>
-            <td class="date-column">
-              <span class="date-text">{{ formatDate(user.date_inscription) }}</span>
-            </td>
-            <td class="date-column">
-              <span *ngIf="user.derniere_connexion; else noLastConnection" class="date-text">
-                {{ formatDate(user.derniere_connexion) }}
-              </span>
-              <ng-template #noLastConnection>
-                <span class="text-muted">Jamais connecté</span>
-              </ng-template>
-            </td>
-            <td class="text-center">
-              <nz-tag [nzColor]="getAdminColor(user)">
-                {{ getAdminLabel(user) }}
-              </nz-tag>
-            </td>
-            <td nzRight>
-              <nz-space nzSize="small">
-                <button 
-                  *nzSpaceItem
-                  nz-button 
-                  nzType="primary" 
-                  nzSize="small"
-                  nz-dropdown 
-                  [nzDropdownMenu]="actionMenu"
-                  nzPlacement="bottomRight"
-                >
-                  <span nz-icon nzType="more"></span>
-                </button>
-              </nz-space>
-              <nz-dropdown-menu #actionMenu="nzDropdownMenu">
-                <ul nz-menu>
-                  <li nz-menu-item (click)="editUser(user)">
-                    <span nz-icon nzType="edit"></span>
-                    Modifier
-                  </li>
-                  <li nz-menu-item (click)="toggleUserStatus(user)">
-                    <span nz-icon nzType="user-switch"></span>
-                    Changer statut
-                  </li>
-                  <li nz-menu-divider></li>
-                </ul>
-              </nz-dropdown-menu>
-            </td>
-          </tr>
-        </tbody>
-      </nz-table>
-  
-      <!-- Message si aucun résultat -->
-      <div *ngIf="!loading && filteredUsers.length === 0 && searchTerm" class="no-results">
-        <nz-space nzDirection="vertical" nzAlign="center">
-          <span *nzSpaceItem nz-icon nzType="search" nzTheme="outline" class="no-results-icon"></span>
-          <span *nzSpaceItem class="no-results-text">
-            Aucun utilisateur trouvé pour "{{ searchTerm }}"
-          </span>
-          <button *nzSpaceItem nz-button nzType="link" (click)="clearSearch()">
-            Effacer la recherche
-          </button>
-        </nz-space>
-      </div>
-  
-      <!-- Message si aucun utilisateur -->
-      <div *ngIf="!loading && users.length === 0" class="no-data">
-        <nz-space nzDirection="vertical" nzAlign="center">
-          <span *nzSpaceItem nz-icon nzType="user" nzTheme="outline" class="no-data-icon"></span>
-          <span *nzSpaceItem class="no-data-text">
-            Aucun utilisateur trouvé
-          </span>
-          <button *nzSpaceItem nz-button nzType="primary" (click)="refresh()">
-            Actualiser
-          </button>
-        </nz-space>
-      </div>
-    </nz-card>
+    <div nz-col nzXs="24" nzSm="8" nzMd="8">
+      <nz-card class="stat-card total-admins">
+        <nz-statistic
+          nzTitle="Administrateurs"
+          [nzValue]="totalAdmins"
+          nzPrefix="🛡️"
+          [nzValueStyle]="{ color: '#52c41a' }"
+        ></nz-statistic>
+      </nz-card>
+    </div>
+    <div nz-col nzXs="24" nzSm="8" nzMd="8">
+      <nz-card class="stat-card total-regular-users">
+        <nz-statistic
+          nzTitle="Utilisateurs Standards"
+          [nzValue]="totalRegularUsers"
+          nzPrefix="👤"
+          [nzValueStyle]="{ color: '#fa8c16' }"
+        ></nz-statistic>
+      </nz-card>
+    </div>
   </div>
-  
-  <!-- Modal de modification d'utilisateur -->
-  <nz-modal
-    [(nzVisible)]="isEditModalVisible"
-    nzTitle="Modifier l'utilisateur"
-    [nzOkText]="'Modifier'"
-    [nzCancelText]="'Annuler'"
-    [nzOkLoading]="isEditLoading"
-    [nzWidth]="800"
-    (nzOnCancel)="closeEditModalWithCleanup()"
-    (nzOnOk)="submitEditWithDocuments()"
-  >
-    <ng-container *nzModalContent>
-      <form nz-form [formGroup]="editForm" nzLayout="vertical">
-        <div nz-row [nzGutter]="16">
-          <div nz-col nzSpan="12">
-            <nz-form-item>
-              <nz-form-label nzRequired>Nom</nz-form-label>
-              <nz-form-control [nzErrorTip]="getFieldError('nom')">
-                <input 
-                  nz-input 
-                  formControlName="nom" 
-                  placeholder="Nom de famille"
-                  [class.error-input]="isFieldInvalid('nom')"
-                />
-              </nz-form-control>
-            </nz-form-item>
-          </div>
-          <div nz-col nzSpan="12">
-            <nz-form-item>
-              <nz-form-label nzRequired>Prénom</nz-form-label>
-              <nz-form-control [nzErrorTip]="getFieldError('prenom')">
-                <input 
-                  nz-input 
-                  formControlName="prenom" 
-                  placeholder="Prénom"
-                  [class.error-input]="isFieldInvalid('prenom')"
-                />
-              </nz-form-control>
-            </nz-form-item>
-          </div>
-        </div>
-  
-        <nz-form-item>
-          <nz-form-label nzRequired>Email</nz-form-label>
-          <nz-form-control [nzErrorTip]="getFieldError('email')">
-            <input 
-              nz-input 
-              formControlName="email" 
-              placeholder="adresse@email.com"
-              type="email"
-              [class.error-input]="isFieldInvalid('email')"
-            />
-          </nz-form-control>
-        </nz-form-item>
-  
-        <div nz-row [nzGutter]="16">
-          <div nz-col nzSpan="12">
-            <nz-form-item>
-              <nz-form-label>Téléphone</nz-form-label>
-              <nz-form-control>
-                <input 
-                  nz-input 
-                  formControlName="telephone" 
-                  placeholder="+225 XX XX XX XX"
-                />
-              </nz-form-control>
-            </nz-form-item>
-          </div>
-          <div nz-col nzSpan="12">
-            <nz-form-item>
-              <nz-form-label>Poste</nz-form-label>
-              <nz-form-control>
-                <input 
-                  nz-input 
-                  formControlName="poste" 
-                  placeholder="Poste occupé"
-                />
-              </nz-form-control>
-            </nz-form-item>
-          </div>
-        </div>
-  
-        <nz-form-item>
-          <nz-form-label>Service</nz-form-label>
-          <nz-form-control>
-            <input 
-              nz-input 
-              formControlName="service" 
-              placeholder="Service/Département"
-            />
-          </nz-form-control>
-        </nz-form-item>
-  
-        <div nz-row [nzGutter]="16">
-          <div nz-col nzSpan="12">
-            <nz-form-item>
-              <nz-form-label nzRequired>Type d'utilisateur</nz-form-label>
-              <nz-form-control [nzErrorTip]="getFieldError('type')">
-                <nz-select 
-                  formControlName="type" 
-                  nzPlaceHolder="Sélectionner un type"
-                  [class.error-input]="isFieldInvalid('type')"
-                >
-                  <nz-option 
-                    *ngFor="let option of userTypeOptions" 
-                    [nzValue]="option.value" 
-                    [nzLabel]="option.label"
-                  ></nz-option>
-                </nz-select>
-              </nz-form-control>
-            </nz-form-item>
-          </div>
-          <div nz-col nzSpan="12">
-            <nz-form-item>
-              <nz-form-label nzRequired>Statut</nz-form-label>
-              <nz-form-control [nzErrorTip]="getFieldError('statut_utilisateur')">
-                <nz-select 
-                  formControlName="statut_utilisateur" 
-                  nzPlaceHolder="Sélectionner un statut"
-                  [class.error-input]="isFieldInvalid('statut_utilisateur')"
-                >
-                  <nz-option 
-                    *ngFor="let option of statusOptions" 
-                    [nzValue]="option.value" 
-                    [nzLabel]="option.label"
-                  ></nz-option>
-                </nz-select>
-              </nz-form-control>
-            </nz-form-item>
-          </div>
-        </div>
-  
-        <nz-form-item>
-          <nz-form-control>
-            <label nz-checkbox formControlName="est_administrateur">
-              Droits d'administrateur
-            </label>
-          </nz-form-control>
-        </nz-form-item>
 
-        <!-- Section Documents -->
-        <div class="documents-section" style="margin-top: 24px;">
-          <h4 style="margin-bottom: 16px; color: #434343; font-weight: 600;">
-            <span nz-icon nzType="file-text" style="margin-right: 8px;"></span>
-            Documents de l'utilisateur
-          </h4>
-          <div nz-row [nzGutter]="16">
-            <!-- Carte Professionnelle -->
-            <div nz-col nzXs="24" nzSm="12" nzMd="12">
-              <nz-card 
-                class="document-card" 
-                nzSize="small"
-                [nzBodyStyle]="{ padding: '12px' }"
-                style="height: 140px; transition: all 0.3s ease;">
-                <div class="document-content">
-                  <div class="document-header" style="display: flex; justify-content: between; align-items: center; margin-bottom: 8px;">
-                    <div class="document-title" style="font-weight: 600; color: #1890ff;">
-                      <span nz-icon nzType="idcard" nzTheme="outline" style="margin-right: 4px;"></span>
-                      Carte Professionnelle
-                    </div>
-                    <div class="document-actions">
-                      <button 
-                        *ngIf="carteProf"
-                        nz-button 
-                        nzType="text" 
-                        nzSize="small"
-                        (click)="viewDocument(carteProf)"
-                        style="padding: 0 4px;"
-                      >
-                        <span nz-icon nzType="eye" nzTheme="outline"></span>
-                      </button>
-                      <nz-upload
-                        nzAction=""
-                        [nzBeforeUpload]="beforeUploadEditCartePro"
-                        nzAccept="image/*,.pdf"
-                        [nzShowUploadList]="false"
-                        style="display: inline-block; margin-left: 4px;"
-                      >
-                        <button nz-button nzType="text" nzSize="small" style="padding: 0 4px;">
-                          <span nz-icon nzType="upload" nzTheme="outline"></span>
-                        </button>
-                      </nz-upload>
-                    </div>
-                  </div>
-                  <div *ngIf="carteProf; else noCarteProf" class="document-info">
-                    <div class="document-meta" style="font-size: 12px; color: #666;">
-                      {{ formatFileSize(carteProf.taille_fichier) }}
-                    </div>
-                    <div class="document-date" style="font-size: 11px; color: #999;">
-                      {{ formatDate(carteProf.date_telechargement) }}
-                    </div>
-                    <div style="margin-top: 8px;">
-                      <nz-tag [nzColor]="carteProf.statut_document === 'actif' ? 'green' : 'orange'" nzSize="small">
-                        {{ carteProf.statut_document }}
-                      </nz-tag>
-                    </div>
-                  </div>
-                  <ng-template #noCarteProf>
-                    <div class="document-empty" style="color: #999; font-size: 12px;">
-                      <span nz-icon nzType="file-add" nzTheme="outline" style="font-size: 20px; color: #d9d9d9; display: block; margin-bottom: 4px;"></span>
-                      Non fournie
-                    </div>
-                  </ng-template>
-                </div>
-              </nz-card>
-            </div>
-
-            <!-- CNI -->
-            <div nz-col nzXs="24" nzSm="12" nzMd="12">
-              <nz-card 
-                class="document-card" 
-                nzSize="small"
-                [nzBodyStyle]="{ padding: '12px' }"
-                style="height: 140px; transition: all 0.3s ease;">
-                <div class="document-content">
-                  <div class="document-header" style="display: flex; justify-content: between; align-items: center; margin-bottom: 8px;">
-                    <div class="document-title" style="font-weight: 600; color: #52c41a;">
-                      <span nz-icon nzType="credit-card" nzTheme="outline" style="margin-right: 4px;"></span>
-                      CNI
-                    </div>
-                    <div class="document-actions">
-                      <button 
-                        *ngIf="cniDoc"
-                        nz-button 
-                        nzType="text" 
-                        nzSize="small"
-                        (click)="viewDocument(cniDoc)"
-                        style="padding: 0 4px;"
-                      >
-                        <span nz-icon nzType="eye" nzTheme="outline"></span>
-                      </button>
-                      <nz-upload
-                        nzAction=""
-                        [nzBeforeUpload]="beforeUploadEditCni"
-                        nzAccept="image/*,.pdf"
-                        [nzShowUploadList]="false"
-                        style="display: inline-block; margin-left: 4px;"
-                      >
-                        <button nz-button nzType="text" nzSize="small" style="padding: 0 4px;">
-                          <span nz-icon nzType="upload" nzTheme="outline"></span>
-                        </button>
-                      </nz-upload>
-                    </div>
-                  </div>
-                  <div *ngIf="cniDoc; else noCni" class="document-info">
-                    <div class="document-meta" style="font-size: 12px; color: #666;">
-                      {{ formatFileSize(cniDoc.taille_fichier) }}
-                    </div>
-                    <div class="document-date" style="font-size: 11px; color: #999;">
-                      {{ formatDate(cniDoc.date_telechargement) }}
-                    </div>
-                    <div style="margin-top: 8px;">
-                      <nz-tag [nzColor]="cniDoc.statut_document === 'actif' ? 'green' : 'orange'" nzSize="small">
-                        {{ cniDoc.statut_document }}
-                      </nz-tag>
-                    </div>
-                  </div>
-                  <ng-template #noCni>
-                    <div class="document-empty" style="color: #999; font-size: 12px;">
-                      <span nz-icon nzType="file-add" nzTheme="outline" style="font-size: 20px; color: #d9d9d9; display: block; margin-bottom: 4px;"></span>
-                      Non fournie
-                    </div>
-                  </ng-template>
-                </div>
-              </nz-card>
-            </div>
-
-            <!-- Photo de Profil -->
-            <div nz-col nzXs="24" nzSm="12" nzMd="12">
-              <nz-card 
-                class="document-card" 
-                nzSize="small"
-                [nzBodyStyle]="{ padding: '12px' }"
-                style="min-height: 200px; transition: all 0.3s ease;">
-                <div class="document-content">
-                  <div class="document-header" style="display: flex; justify-content: between; align-items: center; margin-bottom: 8px;">
-                    <div class="document-title" style="font-weight: 600; color: #722ed1;">
-                      <span nz-icon nzType="user" nzTheme="outline" style="margin-right: 4px;"></span>
-                      Photo de Profil
-                    </div>
-                    <div class="document-actions">
-                      <button 
-                        *ngIf="photoProfilDoc"
-                        nz-button 
-                        nzType="text" 
-                        nzSize="small"
-                        (click)="viewDocument(photoProfilDoc)"
-                        style="padding: 0 4px;"
-                      >
-                        <span nz-icon nzType="eye" nzTheme="outline"></span>
-                      </button>
-                      <nz-upload
-                        nzAction=""
-                        [nzBeforeUpload]="beforeUploadEditPhotoProfil"
-                        nzAccept="image/*"
-                        [nzShowUploadList]="false"
-                        style="display: inline-block; margin-left: 4px;"
-                      >
-                        <button nz-button nzType="text" nzSize="small" style="padding: 0 4px;">
-                          <span nz-icon nzType="upload" nzTheme="outline"></span>
-                        </button>
-                      </nz-upload>
-                    </div>
-                  </div>
-
-                  <!-- Aperçu de la photo de profil -->
-                  <div class="photo-preview-section" style="margin-bottom: 12px;">
-                    <div class="current-photo" style="text-align: center; margin-bottom: 8px;">
-                      <nz-avatar 
-                        [nzSize]="80" 
-                        [nzSrc]="getCurrentPhotoUrl()"
-                        [nzIcon]="'user'"
-                        [nzShape]="'circle'"
-                        style="border: 3px solid #722ed1; box-shadow: 0 4px 8px rgba(114, 46, 209, 0.2);"
-                      ></nz-avatar>
-                    </div>
-                    <div style="text-align: center; font-size: 11px; color: #666;">
-                      {{ getCurrentPhotoUrl() ? 'Photo actuelle' : 'Aucune photo' }}
-                    </div>
-                  </div>
-
-                  <!-- Aperçu du nouveau fichier sélectionné -->
-                  <div *ngIf="editPhotoProfilPreview" class="new-photo-preview" style="margin-bottom: 12px;">
-                    <div style="text-align: center; margin-bottom: 8px;">
-                      <img [src]="editPhotoProfilPreview" alt="Nouvelle photo" 
-                           style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #52c41a; box-shadow: 0 2px 4px rgba(82, 196, 26, 0.3);" />
-                    </div>
-                    <div style="text-align: center; font-size: 11px; color: #52c41a; font-weight: 500;">
-                      Nouvelle photo sélectionnée
-                    </div>
-                  </div>
-
-                  <div *ngIf="photoProfilDoc; else noPhotoProfil" class="document-info">
-                    <div class="document-meta" style="font-size: 12px; color: #666;">
-                      {{ formatFileSize(photoProfilDoc.taille_fichier) }}
-                    </div>
-                    <div class="document-date" style="font-size: 11px; color: #999;">
-                      {{ formatDate(photoProfilDoc.date_telechargement) }}
-                    </div>
-                    <div style="margin-top: 8px;">
-                      <nz-tag [nzColor]="photoProfilDoc.statut_document === 'actif' ? 'green' : 'orange'" nzSize="small">
-                        {{ photoProfilDoc.statut_document }}
-                      </nz-tag>
-                    </div>
-                  </div>
-                  <ng-template #noPhotoProfil>
-                    <div class="document-empty" style="color: #999; font-size: 12px; text-align: center;">
-                      <span nz-icon nzType="file-add" nzTheme="outline" style="font-size: 16px; color: #d9d9d9; display: block; margin-bottom: 4px;"></span>
-                      Non fournie
-                    </div>
-                  </ng-template>
-                </div>
-              </nz-card>
-            </div>
-
-            <!-- Fiche de Souscription -->
-            <div nz-col nzXs="24" nzSm="12" nzMd="12">
-              <nz-card 
-                class="document-card" 
-                nzSize="small"
-                [nzBodyStyle]="{ padding: '12px' }"
-                style="height: 140px; transition: all 0.3s ease;">
-                <div class="document-content">
-                  <div class="document-header" style="display: flex; justify-content: between; align-items: center; margin-bottom: 8px;">
-                    <div class="document-title" style="font-weight: 600; color: #faad14;">
-                      <span nz-icon nzType="file-text" nzTheme="outline" style="margin-right: 4px;"></span>
-                      Fiche Souscription
-                    </div>
-                    <div class="document-actions">
-                      <button 
-                        *ngIf="ficheSouscriptionDoc"
-                        nz-button 
-                        nzType="text" 
-                        nzSize="small"
-                        (click)="viewDocument(ficheSouscriptionDoc)"
-                        style="padding: 0 4px;"
-                      >
-                        <span nz-icon nzType="eye" nzTheme="outline"></span>
-                      </button>
-                      <nz-upload
-                        nzAction=""
-                        [nzBeforeUpload]="beforeUploadEditFicheSouscription"
-                        nzAccept="image/*,.pdf"
-                        [nzShowUploadList]="false"
-                        style="display: inline-block; margin-left: 4px;"
-                      >
-                        <button nz-button nzType="text" nzSize="small" style="padding: 0 4px;">
-                          <span nz-icon nzType="upload" nzTheme="outline"></span>
-                        </button>
-                      </nz-upload>
-                    </div>
-                  </div>
-                  <div *ngIf="ficheSouscriptionDoc; else noFicheSouscription" class="document-info">
-                    <div class="document-meta" style="font-size: 12px; color: #666;">
-                      {{ formatFileSize(ficheSouscriptionDoc.taille_fichier) }}
-                    </div>
-                    <div class="document-date" style="font-size: 11px; color: #999;">
-                      {{ formatDate(ficheSouscriptionDoc.date_telechargement) }}
-                    </div>
-                    <div style="margin-top: 8px;">
-                      <nz-tag [nzColor]="ficheSouscriptionDoc.statut_document === 'actif' ? 'green' : 'orange'" nzSize="small">
-                        {{ ficheSouscriptionDoc.statut_document }}
-                      </nz-tag>
-                    </div>
-                  </div>
-                  <ng-template #noFicheSouscription>
-                    <div class="document-empty" style="color: #999; font-size: 12px;">
-                      <span nz-icon nzType="file-add" nzTheme="outline" style="font-size: 20px; color: #d9d9d9; display: block; margin-bottom: 4px;"></span>
-                      Non fournie
-                    </div>
-                  </ng-template>
-                </div>
-              </nz-card>
-            </div>
-          </div>
-
-          <div style="margin-top: 16px;">
-            <nz-alert
-              nzType="info"
-              nzMessage="Information sur les documents"
-              nzDescription="Cliquez sur l'icône œil pour visualiser un document ou sur l'icône upload pour le remplacer. Formats acceptés : Images (JPG, PNG, GIF) et PDF. Taille maximale : 5MB par fichier."
-              nzShowIcon
-              nzSize="small"
-            ></nz-alert>
-          </div>
-        </div>
-      </form>
-    </ng-container>
-  </nz-modal>
-  
-  <!-- Modal de changement de statut -->
-  <nz-modal
-    [(nzVisible)]="isStatusModalVisible"
-    nzTitle="Changer le statut de l'utilisateur"
-    [nzOkText]="'Confirmer'"
-    [nzCancelText]="'Annuler'"
-    [nzOkLoading]="isStatusLoading"
-    [nzWidth]="450"
-    (nzOnCancel)="closeStatusModal()"
-    (nzOnOk)="confirmStatusChange()"
-  >
-    <ng-container *nzModalContent>
-      <div class="status-change-content">
-        <div class="user-info" *ngIf="selectedUserForStatus">
-          <h4>
-            <span nz-icon nzType="user"></span>
-            {{ selectedUserForStatus.prenom }} {{ selectedUserForStatus.nom }}
-          </h4>
-          <p class="current-status">
-            Statut actuel : 
-            <nz-tag [nzColor]="getStatusColor(selectedUserForStatus.statut_utilisateur)">
-              {{ getStatusLabel(selectedUserForStatus.statut_utilisateur) }}
-            </nz-tag>
-          </p>
-        </div>
-  
-        <nz-divider></nz-divider>
-  
-        <div class="status-selection">
-          <h5>Nouveau statut :</h5>
-          <nz-radio-group [(ngModel)]="newStatus" class="status-radio-group">
-            <label 
-              *ngFor="let option of statusOptions" 
-              nz-radio 
-              [nzValue]="option.value"
-              class="status-radio-option"
-            >
-              <nz-tag [nzColor]="getStatusColor(option.value)" class="status-tag">
-                {{ option.label }}
-              </nz-tag>
-            </label>
-          </nz-radio-group>
-        </div>
-  
-        <nz-alert
-          *ngIf="newStatus === 'suspendu'"
-          nzType="warning"
-          nzMessage="Attention"
-          nzDescription="L'utilisateur ne pourra plus se connecter jusqu'à ce que son statut soit modifié."
-          nzShowIcon
-          class="status-warning"
-        ></nz-alert>
-  
-        <nz-alert
-          *ngIf="newStatus === 'inactif'"
-          nzType="error"
-          nzMessage="Compte inactif"
-          nzDescription="L'utilisateur sera complètement désactivé et ne pourra plus accéder au système."
-          nzShowIcon
-          class="status-warning"
-        ></nz-alert>
-      </div>
-    </ng-container>
-  </nz-modal>
-
-  <!-- Modal pour l'affichage des documents -->
-  <nz-modal
-    [(nzVisible)]="isDocumentModalVisible"
-    [nzTitle]="selectedDocument ? selectedDocument.description_document : 'Document'"
-    [nzWidth]="800"
-    [nzFooter]="null"
-    (nzOnCancel)="closeDocumentModal()">
+  <!-- Section des contrôles -->
+  <nz-card class="controls-section">
+    <div class="controls-header">
+      <h3>Gestion des Utilisateurs</h3>
+      <nz-space>
+        <button *nzSpaceItem nz-button nzType="primary" (click)="refresh()" [nzLoading]="loading">
+          <span nz-icon nzType="reload"></span>
+          Actualiser
+        </button>
+      </nz-space>
+    </div>
     
-    <div *nzModalContent>
-      <div *ngIf="selectedDocument" class="document-modal-content">
-        <!-- Informations du document -->
-        <div class="document-details" style="margin-bottom: 20px;">
-          <nz-descriptions [nzBordered]="true" [nzColumn]="2" nzSize="small">
-            <nz-descriptions-item nzTitle="Nom du fichier">
-              {{ selectedDocument.nom_original }}
-            </nz-descriptions-item>
-            <nz-descriptions-item nzTitle="Taille">
-              {{ formatFileSize(selectedDocument.taille_fichier) }}
-            </nz-descriptions-item>
-            <nz-descriptions-item nzTitle="Date d'upload">
-              {{ formatDate(selectedDocument.date_telechargement) }}
-            </nz-descriptions-item>
-            <nz-descriptions-item nzTitle="Version">
-              v{{ selectedDocument.version_document }}
-            </nz-descriptions-item>
-            <nz-descriptions-item nzTitle="Statut" nzSpan="2">
-              <nz-tag [nzColor]="selectedDocument.statut_document === 'actif' ? 'green' : 'orange'">
-                {{ selectedDocument.statut_document }}
-              </nz-tag>
-            </nz-descriptions-item>
-          </nz-descriptions>
+    <div class="filter-container">
+      <nz-input-group [nzPrefix]="prefixIconSearch" [nzSuffix]="suffixIconClear">
+        <input
+          nz-input
+          placeholder="Rechercher par nom, prénom, email, matricule ou téléphone..."
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onSearchChange($event)"
+          class="search-input"
+        />
+      </nz-input-group>
+      <ng-template #prefixIconSearch>
+        <span nz-icon nzType="search"></span>
+      </ng-template>
+      <ng-template #suffixIconClear>
+        <span 
+          nz-icon 
+          nzType="close-circle" 
+          *ngIf="searchTerm" 
+          (click)="clearSearch()"
+          class="clear-icon"
+        ></span>
+      </ng-template>
+    </div>
+  </nz-card>
+
+  <!-- Tableau des utilisateurs -->
+  <nz-card class="table-section">
+    <nz-table
+      #userTable
+      [nzData]="getPaginatedUsers()"
+      [nzLoading]="loading"
+      [nzFrontPagination]="false"
+      [nzTotal]="totalItems"
+      [nzPageSize]="pageSize"
+      [nzPageIndex]="currentPage"
+      (nzPageIndexChange)="onPageChange($event)"
+      [nzPageSizeOptions]="[5, 10, 20, 50]"
+      [nzShowSizeChanger]="true"
+      [nzShowQuickJumper]="true"
+      (nzPageSizeChange)="onPageSizeChange($event)"
+      nzSize="middle"
+      nzBordered
+      [nzScroll]="{ x: '1280px' }"
+    >
+      <thead>
+        <tr>
+          <th nzWidth="80px">Photo</th>
+          <th nzWidth="120px">Nom</th>
+          <th nzWidth="120px">Prénom</th>
+          <th nzWidth="200px">Email</th>
+          <th nzWidth="160px">Téléphone</th>
+          <th nzWidth="120px">Poste</th>
+          <th nzWidth="130px">Service</th>
+          <th nzWidth="120px">Type</th>
+          <th nzWidth="100px">Statut</th>
+          <th nzWidth="140px">Inscription</th>
+          <th nzWidth="140px">Dernière Connexion</th>
+          <th nzWidth="80px">Admin</th>
+          <th nzWidth="70px" nzRight>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of userTable.data; trackBy: trackByUserId">
+          <td class="text-center">
+            <div class="user-avatar-container">
+              <nz-avatar 
+                [nzSize]="40" 
+                [nzSrc]="getUserPhotoUrl(user)"
+                [nzIcon]="'user'"
+                [nzShape]="'circle'"
+                class="user-avatar"
+                (click)="viewUserPhoto(user)"
+                [style.cursor]="getUserPhotoUrl(user) ? 'pointer' : 'default'"
+              >
+              </nz-avatar>
+            </div>
+          </td>
+          <td>
+            <strong>{{ user.nom }}</strong>
+          </td>
+          <td>{{ user.prenom }}</td>
+          <td>
+            <a [href]="'mailto:' + user.email">{{ user.email }}</a>
+          </td>
+          <td>
+            <span *ngIf="user.telephone; else noPhone">
+              <a [href]="'tel:' + user.telephone">{{ user.telephone }}</a>
+            </span>
+            <ng-template #noPhone>
+              <span class="text-muted">-</span>
+            </ng-template>
+          </td>
+          <td>
+            <span *ngIf="user.poste; else noPoste">{{ user.poste }}</span>
+            <ng-template #noPoste>
+              <span class="text-muted">-</span>
+            </ng-template>
+          </td>
+          <td>
+            <span *ngIf="user.service; else noService">{{ user.service }}</span>
+            <ng-template #noService>
+              <span class="text-muted">-</span>
+            </ng-template>
+          </td>
+          <td>
+            <nz-tag [nzColor]="getUserTypeColor(user.type)">
+              {{ getUserTypeLabel(user.type) }}
+            </nz-tag>
+          </td>
+          <td>
+            <nz-tag [nzColor]="getStatusColor(user.statut_utilisateur)">
+              {{ getStatusLabel(user.statut_utilisateur) }}
+            </nz-tag>
+          </td>
+          <td class="date-column">
+            <span class="date-text">{{ formatDate(user.date_inscription) }}</span>
+          </td>
+          <td class="date-column">
+            <span *ngIf="user.derniere_connexion; else noLastConnection" class="date-text">
+              {{ formatDate(user.derniere_connexion) }}
+            </span>
+            <ng-template #noLastConnection>
+              <span class="text-muted">Jamais connecté</span>
+            </ng-template>
+          </td>
+          <td class="text-center">
+            <nz-tag [nzColor]="getAdminColor(user)">
+              {{ getAdminLabel(user) }}
+            </nz-tag>
+          </td>
+          <td nzRight>
+            <nz-space nzSize="small">
+              <button 
+                *nzSpaceItem
+                nz-button 
+                nzType="primary" 
+                nzSize="small"
+                nz-dropdown 
+                [nzDropdownMenu]="actionMenu"
+                nzPlacement="bottomRight"
+              >
+                <span nz-icon nzType="more"></span>
+              </button>
+            </nz-space>
+            <nz-dropdown-menu #actionMenu="nzDropdownMenu">
+              <ul nz-menu>
+                <li nz-menu-item (click)="editUser(user)">
+                  <span nz-icon nzType="edit"></span>
+                  Modifier
+                </li>
+                <li nz-menu-item (click)="toggleUserStatus(user)">
+                  <span nz-icon nzType="user-switch"></span>
+                  Changer statut
+                </li>
+                <li nz-menu-divider></li>
+              </ul>
+            </nz-dropdown-menu>
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+
+    <!-- Message si aucun résultat -->
+    <div *ngIf="!loading && filteredUsers.length === 0 && searchTerm" class="no-results">
+      <nz-space nzDirection="vertical" nzAlign="center">
+        <span *nzSpaceItem nz-icon nzType="search" nzTheme="outline" class="no-results-icon"></span>
+        <span *nzSpaceItem class="no-results-text">
+          Aucun utilisateur trouvé pour "{{ searchTerm }}"
+        </span>
+        <button *nzSpaceItem nz-button nzType="link" (click)="clearSearch()">
+          Effacer la recherche
+        </button>
+      </nz-space>
+    </div>
+
+    <!-- Message si aucun utilisateur -->
+    <div *ngIf="!loading && users.length === 0" class="no-data">
+      <nz-space nzDirection="vertical" nzAlign="center">
+        <span *nzSpaceItem nz-icon nzType="user" nzTheme="outline" class="no-data-icon"></span>
+        <span *nzSpaceItem class="no-data-text">
+          Aucun utilisateur trouvé
+        </span>
+        <button *nzSpaceItem nz-button nzType="primary" (click)="refresh()">
+          Actualiser
+        </button>
+      </nz-space>
+    </div>
+  </nz-card>
+</div>
+
+<!-- Modal de modification d'utilisateur -->
+<nz-modal
+  [(nzVisible)]="isEditModalVisible"
+  nzTitle="Modifier l'utilisateur"
+  [nzOkText]="'Modifier'"
+  [nzCancelText]="'Annuler'"
+  [nzOkLoading]="isEditLoading"
+  [nzWidth]="800"
+  (nzOnCancel)="closeEditModalWithCleanup()"
+  (nzOnOk)="submitEditWithDocuments()"
+>
+  <ng-container *nzModalContent>
+    <form nz-form [formGroup]="editForm" nzLayout="vertical">
+      <div nz-row [nzGutter]="16">
+        <div nz-col nzSpan="12">
+          <nz-form-item>
+            <nz-form-label nzRequired>Nom</nz-form-label>
+            <nz-form-control [nzErrorTip]="getFieldError('nom')">
+              <input 
+                nz-input 
+                formControlName="nom" 
+                placeholder="Nom de famille"
+                [class.error-input]="isFieldInvalid('nom')"
+              />
+            </nz-form-control>
+          </nz-form-item>
+        </div>
+        <div nz-col nzSpan="12">
+          <nz-form-item>
+            <nz-form-label nzRequired>Prénom</nz-form-label>
+            <nz-form-control [nzErrorTip]="getFieldError('prenom')">
+              <input 
+                nz-input 
+                formControlName="prenom" 
+                placeholder="Prénom"
+                [class.error-input]="isFieldInvalid('prenom')"
+              />
+            </nz-form-control>
+          </nz-form-item>
+        </div>
+      </div>
+
+      <nz-form-item>
+        <nz-form-label nzRequired>Email</nz-form-label>
+        <nz-form-control [nzErrorTip]="getFieldError('email')">
+          <input 
+            nz-input 
+            formControlName="email" 
+            placeholder="adresse@email.com"
+            type="email"
+            [class.error-input]="isFieldInvalid('email')"
+          />
+        </nz-form-control>
+      </nz-form-item>
+
+      <div nz-row [nzGutter]="16">
+        <div nz-col nzSpan="12">
+          <nz-form-item>
+            <nz-form-label>Téléphone</nz-form-label>
+            <nz-form-control>
+              <input 
+                nz-input 
+                formControlName="telephone" 
+                placeholder="+225 XX XX XX XX"
+              />
+            </nz-form-control>
+          </nz-form-item>
+        </div>
+        <div nz-col nzSpan="12">
+          <nz-form-item>
+            <nz-form-label>Poste</nz-form-label>
+            <nz-form-control>
+              <input 
+                nz-input 
+                formControlName="poste" 
+                placeholder="Poste occupé"
+              />
+            </nz-form-control>
+          </nz-form-item>
+        </div>
+      </div>
+
+      <nz-form-item>
+        <nz-form-label>Service</nz-form-label>
+        <nz-form-control>
+          <input 
+            nz-input 
+            formControlName="service" 
+            placeholder="Service/Département"
+          />
+        </nz-form-control>
+      </nz-form-item>
+
+      <div nz-row [nzGutter]="16">
+        <div nz-col nzSpan="12">
+          <nz-form-item>
+            <nz-form-label nzRequired>Type d'utilisateur</nz-form-label>
+            <nz-form-control [nzErrorTip]="getFieldError('type')">
+              <nz-select 
+                formControlName="type" 
+                nzPlaceHolder="Sélectionner un type"
+                [class.error-input]="isFieldInvalid('type')"
+              >
+                <nz-option 
+                  *ngFor="let option of userTypeOptions" 
+                  [nzValue]="option.value" 
+                  [nzLabel]="option.label"
+                ></nz-option>
+              </nz-select>
+            </nz-form-control>
+          </nz-form-item>
+        </div>
+        <div nz-col nzSpan="12">
+          <nz-form-item>
+            <nz-form-label nzRequired>Statut</nz-form-label>
+            <nz-form-control [nzErrorTip]="getFieldError('statut_utilisateur')">
+              <nz-select 
+                formControlName="statut_utilisateur" 
+                nzPlaceHolder="Sélectionner un statut"
+                [class.error-input]="isFieldInvalid('statut_utilisateur')"
+              >
+                <nz-option 
+                  *ngFor="let option of statusOptions" 
+                  [nzValue]="option.value" 
+                  [nzLabel]="option.label"
+                ></nz-option>
+              </nz-select>
+            </nz-form-control>
+          </nz-form-item>
+        </div>
+      </div>
+
+      <nz-form-item>
+        <nz-form-control>
+          <label nz-checkbox formControlName="est_administrateur">
+            Droits d'administrateur
+          </label>
+        </nz-form-control>
+      </nz-form-item>
+
+      <!-- Section Documents -->
+      <div class="documents-section" style="margin-top: 24px;">
+        <h4 style="margin-bottom: 16px; color: #434343; font-weight: 600;">
+          <span nz-icon nzType="file-text" style="margin-right: 8px;"></span>
+          Documents de l'utilisateur
+        </h4>
+        <div nz-row [nzGutter]="16">
+          <!-- Carte Professionnelle -->
+          <div nz-col nzXs="24" nzSm="12" nzMd="12">
+            <nz-card 
+              class="document-card" 
+              nzSize="small"
+              [nzBodyStyle]="{ padding: '12px' }"
+              style="height: 140px; transition: all 0.3s ease;">
+              <div class="document-content">
+                <div class="document-header" style="display: flex; justify-content: between; align-items: center; margin-bottom: 8px;">
+                  <div class="document-title" style="font-weight: 600; color: #1890ff;">
+                    <span nz-icon nzType="idcard" nzTheme="outline" style="margin-right: 4px;"></span>
+                    Carte Professionnelle
+                  </div>
+                  <div class="document-actions">
+                    <button 
+                      *ngIf="carteProf"
+                      nz-button 
+                      nzType="text" 
+                      nzSize="small"
+                      (click)="viewDocument(carteProf)"
+                      style="padding: 0 4px;"
+                    >
+                      <span nz-icon nzType="eye" nzTheme="outline"></span>
+                    </button>
+                    <nz-upload
+                      nzAction=""
+                      [nzBeforeUpload]="beforeUploadEditCartePro"
+                      nzAccept="image/*,.pdf"
+                      [nzShowUploadList]="false"
+                      style="display: inline-block; margin-left: 4px;"
+                    >
+                      <button nz-button nzType="text" nzSize="small" style="padding: 0 4px;">
+                        <span nz-icon nzType="upload" nzTheme="outline"></span>
+                      </button>
+                    </nz-upload>
+                  </div>
+                </div>
+                <div *ngIf="carteProf; else noCarteProf" class="document-info">
+                  <div class="document-meta" style="font-size: 12px; color: #666;">
+                    {{ formatFileSize(carteProf.taille_fichier) }}
+                  </div>
+                  <div class="document-date" style="font-size: 11px; color: #999;">
+                    {{ formatDate(carteProf.date_telechargement) }}
+                  </div>
+                  <div style="margin-top: 8px;">
+                    <nz-tag [nzColor]="carteProf.statut_document === 'actif' ? 'green' : 'orange'" nzSize="small">
+                      {{ carteProf.statut_document }}
+                    </nz-tag>
+                  </div>
+                </div>
+                <ng-template #noCarteProf>
+                  <div class="document-empty" style="color: #999; font-size: 12px;">
+                    <span nz-icon nzType="file-add" nzTheme="outline" style="font-size: 20px; color: #d9d9d9; display: block; margin-bottom: 4px;"></span>
+                    Non fournie
+                  </div>
+                </ng-template>
+              </div>
+            </nz-card>
+          </div>
+
+          <!-- CNI -->
+          <div nz-col nzXs="24" nzSm="12" nzMd="12">
+            <nz-card 
+              class="document-card" 
+              nzSize="small"
+              [nzBodyStyle]="{ padding: '12px' }"
+              style="height: 140px; transition: all 0.3s ease;">
+              <div class="document-content">
+                <div class="document-header" style="display: flex; justify-content: between; align-items: center; margin-bottom: 8px;">
+                  <div class="document-title" style="font-weight: 600; color: #52c41a;">
+                    <span nz-icon nzType="credit-card" nzTheme="outline" style="margin-right: 4px;"></span>
+                    CNI
+                  </div>
+                  <div class="document-actions">
+                    <button 
+                      *ngIf="cniDoc"
+                      nz-button 
+                      nzType="text" 
+                      nzSize="small"
+                      (click)="viewDocument(cniDoc)"
+                      style="padding: 0 4px;"
+                    >
+                      <span nz-icon nzType="eye" nzTheme="outline"></span>
+                    </button>
+                    <nz-upload
+                      nzAction=""
+                      [nzBeforeUpload]="beforeUploadEditCni"
+                      nzAccept="image/*,.pdf"
+                      [nzShowUploadList]="false"
+                      style="display: inline-block; margin-left: 4px;"
+                    >
+                      <button nz-button nzType="text" nzSize="small" style="padding: 0 4px;">
+                        <span nz-icon nzType="upload" nzTheme="outline"></span>
+                      </button>
+                    </nz-upload>
+                  </div>
+                </div>
+                <div *ngIf="cniDoc; else noCni" class="document-info">
+                  <div class="document-meta" style="font-size: 12px; color: #666;">
+                    {{ formatFileSize(cniDoc.taille_fichier) }}
+                  </div>
+                  <div class="document-date" style="font-size: 11px; color: #999;">
+                    {{ formatDate(cniDoc.date_telechargement) }}
+                  </div>
+                  <div style="margin-top: 8px;">
+                    <nz-tag [nzColor]="cniDoc.statut_document === 'actif' ? 'green' : 'orange'" nzSize="small">
+                      {{ cniDoc.statut_document }}
+                    </nz-tag>
+                  </div>
+                </div>
+                <ng-template #noCni>
+                  <div class="document-empty" style="color: #999; font-size: 12px;">
+                    <span nz-icon nzType="file-add" nzTheme="outline" style="font-size: 20px; color: #d9d9d9; display: block; margin-bottom: 4px;"></span>
+                    Non fournie
+                  </div>
+                </ng-template>
+              </div>
+            </nz-card>
+          </div>
+
+          <!-- Photo de Profil -->
+          <div nz-col nzXs="24" nzSm="12" nzMd="12">
+            <nz-card 
+              class="document-card" 
+              nzSize="small"
+              [nzBodyStyle]="{ padding: '12px' }"
+              style="min-height: 200px; transition: all 0.3s ease;">
+              <div class="document-content">
+                <div class="document-header" style="display: flex; justify-content: between; align-items: center; margin-bottom: 8px;">
+                  <div class="document-title" style="font-weight: 600; color: #722ed1;">
+                    <span nz-icon nzType="user" nzTheme="outline" style="margin-right: 4px;"></span>
+                    Photo de Profil
+                  </div>
+                  <div class="document-actions">
+                    <button 
+                      *ngIf="photoProfilDoc"
+                      nz-button 
+                      nzType="text" 
+                      nzSize="small"
+                      (click)="viewDocument(photoProfilDoc)"
+                      style="padding: 0 4px;"
+                    >
+                      <span nz-icon nzType="eye" nzTheme="outline"></span>
+                    </button>
+                    <nz-upload
+                      nzAction=""
+                      [nzBeforeUpload]="beforeUploadEditPhotoProfil"
+                      nzAccept="image/*"
+                      [nzShowUploadList]="false"
+                      style="display: inline-block; margin-left: 4px;"
+                    >
+                      <button nz-button nzType="text" nzSize="small" style="padding: 0 4px;">
+                        <span nz-icon nzType="upload" nzTheme="outline"></span>
+                      </button>
+                    </nz-upload>
+                  </div>
+                </div>
+
+                <!-- Aperçu de la photo de profil -->
+                <div class="photo-preview-section" style="margin-bottom: 12px;">
+                  <div class="current-photo" style="text-align: center; margin-bottom: 8px;">
+                    <nz-avatar 
+                      [nzSize]="80" 
+                      [nzSrc]="getCurrentPhotoUrl()"
+                      [nzIcon]="'user'"
+                      [nzShape]="'circle'"
+                      style="border: 3px solid #722ed1; box-shadow: 0 4px 8px rgba(114, 46, 209, 0.2);"
+                    ></nz-avatar>
+                  </div>
+                  <div style="text-align: center; font-size: 11px; color: #666;">
+                    {{ getCurrentPhotoUrl() ? 'Photo actuelle' : 'Aucune photo' }}
+                  </div>
+                </div>
+
+                <!-- Aperçu du nouveau fichier sélectionné -->
+                <div *ngIf="editPhotoProfilPreview" class="new-photo-preview" style="margin-bottom: 12px;">
+                  <div style="text-align: center; margin-bottom: 8px;">
+                    <img [src]="editPhotoProfilPreview" alt="Nouvelle photo" 
+                         style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #52c41a; box-shadow: 0 2px 4px rgba(82, 196, 26, 0.3);" />
+                  </div>
+                  <div style="text-align: center; font-size: 11px; color: #52c41a; font-weight: 500;">
+                    Nouvelle photo sélectionnée
+                  </div>
+                </div>
+
+                <div *ngIf="photoProfilDoc; else noPhotoProfil" class="document-info">
+                  <div class="document-meta" style="font-size: 12px; color: #666;">
+                    {{ formatFileSize(photoProfilDoc.taille_fichier) }}
+                  </div>
+                  <div class="document-date" style="font-size: 11px; color: #999;">
+                    {{ formatDate(photoProfilDoc.date_telechargement) }}
+                  </div>
+                  <div style="margin-top: 8px;">
+                    <nz-tag [nzColor]="photoProfilDoc.statut_document === 'actif' ? 'green' : 'orange'" nzSize="small">
+                      {{ photoProfilDoc.statut_document }}
+                    </nz-tag>
+                  </div>
+                </div>
+                <ng-template #noPhotoProfil>
+                  <div class="document-empty" style="color: #999; font-size: 12px; text-align: center;">
+                    <span nz-icon nzType="file-add" nzTheme="outline" style="font-size: 16px; color: #d9d9d9; display: block; margin-bottom: 4px;"></span>
+                    Non fournie
+                  </div>
+                </ng-template>
+              </div>
+            </nz-card>
+          </div>
+
+          <!-- Fiche de Souscription -->
+          <div nz-col nzXs="24" nzSm="12" nzMd="12">
+            <nz-card 
+              class="document-card" 
+              nzSize="small"
+              [nzBodyStyle]="{ padding: '12px' }"
+              style="height: 140px; transition: all 0.3s ease;">
+              <div class="document-content">
+                <div class="document-header" style="display: flex; justify-content: between; align-items: center; margin-bottom: 8px;">
+                  <div class="document-title" style="font-weight: 600; color: #faad14;">
+                    <span nz-icon nzType="file-text" nzTheme="outline" style="margin-right: 4px;"></span>
+                    Fiche Souscription
+                  </div>
+                  <div class="document-actions">
+                    <button 
+                      *ngIf="ficheSouscriptionDoc"
+                      nz-button 
+                      nzType="text" 
+                      nzSize="small"
+                      (click)="viewDocument(ficheSouscriptionDoc)"
+                      style="padding: 0 4px;"
+                    >
+                      <span nz-icon nzType="eye" nzTheme="outline"></span>
+                    </button>
+                    <nz-upload
+                      nzAction=""
+                      [nzBeforeUpload]="beforeUploadEditFicheSouscription"
+                      nzAccept="image/*,.pdf"
+                      [nzShowUploadList]="false"
+                      style="display: inline-block; margin-left: 4px;"
+                    >
+                      <button nz-button nzType="text" nzSize="small" style="padding: 0 4px;">
+                        <span nz-icon nzType="upload" nzTheme="outline"></span>
+                      </button>
+                    </nz-upload>
+                  </div>
+                </div>
+                <div *ngIf="ficheSouscriptionDoc; else noFicheSouscription" class="document-info">
+                  <div class="document-meta" style="font-size: 12px; color: #666;">
+                    {{ formatFileSize(ficheSouscriptionDoc.taille_fichier) }}
+                  </div>
+                  <div class="document-date" style="font-size: 11px; color: #999;">
+                    {{ formatDate(ficheSouscriptionDoc.date_telechargement) }}
+                  </div>
+                  <div style="margin-top: 8px;">
+                    <nz-tag [nzColor]="ficheSouscriptionDoc.statut_document === 'actif' ? 'green' : 'orange'" nzSize="small">
+                      {{ ficheSouscriptionDoc.statut_document }}
+                    </nz-tag>
+                  </div>
+                </div>
+                <ng-template #noFicheSouscription>
+                  <div class="document-empty" style="color: #999; font-size: 12px;">
+                    <span nz-icon nzType="file-add" nzTheme="outline" style="font-size: 20px; color: #d9d9d9; display: block; margin-bottom: 4px;"></span>
+                    Non fournie
+                  </div>
+                </ng-template>
+              </div>
+            </nz-card>
+          </div>
         </div>
 
-        <!-- Aperçu du document -->
-        <div class="document-preview" style="text-align: center;">
-          <div class="preview-container" style="max-height: 500px; overflow-y: auto; border: 1px solid #d9d9d9; border-radius: 6px; padding: 16px;">
-            <img 
-              [src]="getDocumentUrl(selectedDocument)" 
-              [alt]="selectedDocument.nom_original"
-              style="max-width: 100%; height: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 4px;"
-              (error)="onImageError($event)"
-            />
-            <div style="display: none; padding: 40px; color: #999; text-align: center;">
-              <span nz-icon nzType="file-image" nzTheme="outline" style="font-size: 48px; margin-bottom: 16px;"></span>
-              <p>Aperçu non disponible</p>
-              <p style="font-size: 12px;">{{ selectedDocument.nom_original }}</p>
-            </div>
+        <div style="margin-top: 16px;">
+          <nz-alert
+            nzType="info"
+            nzMessage="Information sur les documents"
+            nzDescription="Cliquez sur l'icône œil pour visualiser un document ou sur l'icône upload pour le remplacer. Formats acceptés : Images (JPG, PNG, GIF) et PDF. Taille maximale : 5MB par fichier."
+            nzShowIcon
+            nzSize="small"
+          ></nz-alert>
+        </div>
+      </div>
+    </form>
+  </ng-container>
+</nz-modal>
+
+<!-- Modal de changement de statut -->
+<nz-modal
+  [(nzVisible)]="isStatusModalVisible"
+  nzTitle="Changer le statut de l'utilisateur"
+  [nzOkText]="'Confirmer'"
+  [nzCancelText]="'Annuler'"
+  [nzOkLoading]="isStatusLoading"
+  [nzWidth]="450"
+  (nzOnCancel)="closeStatusModal()"
+  (nzOnOk)="confirmStatusChange()"
+>
+  <ng-container *nzModalContent>
+    <div class="status-change-content">
+      <div class="user-info" *ngIf="selectedUserForStatus">
+        <h4>
+          <span nz-icon nzType="user"></span>
+          {{ selectedUserForStatus.prenom }} {{ selectedUserForStatus.nom }}
+        </h4>
+        <p class="current-status">
+          Statut actuel : 
+          <nz-tag [nzColor]="getStatusColor(selectedUserForStatus.statut_utilisateur)">
+            {{ getStatusLabel(selectedUserForStatus.statut_utilisateur) }}
+          </nz-tag>
+        </p>
+      </div>
+
+      <nz-divider></nz-divider>
+
+      <div class="status-selection">
+        <h5>Nouveau statut :</h5>
+        <nz-radio-group [(ngModel)]="newStatus" class="status-radio-group">
+          <label 
+            *ngFor="let option of statusOptions" 
+            nz-radio 
+            [nzValue]="option.value"
+            class="status-radio-option"
+          >
+            <nz-tag [nzColor]="getStatusColor(option.value)" class="status-tag">
+              {{ option.label }}
+            </nz-tag>
+          </label>
+        </nz-radio-group>
+      </div>
+
+      <nz-alert
+        *ngIf="newStatus === 'suspendu'"
+        nzType="warning"
+        nzMessage="Attention"
+        nzDescription="L'utilisateur ne pourra plus se connecter jusqu'à ce que son statut soit modifié."
+        nzShowIcon
+        class="status-warning"
+      ></nz-alert>
+
+      <nz-alert
+        *ngIf="newStatus === 'inactif'"
+        nzType="error"
+        nzMessage="Compte inactif"
+        nzDescription="L'utilisateur sera complètement désactivé et ne pourra plus accéder au système."
+        nzShowIcon
+        class="status-warning"
+      ></nz-alert>
+    </div>
+  </ng-container>
+</nz-modal>
+
+<!-- Modal pour l'affichage des documents -->
+<nz-modal
+  [(nzVisible)]="isDocumentModalVisible"
+  [nzTitle]="selectedDocument ? selectedDocument.description_document : 'Document'"
+  [nzWidth]="800"
+  [nzFooter]="null"
+  (nzOnCancel)="closeDocumentModal()">
+  
+  <div *nzModalContent>
+    <div *ngIf="selectedDocument" class="document-modal-content">
+      <!-- Informations du document -->
+      <div class="document-details" style="margin-bottom: 20px;">
+        <nz-descriptions [nzBordered]="true" [nzColumn]="2" nzSize="small">
+          <nz-descriptions-item nzTitle="Nom du fichier">
+            {{ selectedDocument.nom_original }}
+          </nz-descriptions-item>
+          <nz-descriptions-item nzTitle="Taille">
+            {{ formatFileSize(selectedDocument.taille_fichier) }}
+          </nz-descriptions-item>
+          <nz-descriptions-item nzTitle="Date d'upload">
+            {{ formatDate(selectedDocument.date_telechargement) }}
+          </nz-descriptions-item>
+          <nz-descriptions-item nzTitle="Version">
+            v{{ selectedDocument.version_document }}
+          </nz-descriptions-item>
+          <nz-descriptions-item nzTitle="Statut" nzSpan="2">
+            <nz-tag [nzColor]="selectedDocument.statut_document === 'actif' ? 'green' : 'orange'">
+              {{ selectedDocument.statut_document }}
+            </nz-tag>
+          </nz-descriptions-item>
+        </nz-descriptions>
+      </div>
+
+      <!-- Aperçu du document -->
+      <div class="document-preview" style="text-align: center;">
+        <div class="preview-container" style="max-height: 500px; overflow-y: auto; border: 1px solid #d9d9d9; border-radius: 6px; padding: 16px;">
+          <img 
+            [src]="getDocumentUrl(selectedDocument)" 
+            [alt]="selectedDocument.nom_original"
+            style="max-width: 100%; height: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 4px;"
+            (error)="onImageError($event)"
+          />
+          <div style="display: none; padding: 40px; color: #999; text-align: center;">
+            <span nz-icon nzType="file-image" nzTheme="outline" style="font-size: 48px; margin-bottom: 16px;"></span>
+            <p>Aperçu non disponible</p>
+            <p style="font-size: 12px;">{{ selectedDocument.nom_original }}</p>
           </div>
         </div>
       </div>
     </div>
-  </nz-modal>
+  </div>
+</nz-modal>

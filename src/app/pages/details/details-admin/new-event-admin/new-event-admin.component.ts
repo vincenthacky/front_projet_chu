@@ -1,5 +1,5 @@
 // src/app/pages/details/details-admin/new-event-admin/new-event-admin.component.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -12,7 +12,6 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
-import { NzTimePickerModule } from 'ng-zorro-antd/time-picker';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzCardModule } from 'ng-zorro-antd/card';
@@ -42,7 +41,6 @@ import { SouscriptionService } from 'src/app/core/services/souscription.service'
     NzButtonModule,
     NzSelectModule,
     NzDatePickerModule,
-    NzTimePickerModule,
     NzSwitchModule,
     NzIconModule,
     NzCardModule,
@@ -58,6 +56,8 @@ import { SouscriptionService } from 'src/app/core/services/souscription.service'
   styleUrl: './new-event-admin.component.css'
 })
 export class NewEventAdminComponent implements OnInit {
+  @Output() eventCreated = new EventEmitter<void>();
+  
   eventForm!: FormGroup;
   isSubmitting = false;
   currentStep = 0;
@@ -96,11 +96,9 @@ export class NewEventAdminComponent implements OnInit {
       description: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]],
       type_evenement_libre: ['', [Validators.required, Validators.maxLength(100)]],
       
-      // Étape 2: Date et lieu
+      // Étape 2: Date et lieu (SANS HEURES)
       date_debut: [null, Validators.required],
-      heure_debut: [null, Validators.required],
       date_fin: [null, Validators.required],
-      heure_fin: [null, Validators.required],
       lieu: ['', [Validators.required, Validators.maxLength(200)]],
       
       // Étape 3: Paramètres avancés
@@ -126,18 +124,15 @@ export class NewEventAdminComponent implements OnInit {
 
   // Fonction améliorée pour l'upload de fichiers
   beforeUpload = (file: NzUploadFile): boolean => {
-    // Réinitialiser les erreurs
     this.uploadError = null;
     
     console.log('Fichier reçu:', file);
     
-    // Vérifier la limite de nombre de fichiers
     if (this.uploadedDocuments.length >= this.maxFiles) {
       this.uploadError = `Maximum ${this.maxFiles} fichiers autorisés`;
       return false;
     }
     
-    // Méthode robuste pour récupérer le fichier
     let actualFile: File;
     
     if (file instanceof File) {
@@ -151,7 +146,6 @@ export class NewEventAdminComponent implements OnInit {
 
     console.log('Fichier à traiter:', actualFile.name, actualFile.type, actualFile.size);
 
-    // Validation du type de fichier avec fallback
     const allowedTypes = [
       'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
       'video/mp4', 'video/avi', 'video/mov', 'video/quicktime', 'video/x-msvideo'
@@ -167,13 +161,11 @@ export class NewEventAdminComponent implements OnInit {
       return false;
     }
 
-    // Vérifier la taille
     if (actualFile.size > this.maxFileSize) {
       this.uploadError = `Le fichier "${actualFile.name}" dépasse la limite de ${this.formatFileSize(this.maxFileSize)}`;
       return false;
     }
 
-    // Vérifier les doublons
     const isDuplicate = this.uploadedDocuments.some(doc => 
       doc.name === actualFile.name && doc.size === actualFile.size
     );
@@ -183,10 +175,8 @@ export class NewEventAdminComponent implements OnInit {
       return false;
     }
 
-    // Ajouter le fichier à la liste
     this.uploadedDocuments.push(actualFile);
     
-    // Créer un aperçu pour les images
     if (actualFile.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onload = () => {
@@ -212,10 +202,9 @@ export class NewEventAdminComponent implements OnInit {
     
     this.message.success(`Fichier "${actualFile.name}" ajouté`);
     
-    return false; // Empêcher l'upload automatique
+    return false;
   };
 
-  // Fonction pour supprimer un fichier
   removeFile = (file: NzUploadFile): boolean => {
     console.log('Suppression du fichier:', file.name);
     
@@ -234,7 +223,6 @@ export class NewEventAdminComponent implements OnInit {
     return true;
   };
 
-  // Méthode pour supprimer un fichier par index
   removeFileFromList(index: number): void {
     if (index >= 0 && index < this.uploadedDocuments.length) {
       const fileName = this.uploadedDocuments[index].name;
@@ -250,7 +238,6 @@ export class NewEventAdminComponent implements OnInit {
     }
   }
 
-  // Navigation entre les étapes
   nextStep(): void {
     if (this.validateCurrentStep()) {
       this.currentStep++;
@@ -266,13 +253,13 @@ export class NewEventAdminComponent implements OnInit {
     let fieldsToValidate: string[] = [];
 
     switch (step) {
-      case 0: // Informations de base
+      case 0:
         fieldsToValidate = ['titre', 'description', 'type_evenement_libre'];
         break;
-      case 1: // Date et lieu
-        fieldsToValidate = ['date_debut', 'heure_debut', 'date_fin', 'heure_fin', 'lieu'];
+      case 1:
+        fieldsToValidate = ['date_debut', 'date_fin', 'lieu'];
         break;
-      case 2: // Paramètres avancés
+      case 2:
         fieldsToValidate = ['id_souscription'];
         break;
     }
@@ -286,7 +273,6 @@ export class NewEventAdminComponent implements OnInit {
       }
     });
 
-    // Validation spéciale pour les dates
     if (step === 1 && isValid) {
       isValid = this.validateDates();
     }
@@ -296,24 +282,25 @@ export class NewEventAdminComponent implements OnInit {
 
   private validateDates(): boolean {
     const dateDebut = this.eventForm.get('date_debut')?.value;
-    const heureDebut = this.eventForm.get('heure_debut')?.value;
     const dateFin = this.eventForm.get('date_fin')?.value;
-    const heureFin = this.eventForm.get('heure_fin')?.value;
 
-    if (dateDebut && heureDebut && dateFin && heureFin) {
+    if (dateDebut && dateFin) {
       const debut = new Date(dateDebut);
-      debut.setHours(heureDebut.getHours(), heureDebut.getMinutes());
-
       const fin = new Date(dateFin);
-      fin.setHours(heureFin.getHours(), heureFin.getMinutes());
+      
+      // Comparaison par date uniquement (sans heures)
+      debut.setHours(0, 0, 0, 0);
+      fin.setHours(0, 0, 0, 0);
 
-      if (fin <= debut) {
-        this.message.error('La date de fin doit être postérieure à la date de début');
+      if (fin < debut) {
+        this.message.error('La date de fin doit être postérieure ou égale à la date de début');
         return false;
       }
 
       // Vérifier que l'événement n'est pas dans le passé
       const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      
       if (debut < now) {
         this.message.error('La date de début ne peut pas être dans le passé');
         return false;
@@ -323,10 +310,9 @@ export class NewEventAdminComponent implements OnInit {
     return true;
   }
 
-  // Méthode pour valider les fichiers avant soumission
   private validateFiles(): boolean {
     if (this.uploadedDocuments.length === 0) {
-      return true; // Pas de fichiers = OK (optionnel)
+      return true;
     }
 
     for (const file of this.uploadedDocuments) {
@@ -351,65 +337,54 @@ export class NewEventAdminComponent implements OnInit {
       const formData = this.eventForm.value;
       const eventData: CreateEventRequest = this.prepareEventData(formData);
 
-      console.log('Données à envoyer:', eventData);
-      console.log('Type de est_public:', typeof eventData.est_public, 'Valeur:', eventData.est_public);
-      console.log('Documents à joindre:', this.uploadedDocuments);
-
-      // Appel réel à l'API
       this.evenementsService.creerEvenement(eventData, this.uploadedDocuments).subscribe({
         next: (response: CreateEventResponse) => {
           this.isSubmitting = false;
           
           if (response.success) {
-            this.notification.success(
-              'Événement créé',
-              `L'événement "${response.data.evenement.titre}" a été créé avec succès! ${this.uploadedDocuments.length} document(s) joint(s).`
-            );
+            this.message.success(`Événement créé avec succès!`);
             
-            // Redirection vers la liste des événements
-            this.router.navigate(['/dashboard/admin/event-admin']);
+            // Émettre l'événement pour fermer le modal parent
+            this.eventCreated.emit();
+            
+            // Redirection
+            this.router.navigate(['/dashboard/admin/details/event-admin']);
           } else {
             this.message.error(response.message || 'Erreur lors de la création');
           }
         },
         error: (error) => {
           this.isSubmitting = false;
-          console.error('Erreur création événement:', error);
-          console.error('Détails de l\'erreur:', error.error);
+          console.error('Erreur:', error);
           
-          // Gestion des erreurs spécifiques
           if (error.error && error.error.message) {
             this.message.error(error.error.message);
           } else if (error.status === 422 && error.error.errors) {
-            // Erreurs de validation
             const validationErrors = error.error.errors;
             Object.keys(validationErrors).forEach(field => {
               this.message.error(`${field}: ${validationErrors[field][0]}`);
             });
-          } else if (error.status === 413) {
-            this.message.error('Les fichiers sont trop volumineux. Veuillez réduire la taille.');
           } else {
-            this.message.error('Erreur lors de la création de l\'événement. Veuillez réessayer.');
+            this.message.error('Erreur lors de la création');
           }
         }
       });
-         // Redirection vers la liste des événements
-         this.router.navigate(['/dashboard/admin/details/event-admin']);
-
     } else {
-      this.message.error('Veuillez corriger les erreurs dans le formulaire et les fichiers');
+      this.message.error('Veuillez corriger les erreurs');
       this.markAllFieldsAsTouched();
     }
   }
 
   private prepareEventData(formData: any): CreateEventRequest {
+    // Conversion des dates SANS HEURES
     const dateDebut = new Date(formData.date_debut);
-    dateDebut.setHours(formData.heure_debut.getHours(), formData.heure_debut.getMinutes());
-
     const dateFin = new Date(formData.date_fin);
-    dateFin.setHours(formData.heure_fin.getHours(), formData.heure_fin.getMinutes());
+    
+    // Mettre les heures à 00:00:00
+    dateDebut.setHours(0, 0, 0, 0);
+    dateFin.setHours(0, 0, 0, 0);
 
-    // Conversion stricte en booléen - NzSwitch peut retourner différents types
+    // Conversion stricte en booléen
     let estPublic: boolean = false;
     
     if (formData.est_public === true || formData.est_public === 'true' || formData.est_public === 1 || formData.est_public === '1') {
@@ -417,7 +392,6 @@ export class NewEventAdminComponent implements OnInit {
     } else if (formData.est_public === false || formData.est_public === 'false' || formData.est_public === 0 || formData.est_public === '0') {
       estPublic = false;
     } else {
-      // Valeur par défaut si indéterminée
       estPublic = Boolean(formData.est_public);
     }
 
@@ -425,28 +399,25 @@ export class NewEventAdminComponent implements OnInit {
     console.log('Valeur convertie est_public:', estPublic, 'Type:', typeof estPublic);
 
     return {
-      id_type_evenement: 3, // Vous pouvez ajuster ou rendre dynamique
+      id_type_evenement: 3,
       id_souscription: formData.id_souscription,
       titre: formData.titre.trim(),
       description: formData.description.trim(),
       date_debut_evenement: this.formatDateForAPI(dateDebut),
       date_fin_evenement: this.formatDateForAPI(dateFin),
       lieu: formData.lieu.trim(),
-      est_public: estPublic, // Booléen strict garanti
+      est_public: estPublic,
       type_evenement_libre: formData.type_evenement_libre?.trim()
     };
   }
 
   private formatDateForAPI(date: Date): string {
-    // Format requis: "2025-09-15 18:00:00"
+    // Format: "2025-11-15 00:00:00"
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = '00';
     
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    return `${year}-${month}-${day} 00:00:00`;
   }
 
   private markAllFieldsAsTouched(): void {
@@ -455,7 +426,6 @@ export class NewEventAdminComponent implements OnInit {
     });
   }
 
-  // Méthodes utilitaires pour le template
   isFieldInvalid(fieldName: string): boolean {
     const field = this.eventForm.get(fieldName);
     return !!(field && field.invalid && (field.dirty || field.touched));
@@ -488,10 +458,10 @@ export class NewEventAdminComponent implements OnInit {
   }
 
   cancel(): void {
+    this.eventCreated.emit();
     this.router.navigate(['/dashboard/admin/details/event-admin']);
   }
 
-  // Utilitaires pour les fichiers
   getFileIcon(file: NzUploadFile): string {
     if (file.type) {
       if (file.type.startsWith('image/')) {
@@ -501,7 +471,6 @@ export class NewEventAdminComponent implements OnInit {
       }
     }
     
-    // Fallback basé sur l'extension
     if (file.name) {
       const ext = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
       if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)) {
