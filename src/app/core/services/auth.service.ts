@@ -863,7 +863,7 @@ export class AuthService {
       'Authorization': `Bearer ${token}`
     });
 
-    const params = new HttpParams().set('per_page', '1000000');
+    const params = new HttpParams().set('per_page', '100000');
 
     return this.http.get<UsersResponse>(`${this.API_URL}/utilisateurs`, { headers, params }).pipe(
       tap(response => {

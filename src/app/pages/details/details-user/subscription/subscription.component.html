@@ -110,7 +110,7 @@
                       <th>Terrain</th>
                       <th>Prix Total</th>
                       <th>{{ currentViewMode === 'souscriptions' ? 'Montant Payé' : 'Date Demande' }}</th>
-                      <th>{{ currentViewMode === 'souscriptions' ? 'Reste à Payer' : 'Origine' }}</th>
+                      <th>{{ currentViewMode === 'souscriptions' ? 'Total Reste à Payer' : 'Origine' }}</th>
                       <th>Date Début</th>
                       <th>{{ currentViewMode === 'souscriptions' ? 'Prochain Paiement' : 'Date Création' }}</th>
                       <th>Retard de paiement</th>
@@ -160,6 +160,26 @@
                               <i class="fas fa-clock"></i>
                               {{ formatDate(subscription.dateCreation || '') }}
                           </div>
+                      </td>
+                      <!-- ✅ COLONNE CORRIGÉE : État de paiement -->
+                      <td class="table-cell">
+                        <div class="payment-status-container">
+                          <nz-tag
+                            [nzColor]="getPaymentStatusDisplay(subscription).color"
+                            [nz-tooltip]="getPaymentStatusDisplay(subscription).tooltip"
+                            nzTooltipPlacement="top"
+                            style="margin-bottom: 4px; font-weight: 500; min-width: 120px; text-align: center;"
+                          >
+                            {{ getPaymentStatusDisplay(subscription).label }}
+                          </nz-tag>
+                          <div 
+                            *ngIf="getPaymentStatusDisplay(subscription).montant > 0"
+                            style="font-size: 13px; font-weight: 700; margin-top: 4px;"
+                            [style.color]="getPaymentStatusDisplay(subscription).statut === 'en_avance' ? '#52c41a' : '#ff4d4f'"
+                          >
+                             <span style="font-size: 11px;">Montant : {{ formatAmount(getPaymentStatusDisplay(subscription).montant) }}</span>
+                          </div>
+                        </div>
                       </td>
                       <td class="table-cell">
                           <div class="status-badge" [ngClass]="getStatusClass(subscription.statut)">

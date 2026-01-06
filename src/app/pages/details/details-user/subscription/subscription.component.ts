@@ -15,10 +15,11 @@ import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { NzMessageModule } from 'ng-zorro-antd/message';
 import { NzStatisticModule } from 'ng-zorro-antd/statistic';
 import { NzPaginationModule } from 'ng-zorro-antd/pagination';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NzModalService } from 'ng-zorro-antd/modal';
-import { ApiSouscription } from 'src/app/core/models/souscription';
+import { ApiSouscription, EtatPaiement } from 'src/app/core/models/souscription';
 import { SouscriptionService } from 'src/app/core/services/souscription.service';
 
 interface Payment {
@@ -45,6 +46,7 @@ interface Subscription {
   statut: string;
   progression: number;
   payments: Payment[];
+  etat_paiement?: EtatPaiement;
 }
 
 @Component({
@@ -67,6 +69,7 @@ interface Subscription {
     NzMessageModule,
     NzStatisticModule,
     NzPaginationModule,
+    NzToolTipModule,
     FormsModule,
   ],
   templateUrl: './subscription.component.html',
@@ -196,7 +199,8 @@ export class SubscriptionComponent {
       origine: demande.origine || 'utilisateur',
       statut: demande.statut_souscription,
       progression: 0,
-      payments: []
+      payments: [],
+      etat_paiement: undefined
     };
   }
 
@@ -288,7 +292,8 @@ export class SubscriptionComponent {
         prochainPaiement,
         statut: item.statut_dynamique,
         progression,
-        payments
+        payments,
+        etat_paiement: item.etat_paiement
       });
     }
     return mapped;
@@ -359,10 +364,82 @@ export class SubscriptionComponent {
   }
 
   getPaymentStatusColor(status: string): string {
-    const colors: any = {
-      'paye_a_temps': 'green', 'paye_en_retard': 'orange', 'paiement_partiel': 'blue'
-    };
-    return colors[status] || 'default';
+    switch (status.toLowerCase()) {
+      case 'paye_a_temps':
+        return 'green';
+      case 'paye_en_retard':
+        return 'orange';
+      case 'paiement_partiel':
+        return 'blue';
+      default:
+        return 'default';
+    }
+  }
+
+  getPaymentStatusDisplay(subscription: Subscription): { 
+    statut: string; 
+    montant: number; 
+    label: string; 
+    color: string;
+    tooltip: string;
+  } {
+    const etatPaiement = subscription.etat_paiement;
+    
+    if (!etatPaiement) {
+      return { 
+        statut: 'inconnu', 
+        montant: 0, 
+        label: 'Non défini', 
+        color: 'default',
+        tooltip: 'État de paiement non disponible'
+      };
+    }
+
+    const statut = etatPaiement.statut?.toLowerCase() || '';
+
+    switch(statut) {
+      case 'en_avance':
+        const montantAvance = etatPaiement.avance?.montant_en_avance || 0;
+        const moisAvance = etatPaiement.avance?.mois_en_avance || 0;
+        return {
+          statut: 'en_avance',
+          montant: montantAvance,
+          label: `En avance de ${moisAvance} mois`,
+          color: 'green',
+          tooltip: `${moisAvance} mois d'avance • Avance de ${this.formatAmount(montantAvance)}`
+        };
+
+      case 'en_retard':
+        const montantRetard = etatPaiement.retard?.montant_en_retard || 0;
+        const moisRetard = etatPaiement.retard?.mois_en_retard || 0;
+        return {
+          statut: 'en_retard',
+          montant: montantRetard,
+          label:  `En retard de ${moisRetard} mois`,
+          color: 'red',
+          tooltip: moisRetard > 0 
+            ? `${moisRetard} mois de retard • Montant en retard: ${this.formatAmount(montantRetard)}`
+            : `Montant en retard: ${this.formatAmount(montantRetard)}`
+        };
+
+      case 'a_jour':
+        return {
+          statut: 'a_jour',
+          montant: 0,
+          label: 'À jour',
+          color: 'blue',
+          tooltip: 'Paiements à jour selon l\'échéancier'
+        };
+
+      default:
+        return {
+          statut: 'inconnu',
+          montant: 0,
+          label: statut || 'Non défini',
+          color: 'default',
+          tooltip: 'État de paiement: ' + (statut || 'inconnu')
+        };
+    }
   }
 
   trackByPayment(index: number, payment: any): string {

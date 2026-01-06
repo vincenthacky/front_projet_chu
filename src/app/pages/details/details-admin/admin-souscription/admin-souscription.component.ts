@@ -248,23 +248,23 @@ export class AdminSouscriptionComponent implements OnInit, OnDestroy {
 
     switch(statut) {
       case 'en_avance':
-        const montantAvance = etatPaiement.avance?.montant_avance || 0;
-        const moisAvance = etatPaiement.avance?.mois_avance || 0;
+        const montantAvance = etatPaiement.avance?.montant_en_avance || 0;
+        const moisAvance = etatPaiement.avance?.mois_en_avance || 0;
         return {
           statut: 'en_avance',
           montant: montantAvance,
-          label: 'En avance de',
+          label: `En avance de ${moisAvance} mois`,
           color: 'green',
           tooltip: `${moisAvance} mois d'avance • Avance de ${this.formatCurrency(montantAvance)}`
         };
 
       case 'en_retard':
-        const montantRetard = etatPaiement.retard?.montant_restant || 0;
-        const moisRetard = etatPaiement.retard?.mois_non_payes || 0;
+        const montantRetard = etatPaiement.retard?.montant_en_retard || 0;
+        const moisRetard = etatPaiement.retard?.mois_en_retard || 0;
         return {
           statut: 'en_retard',
           montant: montantRetard,
-          label: 'En retard de',
+          label:  `En retard de ${moisRetard} mois`,
           color: 'red',
           tooltip: moisRetard > 0 
             ? `${moisRetard} mois de retard • Montant restant: ${this.formatCurrency(montantRetard)}`

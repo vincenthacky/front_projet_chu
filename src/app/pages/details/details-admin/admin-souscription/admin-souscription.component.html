@@ -181,16 +181,16 @@
                       [nzColor]="getPaymentStatusDisplay(souscription).color"
                       [nz-tooltip]="getPaymentStatusDisplay(souscription).tooltip"
                       nzTooltipPlacement="top"
-                      style="margin-bottom: 4px; font-weight: 500;"
+                      style="margin-bottom: 4px; font-weight: 500; min-width: 120px; text-align: center;"
                     >
                       {{ getPaymentStatusDisplay(souscription).label }}
                     </nz-tag>
                     <div 
                       *ngIf="getPaymentStatusDisplay(souscription).montant > 0"
-                      style="font-size: 12px; font-weight: 600;"
+                      style="font-size: 13px; font-weight: 700; margin-top: 4px;"
                       [style.color]="getPaymentStatusDisplay(souscription).statut === 'en_avance' ? '#52c41a' : '#ff4d4f'"
                     >
-                      {{ formatCurrency(getPaymentStatusDisplay(souscription).montant) }}
+                      <span style="font-size: 11px;">Montant : {{ formatCurrency(getPaymentStatusDisplay(souscription).montant) }} </span>
                     </div>
                   </div>
                 </td>
@@ -275,7 +275,6 @@
     </div>
   </nz-spin>
 </div>
-
 <!-- Modal de détails -->
 <nz-modal
   [(nzVisible)]="isVisible"

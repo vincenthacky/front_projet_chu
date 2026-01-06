@@ -1,6 +1,20 @@
-// src/app/core/models/souscription.ts
+// ✅ Interface pour l'état de paiement (selon l'API)
+export interface EtatPaiement {
+  statut: 'en_avance' | 'en_retard' | 'a_jour';
+  mois_ecoules: number;
+  mensualites_payees: number;
+  montant_du: number;
+  montant_paye: string;
+  avance?: {
+    mois_en_avance: number;
+    montant_en_avance: number;
+  };
+  retard?: {
+    mois_en_retard: number;
+    montant_en_retard: number;
+  };
+}
 
-// Interfaces existantes...
 export interface ApiSouscription {
   id_souscription: number;
   id_utilisateur: number;
@@ -23,6 +37,7 @@ export interface ApiSouscription {
   montant_paye: string;
   reste_a_payer: number;
   date_prochain: string | null;
+  etat_paiement?: EtatPaiement; // ✅ Ajout du champ etat_paiement
   utilisateur?: {
     id_utilisateur: number;
     matricule: string;
@@ -177,7 +192,6 @@ export interface TerrainResponse {
   data: Terrain[];
 }
 
-// ✅ NOUVEAU : Interfaces pour les souscriptions groupées par utilisateur
 export interface UtilisateurStatistiques {
   nbr_total_souscriptions: number;
   montant_total: number;
